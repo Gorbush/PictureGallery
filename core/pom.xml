@@ -32,7 +32,8 @@
     </properties>
 
     <modules>
-        <!-- module>config</module -->
+        <module>libs</module>
+        <module>model</module>
     </modules>
 
 </project>

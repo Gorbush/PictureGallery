@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+	<conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+	<conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+	<conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+
+	<!--<property name="BI_CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(-&#45;&#45;){faint} %clr([%15.15t]){faint} %clr(%-40.-->
+<!--40logger{39}){cyan} %clr(:){faint} %clr({%X{FeedName}}){green} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>-->
+	<property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} {%X{FeedName}} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+	<appender name="INDEX_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/indexer.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/indexer.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+	</appender>
+
+	<appender name="MONGO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/mongo.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/mongo.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="SPRING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/spring.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/spring.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="SPRING_WEB_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/spring_web.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/spring_web.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+    <appender name="INDEX_FILE_FAILED" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Append>true</Append>
+        <File>logs/indexer_error.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>logs/indexer_error.log.%i</fileNamePattern>
+        </rollingPolicy>
+        <triggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="INDEX_FILE_UNKNOWN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Append>true</Append>
+        <File>logs/indexer_unknown.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>logs/indexer_unknown.log.%i</fileNamePattern>
+        </rollingPolicy>
+        <triggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="INDEX_FILE_UNKNOWN_DIR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Append>true</Append>
+        <File>logs/indexer_unknown_dir.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>logs/indexer_unknown_dir.log.%i</fileNamePattern>
+        </rollingPolicy>
+        <triggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!--<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">-->
+        <!--<encoder>-->
+            <!--<pattern>${BI_CONSOLE_LOG_PATTERN}</pattern>-->
+            <!--<charset>utf8</charset>-->
+        <!--</encoder>-->
+        <!--<filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
+            <!--<level>WARN</level>-->
+        <!--</filter>-->
+    <!--</appender>-->
+
+	<logger name="org.springframework" level="DEBUG" />
+
+	<logger name="gallerymine" level="INFO" additivity="true">
+		<!--<appender-ref ref="INDEX_FILE" />-->
+	</logger>
+
+	<logger name="gallerymine.backend.helpers.analyzer" level="INFO" additivity="true">
+		<!--<appender-ref ref="" />-->
+	</logger>
+
+	<!--<logger name="gallerymine.backend.helpers.IndexRequestProcessor" level="INFO" additivity="false">-->
+		<!--<appender-ref ref="INDEX_FILE_FAILED" />-->
+	<!--</logger>-->
+
+	<logger name="failedToIndexError" level="INFO" additivity="false">
+		<appender-ref ref="INDEX_FILE_FAILED" />
+	</logger>
+
+	<!--<logger name="gallerymine.backend.helpers.analyzer" level="INFO" additivity="false">-->
+		<!--<appender-ref ref="INDEX_FILE_UNKNOWN" />-->
+	<!--</logger>-->
+
+	<logger name="failedToIndexUnknown" level="INFO" additivity="false">
+		<appender-ref ref="INDEX_FILE_UNKNOWN" />
+	</logger>
+
+	<logger name="unknownDirectory" level="INFO" additivity="true">
+		<appender-ref ref="INDEX_FILE_UNKNOWN_DIR" />
+	</logger>
+
+	<logger name="org.springframework.data.mongodb" level="DEBUG" additivity="true">
+		<appender-ref ref="MONGO_FILE" />
+	</logger>
+
+	<logger name="org.springframework.web" level="DEBUG" additivity="true">
+		<appender-ref ref="SPRING_WEB_FILE" />
+	</logger>
+
+	<!-- logger name="org.springframework.beans" level="DEBUG" additivity="false">
+		<appender-ref ref="SPRING_FILE" />
+	</logger>
+
+	<logger name="org.springframework.core" level="DEBUG" additivity="false">
+		<appender-ref ref="SPRING_FILE" />
+	</logger>
+
+	<logger name="org.springframework.boot" level="DEBUG" additivity="false">
+		<appender-ref ref="SPRING_FILE" />
+	</logger>
+
+	<logger name="org.springframework.context" level="DEBUG" additivity="false">
+		<appender-ref ref="SPRING_FILE" />
+	</logger -->
+
+	<logger name="org.springframework" level="DEBUG" additivity="true">
+		<appender-ref ref="SPRING_FILE" />
+	</logger>
+
+	<root level="INFO">
+		<!--<appender-ref ref="stdout"/>-->
+		<!--<appender-ref ref="INDEX_FILE"/>-->
+	</root>
+
+</configuration>

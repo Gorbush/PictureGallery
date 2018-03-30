@@ -1,0 +1,209 @@
+div.dropdown.contextmenu {
+    position: absolute;
+    display:none;
+}
+div#templates {
+    display: none;
+}
+div#pageHeader {
+    background-color: #fff9b4;
+    position: absolute;
+    width: 100%;
+    height: 100px;
+    left: 0;
+    right: 0;
+    top: 0;
+}
+ul.nav li span.navbar-label {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    line-height: 20px;
+    position: relative;
+    display: block;
+    font-size: 100%;
+}
+@media (min-width: 768px) {
+    ul.nav li span.navbar-label {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
+}
+div#pageHeaderLabel{
+    width: 100%;
+    height: 53px;
+    text-align: center;
+}
+div#pageMainButtons {
+    width: 100%;
+    height: 50px;
+    vertical-align: middle;
+}
+div#pageContent {
+    border: 1px solid blue;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100px;
+    bottom: 20px;
+}
+div#matchingInformation {
+    border: 1px solid gold;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 100px;
+}
+div#matchedContent{
+    border: 1px solid orange;
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 100px;
+    bottom: 0;
+}
+div#matchedSourcesContent{
+    background-color: #ffe3df;
+    /*position: absolute;*/
+    /*left: 0;*/
+    /*right: 60%;*/
+    /*top: 0;*/
+    /*bottom: 0;*/
+    height: 100%;
+    overflow-y: auto;
+}
+div#matchingLinesContent {
+    background-color: #abdaff;
+    /*position: absolute;*/
+    /*left: 40%;*/
+    /*right: 60%;*/
+    /*top: 0;*/
+    /*bottom: 0;*/
+    height: 100%;
+    overflow-y: auto;
+}
+div#matchedPicturesContent{
+    background-color: #c5def6;
+    /*position: absolute;*/
+    /*left: 60%;*/
+    /*right: 0;*/
+    /*top: 0;*/
+    /*bottom: 0;*/
+    height: 100%;
+    overflow-y: auto;
+}
+div#matchedSources{
+}
+div#matchingLines {
+}
+div#matchedPictures{
+}
+div#matchingSource {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100px;
+    width: 40%;
+}
+div#matchingStats {
+    position: absolute;
+    left: 40%;
+    top: 0;
+    bottom: 0;
+    width: 60%;
+}
+/** Source Matching record - width: 100% height: 100px **/
+div.sourceBlock {
+    width: 100%;
+    height: 100px;
+    position: relative;
+}
+.source-block-unsaved {
+    background-color: #dcdcdc;
+}
+.source-block-unset {
+    background-color: #dcd9b4;
+}
+.source-block-duplicate {
+    background-color: #dcc7d2;
+}
+.source-block-primary {
+    background-color: #acdcc2;
+}
+div.sourceBlock div.sourceBlockBody {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+}
+div.sourceBlock div.source_image {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100px;
+    width: 100px;
+    background-size: 100px 100px;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    align-content: center;
+    text-align: center;
+}
+div.sourceBlock div.source_image img {
+    max-width: 100%;
+    max-height: 100%;
+}
+div.sourceBlock div.matchingProperties {
+    position: absolute;
+    left: 0;
+    right:  0;
+    top: 0;
+    height: 100px;
+    padding-left: 105px;
+}
+div.sourceBlock div.filePath {
+
+}
+div.sourceBlock div.fileName {
+
+}
+div.decisionBlock {
+    position: absolute;
+    width: 70px;
+    right:  0;
+    top: 0;
+    height: 22px;
+    background-color: #ededed;
+    margin-right: 10px;
+    text-align: center;
+    align-content: center;
+}
+div.decisionBlock .decisionButton{
+    background-color: #1deded;
+    padding: 3px;
+}
+span.btn_LATER {
+    /*background-size: 16px 16px;*/
+    /*background-repeat: no-repeat;*/
+    /*background-image: url('/images/timer-16.gif');*/
+    /*background-position: center center;*/
+}
+span.btn_APPROVE {
+    /*background-size: 16px 16px;*/
+    /*background-repeat: no-repeat;*/
+    /*background-image: url('/images/check-16.png');*/
+    /*background-position: center center;*/
+}
+span.btn_DUPLICATE {
+    /*background-size: 16px 16px;*/
+    /*background-repeat: no-repeat;*/
+    /*background-image: url('/images/trash-16.png');*/
+    /*background-position: center center;*/
+}
+div.decisionBlock .decisionButton.decision_selected {
+    border: 1px solid red;
+}

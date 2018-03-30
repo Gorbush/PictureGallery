@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+<title>Messages : View all</title>
+</head>
+<body>
+	<h1 layout:fragment="header">Messages : View all</h1>
+	<div layout:fragment="content" class="container">
+		<div class="pull-right">
+			<a href="form.html" th:href="@{/(form)}">Create Message</a>
+		</div>
+		<table class="table table-bordered table-striped">
+			<thead>
+				<tr>
+					<td>ID</td>
+					<td>Created</td>
+					<td>Summary</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:if="${messages.empty}">
+					<td colspan="3">No messages</td>
+				</tr>
+				<tr th:each="message : ${messages}">
+					<td th:text="${message.id}">1</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

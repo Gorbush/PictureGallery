@@ -1,0 +1,212 @@
+#breadcrumb {
+    float: right;
+    height: 45px;
+    margin-bottom: 0px;
+    margin-top: 0px;
+    line-height: 32px;
+}
+#daterange {
+    height: 45px;
+    margin-bottom: 0px;
+    margin-top: 9px;
+    line-height: 32px;
+    width: 300px;
+    position: absolute;
+    top: 0px;
+
+    /*left: 50%;*/
+    /*margin-left: -150px;*/
+    left: 300px;
+}
+#sourcesNav {
+    float: right;
+    height: 50px;
+}
+#sourcesNav .pagination{
+    height: 50px;
+    margin-right: 10px;
+    margin-top: 8px;
+}
+
+div.dropdown.contextmenu {
+    position: absolute;
+    display:none;
+}
+ul.nav li span.navbar-label {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    line-height: 20px;
+    position: relative;
+    display: block;
+    font-size: 100%;
+}
+@media (min-width: 768px) {
+    ul.nav li span.navbar-label {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
+}
+
+div#matchingInformation {
+    background-color: gold;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 100px;
+}
+div#matchedSourcesContent{
+    background-color: #ffe3df;
+    height: 100%;
+    overflow-y: auto;
+}
+div#matchingLinesContent {
+    background-color: #abdaff;
+    height: 100%;
+    overflow-y: auto;
+}
+div#matchedPicturesContent{
+    background-color: #c5def6;
+    height: 100%;
+    overflow-y: auto;
+}
+div#matchedSources{
+}
+div#matchingLines {
+}
+div#matchedPictures{
+}
+div#matchingSource {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100px;
+    width: 40%;
+}
+div#matchingStats {
+    position: absolute;
+    left: 40%;
+    top: 0;
+    bottom: 0;
+    width: 60%;
+}
+div#sources {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+/** Source Matching record - width: 100% height: 100px **/
+div.sourceBlock {
+    width: 100%;
+    height: 100px;
+    position: relative;
+}
+div#sources  div.sourceBlock {
+    width: 350px;
+    float: left;
+}
+.source-block-unsaved {
+    background-color: #dcdcdc;
+}
+.source-block-unset {
+    background-color: #dcd9b4;
+}
+.source-block-duplicate {
+    background-color: #dcc7d2;
+}
+.source-block-primary {
+    background-color: #acdcc2;
+}
+div.sourceBlock div.sourceBlockBody {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+}
+div.sourceBlock div.source_image {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100px;
+    width: 100px;
+    background-size: 100px 100px;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    align-content: center;
+    text-align: center;
+}
+div.sourceBlock div.source_image img {
+    max-width: 100%;
+    max-height: 100%;
+}
+div.sourceBlock div.matchingProperties {
+    position: absolute;
+    left: 0;
+    right:  0;
+    top: 0;
+    height: 100px;
+    padding-left: 105px;
+}
+div.sourceBlock div.filePath {
+
+}
+div.sourceBlock div.fileName {
+
+}
+div.decisionBlock {
+    position: absolute;
+    width: 70px;
+    right:  0;
+    top: 0;
+    height: 22px;
+    background-color: #ededed;
+    margin-right: 10px;
+    text-align: center;
+    align-content: center;
+}
+div.decisionBlock .decisionButton{
+    background-color: #1deded;
+    padding: 3px;
+}
+span.btn_LATER {
+    /*background-size: 16px 16px;*/
+    /*background-repeat: no-repeat;*/
+    /*background-image: url('/images/timer-16.gif');*/
+    /*background-position: center center;*/
+}
+span.btn_APPROVE {
+    /*background-size: 16px 16px;*/
+    /*background-repeat: no-repeat;*/
+    /*background-image: url('/images/check-16.png');*/
+    /*background-position: center center;*/
+}
+span.btn_DUPLICATE {
+    /*background-size: 16px 16px;*/
+    /*background-repeat: no-repeat;*/
+    /*background-image: url('/images/trash-16.png');*/
+    /*background-position: center center;*/
+}
+div.decisionBlock .decisionButton.decision_selected {
+    border: 1px solid red;
+}
+div#folderTree {
+    height: 30%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+}
+div#datesTree {
+    height: 30%;
+    position: absolute;
+    top: 30%;
+    left: 0;
+    right: 0;
+    overflow: auto;
+}

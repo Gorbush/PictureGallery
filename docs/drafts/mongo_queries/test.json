@@ -1,0 +1,13 @@
+{
+  "$group": {
+    "_id": { "$arrayElemAt": [ { "$split": [ "$filePath", "/" ] }, 1 ] },
+    "count": { "$sum": [ 1 ] }
+  }
+}
+,
+{
+  "$group": {
+    "_id":	{ "$arrayElemAt": [ { "$split": [ "$filePath", "/" ] }, 1 ] },
+    count: { $sum: 1 }
+  }
+}

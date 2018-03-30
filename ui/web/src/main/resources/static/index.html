@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <title>Source matching for Gallery Mine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/lib/jstree-3.3.4-dist/themes/default/style.min.css" id="csstree"/>
+    <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css" id="cssui" />
+    <link rel="stylesheet" type="text/css" href="/css/common.css" id="cssCommon" />
+    <link rel="stylesheet" type="text/css" href="/css/sourceList.css" id="css" />
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="/lib/bootstrap-3.3.7-dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="/lib/bootstrap-datepicker-1.6.4/css/bootstrap-datepicker.css" />
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="/lib/bootstrap-3.3.7-dist/css/bootstrap-theme.css"/>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="/js/jquery-1.10.2.js"></script>
+    <script src="/js/jquery-ui-1.11.1.min.js"></script>
+    <script src="/lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <script src="/lib/bootstrap-datepicker-1.6.4/js/bootstrap-datepicker.js"></script>
+    <script src="/lib/jstree-3.3.4-dist/jstree.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/error.js"></script>
+    <script src="/js/sourceBlock.js"></script>
+    <script src="/js/pager.js"></script>
+    <script src="/js/sourceList.js"></script>
+    <script src="/js/TreePath.js"></script>
+    <script src="/js/TreeDates.js"></script>
+</head>
+<body>
+<div id="pageHeader">
+    <div id="pageHeaderLabel">
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">Gallery Mine - Home</a>
+                </div>
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="#">Home</a></li>
+                    <li><a href="/sourceList.html">SourceList</a></li>
+                    <li><a href="/indexRequest.html">Indexing</a></li>
+                    <li><a href="/sourceMatching.html">Matching</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><span class="label label-default navbar-label" id="message-label"></span></li>
+                    <li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                    <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+    <div id="pageMainButtons">
+        <div id="pageMainButtonsContent">
+            <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
+            <button type="button" id="apply" class="btn btn-success navbar-btn">Apply</button>
+            <button type="button" id="reset" class="btn btn-warning navbar-btn">Reset</button>
+
+            <nav aria-label="Page navigation" id="sourcesNav">
+                <ul class="pagination pagination-sm">
+                    <li>
+                        <a href="#" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li><a href="#">1</a></li>
+                    <li><a href="#">2</a></li>
+                    <li class="middle"><a href="#">..</a></li>
+                    <li><a href="#">4</a></li>
+                    <li class="middle"><a href="#">..</a></li>
+                    <li><a href="#">8</a></li>
+                    <li><a href="#">9</a></li>
+                    <li>
+                        <a href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div id="breadcrumb">
+                <ol class="breadcrumb" id="breadcrumblist">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Library</a></li>
+                    <li class="active">Data</li>
+                </ol>
+            </div>
+            <div id="daterange">
+                <div class="input-daterange input-group" id="datepicker">
+                    <input type="text" class="input-sm form-control" name="start" />
+                    <span class="input-group-addon">to</span>
+                    <input type="text" class="input-sm form-control" name="end" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="pageContent" class="container-fluid row full-size ">
+    <div id="matchedSourcesContent" class="col-sm-2">
+        <div id="folderTree">
+        </div>
+        <div id="datesTree">
+        </div>
+    </div>
+    <div id="matchingLinesContent" class="col-sm-10">
+        <div id="sources" class="SourceBlockContainer">
+        </div>
+    </div>
+</div>
+<div id="pageFooter">
+</div>
+<div id="contextMenuFolderAction" class="dropdown clearfix contextmenu">
+    <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
+        <li><a tabindex="-1" href="#">Action</a></li>
+        <li><a tabindex="-1" href="#">Another action</a></li>
+        <li><a tabindex="-1" href="#">Something else here</a></li>
+        <li class="divider"></li>
+        <li><a tabindex="-1" href="#">Separated link</a></li>
+    </ul>
+</div>
+<div id="templates">
+    <div class="sourceBlock">
+        <div class="sourceBlockBody">
+            <div class="matchingProperties">
+                <div class="filePath"></div>
+                <div class="folderStats">
+                    <span class="message"></span>
+                    <span class="data">
+                            Files <span class="badge files"></span>
+                            Matched  <span class="badge matched"></span>
+                            Matchable <span class="badge matchable"></span>
+                            Dups <span class="badge duplicates"></span>
+                        </span>
+                </div>
+                <div class="fileName"></div>
+                <div class="fileSize"></div>
+                <div class="timeStamp"></div>
+            </div>
+            <div class="source_image" title="SimpleHint">
+                <img class="img-thumbnail" />
+            </div>
+            <div class="decisionBlock">
+                <span class="decisionButton btn_LATER glyphicon glyphicon-time" value="later"></span>
+                <span class="decisionButton btn_APPROVE glyphicon glyphicon-star" value="approve"></span>
+                <span class="decisionButton btn_DUPLICATE glyphicon glyphicon-remove" value="duplicate"></span>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="myModalLabel">Image preview</h4>
+            </div>
+            <div class="modal-body">
+                <img src="" id="imagepreview"  >
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

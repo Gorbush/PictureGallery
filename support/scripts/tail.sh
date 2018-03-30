@@ -1,0 +1,1 @@
+ssh homel -C '/home/gorbush/opt/galleryMine/daemon.sh tail'

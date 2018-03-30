@@ -1,0 +1,80 @@
+.fillwidth {
+    min-width: 100%;
+    height: auto;
+}
+.fillheight {
+    min-height: 100%;
+    width: auto;
+}
+#slideshow {
+    background-color: rgba(0, 0, 0, 0.75);
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000;
+}
+
+#slideshow .current .image, #slideshow .controls .previous, #slideshow .controls .next {
+    height: 500px;
+    margin: 20px 0 0;
+}
+
+#slideshow .current .image, #slideshow .current .caption { text-align: center; }
+
+#slideshow .current .caption {
+    color: #f1eeee;
+    padding: 20px 0 0;
+}
+
+#slideshow .controls { position: relative; }
+
+#slideshow .controls .control { position: absolute; }
+
+#slideshow .controls .previous, #slideshow .controls .next {
+    top: 0;
+    width: 50%;
+}
+
+#slideshow .controls .previous { left: 0; }
+
+#slideshow .controls .next { right: 0; }
+
+#slideshow .controls .close {
+    height: 48px;
+    right: 0;
+    top: 0;
+    width: 62px;
+}
+
+#slideshow .controls .control a {
+    color: transparent;
+    display: block;
+}
+
+#slideshow .controls .previous a, #slideshow .controls .next a {
+    height: 500px;
+    width: auto;
+}
+
+#slideshow .controls .previous a {
+    background-image: url(/lib/gallery/images/previous.png);
+    background-position: 25% center;
+    background-repeat: no-repeat;
+}
+
+#slideshow .controls .next a {
+    background-image: url(/lib/gallery/images/next.png);
+    background-position: 75% center;
+    background-repeat: no-repeat;
+}
+
+#slideshow .controls .close a {
+    background-image: url(/lib/gallery/images/close.png);
+    background-position: 50% center;
+    background-repeat: no-repeat;
+    height: 48px;
+    width: 48px;
+}

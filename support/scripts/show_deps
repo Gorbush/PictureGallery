@@ -1,0 +1,2 @@
+gradle dependencies --configuration runtime
+mvn3 dependency:tree

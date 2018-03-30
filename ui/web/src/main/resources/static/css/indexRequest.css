@@ -1,0 +1,46 @@
+ul.jstree-contextmenu {
+    z-index: 9999;
+}
+
+#indexRequestsTree {
+    height: 200px;
+    width: 200px;
+    border: 1px solid red;
+}
+
+li.jstree-node i.NODE_STATUS_FOUND {
+    background-image: url(../images/loading-16.gif);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_AWAITING {
+    background-image: url(../images/timer-16.gif);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_ENUMERATING {
+    background-image: url(../images/fill-fade-16.gif);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_ENUMERATED {
+    background-image: url(../images/fill-fade-done-16.gif);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_FILES_PROCESSING {
+    background-image: url(../images/pacman-16.gif);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_RESTART {
+    background-image: url(../images/restart-16.png);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_SUB {
+    background-image: url(../images/timer2-16.gif);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_FAILED {
+    background-image: url(../images/warning.png);
+    background-position: 1px 4px;
+}
+li.jstree-node i.NODE_STATUS_DONE {
+    background-image: url(../images/check-16.png);
+    background-position: 1px 4px;
+}
