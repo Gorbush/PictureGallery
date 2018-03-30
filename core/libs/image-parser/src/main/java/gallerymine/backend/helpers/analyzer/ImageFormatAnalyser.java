@@ -14,7 +14,6 @@ import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.photoshop.PsdHeaderDirectory;
 import com.drew.metadata.png.PngDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
-import gallerymine.backend.beans.AppConfig;
 import gallerymine.model.GeoPoint;
 import gallerymine.model.Source;
 import gallerymine.model.support.ImageInformation;
@@ -24,9 +23,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
-import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -41,33 +37,28 @@ import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static gallerymine.model.support.TimestampKind.*;
 
 /**
  * Analyser for Image files
  * Created by sergii_puliaiev on 6/11/17.
  */
-@Component
 public class ImageFormatAnalyser {
     private static Logger log = LoggerFactory.getLogger(ImageFormatAnalyser.class);
 //    private static Logger logUnknownDirectory = LogManager.getLogger("unknownDirectory");
     private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageFormatAnalyser.class);
 
-    @Autowired
-    private AppConfig appConfig;
-
     /** format IMG_20160812_163115.jpg */
-    Pattern parser1 = Pattern.compile("([1,2][0-9][0-9][0-9][0-1][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
+    private Pattern parser1 = Pattern.compile("([1,2][0-9][0-9][0-9][0-1][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
     /** format IMG_06012017_182643.png */
-    Pattern parser2 = Pattern.compile("([0-1][0-9][0-3][0-9][1,2][0-9][0-9][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
+    private Pattern parser2 = Pattern.compile("([0-1][0-9][0-3][0-9][1,2][0-9][0-9][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
 
-    public void gatherFileInformation(Source source, boolean extractThumb) {
+    public void gatherFileInformation(File rootFolder, Source source, boolean extractThumb) {
         ImageInformation info = new ImageInformation();
         try {
             // preset some properties to avoid re-population
             info.extractThumb = extractThumb;
 
-            File folder = new File(appConfig.getSourcesRootFolder(), source.getFilePath());
+            File folder = new File(rootFolder, source.getFilePath());
             info.file = new File(folder, source.getFileName());
             if (StringUtils.isNotBlank(source.getThumbPath())) {
                 info.thumbFile = new File(source.getThumbPath());
@@ -107,7 +98,7 @@ public class ImageFormatAnalyser {
             //      val attr = Files.readAttributes(javaPath, classOf[BasicFileAttributes], LinkOption.NOFOLLOW_LINKS)
             BasicFileAttributes view = Files.getFileAttributeView(javaPath, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
 
-            info.addStamp(TS_FILE_CREATE.create(view.creationTime().toMillis()));
+            info.addStamp(TimestampKind.TS_FILE_CREATE.create(view.creationTime().toMillis()));
         } catch (Exception e){
             log.warn("Failed to index basic file attributes for {}", info.file.getAbsolutePath(), e);
         }
@@ -117,13 +108,13 @@ public class ImageFormatAnalyser {
             Matcher dt = parser1.matcher(fileName);
             if (dt.find()) {
                 String stampPart = dt.group(1);
-                info.addStamp(TS_FILE_NAME.create(LocalDateTime.parse(stampPart,
+                info.addStamp(TimestampKind.TS_FILE_NAME.create(LocalDateTime.parse(stampPart,
                             DateTimeFormatter.ofPattern("yyyyMMdd'_'HHmmss")).atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()));
             } else {
                 dt = parser2.matcher(fileName);
                 if (dt.find()) {
                     String stampPart = dt.group(1);
-                    info.addStamp(TS_FILE_NAME.create(LocalDateTime.parse(stampPart,
+                    info.addStamp(TimestampKind.TS_FILE_NAME.create(LocalDateTime.parse(stampPart,
                             DateTimeFormatter.ofPattern("ddMMyyyy'_'HHmmss")).atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()));
                 }
             }
@@ -158,8 +149,8 @@ public class ImageFormatAnalyser {
                     break;
                 }
                 case "ExifIFD0Directory": {
-                    info.addStamp(TS_FILE_EXIF_ORIGINAL.create(directory.getDate(ExifIFD0Directory.TAG_DATETIME_ORIGINAL)));
-                    info.addStamp(TS_FILE_EXIF.create(directory.getDate(ExifIFD0Directory.TAG_DATETIME)));
+                    info.addStamp(TimestampKind.TS_FILE_EXIF_ORIGINAL.create(directory.getDate(ExifIFD0Directory.TAG_DATETIME_ORIGINAL)));
+                    info.addStamp(TimestampKind.TS_FILE_EXIF.create(directory.getDate(ExifIFD0Directory.TAG_DATETIME)));
                     info.orientation = 1;
                     if (directory.containsTag(ExifDirectoryBase.TAG_ORIENTATION)) {
                         info.orientation = directory.getInt(ExifDirectoryBase.TAG_ORIENTATION);
@@ -173,7 +164,7 @@ public class ImageFormatAnalyser {
                 case "FileMetadataDirectory": {
                     // get FileMetadata
                     if (directory.containsTag(FileMetadataDirectory.TAG_FILE_MODIFIED_DATE)) {
-                        info.addStamp(TS_FILE_MODIFY.create(directory.getDate(FileMetadataDirectory.TAG_FILE_MODIFIED_DATE)));
+                        info.addStamp(TimestampKind.TS_FILE_MODIFY.create(directory.getDate(FileMetadataDirectory.TAG_FILE_MODIFIED_DATE)));
                     }
                     break;
                 }
@@ -186,7 +177,7 @@ public class ImageFormatAnalyser {
                             createDate += "T" + time[0] + ":" + time[1] + ":" + time[2];
 
                             LocalDateTime dt = LocalDateTime.parse(createDate, DateTimeFormatter.ofPattern("yyyy':'MM':'dd'T'H':'m':'s"));
-                            info.addStamp(TS_GPS.create(dt.atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()));
+                            info.addStamp(TimestampKind.TS_GPS.create(dt.atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()));
                         }
                     }
                     GeoLocation geoLocation = ((GpsDirectory) directory).getGeoLocation();
@@ -213,16 +204,16 @@ public class ImageFormatAnalyser {
                         info.height = directory.getInt(PngDirectory.TAG_IMAGE_HEIGHT);
                     }
                     if (directory.containsTag(PngDirectory.TAG_LAST_MODIFICATION_TIME)) {
-                        info.addStamp(TS_FILE_EXIF.create(directory.getDate(PngDirectory.TAG_LAST_MODIFICATION_TIME)));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF.create(directory.getDate(PngDirectory.TAG_LAST_MODIFICATION_TIME)));
                     }
                     break;
                 }
                 case "ExifSubIFDDirectory": {
                     if (directory.containsTag(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL)) {
-                        info.addStamp(TS_FILE_EXIF_ORIGINAL.create(directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL)));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF_ORIGINAL.create(directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL)));
                     }
                     if (directory.containsTag(ExifSubIFDDirectory.TAG_DATETIME_DIGITIZED)) {
-                        info.addStamp(TS_FILE_EXIF.create(directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_DIGITIZED)));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF.create(directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_DIGITIZED)));
                     }
                     if (directory.containsTag(ExifSubIFDDirectory.TAG_IMAGE_WIDTH)) {
                         info.width = directory.getInt(ExifSubIFDDirectory.TAG_IMAGE_WIDTH);
@@ -260,7 +251,7 @@ public class ImageFormatAnalyser {
                     String createDate = directoryXMP.getXmpProperties().get("xmp:CreateDate");
                     if (StringUtils.isNotBlank(createDate) && !info.hasTimeStamp(TimestampKind.TS_FILE_EXIF)) {
                         long dt = LocalDateTime.parse(createDate.replaceAll("\\.[0-9]+$", ""), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")).atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli();
-                        info.addStamp(TS_FILE_EXIF.create(dt));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF.create(dt));
                     }
                     break;
                 }
@@ -283,7 +274,7 @@ public class ImageFormatAnalyser {
                                 .withMinuteOfHour(time / 100 % 100)
                                 .withSecondOfMinute(time % 100);
 
-                        info.addStamp(TS_FILE_EXIF.create(dt));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF.create(dt));
                     }
                     if (directory.containsTag(IptcDirectory.TAG_DIGITAL_DATE_CREATED) && directory.containsTag(IptcDirectory.TAG_DIGITAL_TIME_CREATED)) {
                         DateTime dt = new DateTime(directory.getDate(IptcDirectory.TAG_DIGITAL_DATE_CREATED));
@@ -298,7 +289,7 @@ public class ImageFormatAnalyser {
                                 .withMinuteOfHour(time / 100 % 100)
                                 .withSecondOfMinute(time % 100)
                                 .withMillis(0);
-                        info.addStamp(TS_FILE_EXIF_ORIGINAL.create(dt));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF_ORIGINAL.create(dt));
                     }
                     break;
                 }
@@ -332,7 +323,7 @@ public class ImageFormatAnalyser {
                                 .withMinuteOfHour(tm[1])
                                 .withSecondOfMinute(tm[2]);
 
-                        info.addStamp(TS_FILE_EXIF.create(dt));
+                        info.addStamp(TimestampKind.TS_FILE_EXIF.create(dt));
                     }
                     if (directory.containsTag(KodakMakernoteDirectory.TAG_IMAGE_WIDTH)) {
                         info.width = directory.getInt(KodakMakernoteDirectory.TAG_IMAGE_WIDTH);

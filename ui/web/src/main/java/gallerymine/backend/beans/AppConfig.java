@@ -45,7 +45,7 @@ public class AppConfig {
         return relativizePath(filePath, thumbsRootFolder);
     }
 
-    private String relativizePath(String fileName, String rootFolder) {
+    public String relativizePath(String fileName, String rootFolder) {
         Path root = Paths.get(rootFolder);
         Path file = Paths.get(fileName);
         Path relative = root.relativize(file);

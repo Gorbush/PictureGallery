@@ -52,10 +52,9 @@ public class IndexRequestProcessor implements Runnable {
     private ThumbRequestRepository thumbRequestRepository;
 
     @Autowired
-    private ImageFormatAnalyser analyzer;
-
-    @Autowired
     private IndexRequestPoolManager pool;
+
+    private ImageFormatAnalyser analyzer = new ImageFormatAnalyser();
 
     private IndexRequest request;
 
@@ -228,7 +227,7 @@ public class IndexRequestProcessor implements Runnable {
 
             String fileName = file.getFileName().toString();
             String filePath = file.getParent().toAbsolutePath().toString();
-            filePath = appConfig.relativizePathToSource(filePath);
+            filePath = appConfig.relativizePath(filePath, appConfig.getSourcesRootFolder());
 
             Source pictureSource = sourceRepository.findByFilePathAndFileName(filePath, fileName);
             if (pictureSource == null) {
@@ -239,7 +238,7 @@ public class IndexRequestProcessor implements Runnable {
 
             boolean hasThumb = pictureSource.hasThumb();
 //            ImageInformation info =
-            analyzer.gatherFileInformation(pictureSource, !hasThumb);
+            analyzer.gatherFileInformation(new File(appConfig.getSourcesRootFolder()), pictureSource, !hasThumb);
 
             if (pictureSource.hasThumb() && !hasThumb) {
                 File thumbStoredFile = generatePicThumbName(pictureSource);
