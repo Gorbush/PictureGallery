@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>spuliaiev.apps.gallerymine</groupId>
+        <artifactId>gallery-mine-pom</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gallery-mine-plugins</artifactId>
+    <name>Gallery Mine Plugins</name>
+    <description>Gallery application Plugins modules</description>
+    <url>http://projects.spring.io/spring-boot/</url>
+
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <organization>
+	<name>Sergii Puliaiev</name>
+    </organization>
+
+    <properties>
+	<main.basedir>${basedir}/../..</main.basedir>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
+        <commons_lang.version>3.6</commons_lang.version>
+        <spring-cloud.version>Dalston.SR4</spring-cloud.version>
+        <java.version>1.8</java.version>
+    </properties>
+
+    <modules>
+        <!-- module>config</module -->
+    </modules>
+
+</project>
