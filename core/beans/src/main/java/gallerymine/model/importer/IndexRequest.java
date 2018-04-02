@@ -1,12 +1,11 @@
-package gallerymine.model;
+package gallerymine.model.importer;
 
 import lombok.Data;
 import org.joda.time.DateTime;
 
-import static gallerymine.model.IndexRequest.IndexStatus.DONE;
-import static gallerymine.model.IndexRequest.IndexStatus.FAILED;
-import static gallerymine.model.IndexRequest.IndexStatus.FOUND;
-import static gallerymine.model.IndexRequest.IndexStatus.FOUND;
+import static gallerymine.model.importer.IndexRequest.IndexStatus.DONE;
+import static gallerymine.model.importer.IndexRequest.IndexStatus.FAILED;
+import static gallerymine.model.importer.IndexRequest.IndexStatus.FOUND;
 
 /**
  * This bean holds information about request for indexing

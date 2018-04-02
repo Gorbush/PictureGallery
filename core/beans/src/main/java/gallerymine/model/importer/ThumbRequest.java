@@ -1,4 +1,4 @@
-package gallerymine.model;
+package gallerymine.model.importer;
 
 import lombok.Data;
 import org.joda.time.DateTime;

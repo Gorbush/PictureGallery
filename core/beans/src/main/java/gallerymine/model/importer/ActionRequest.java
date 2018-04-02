@@ -1,4 +1,4 @@
-package gallerymine.model;
+package gallerymine.model.importer;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

@@ -1,8 +1,9 @@
-package gallerymine.model;
+package gallerymine.model.importer;
 
+import gallerymine.model.GeoPoint;
 import lombok.Data;
 
-import static gallerymine.model.GeoCodeRequest.RequestStatus.FOUND;
+import static gallerymine.model.importer.GeoCodeRequest.RequestStatus.FOUND;
 
 @Data
 public class GeoCodeRequest {

@@ -32,8 +32,9 @@
     </properties>
 
     <modules>
+        <module>beans</module>
+        <module>dao</module>
         <module>libs</module>
-        <module>model</module>
     </modules>
 
 </project>
