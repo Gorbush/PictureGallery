@@ -11,6 +11,16 @@
 <!--40logger{39}){cyan} %clr(:){faint} %clr({%X{FeedName}}){green} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>-->
 	<property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} {%X{FeedName}} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 
+	<appender name="SIFT_INDEX_FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
+		<discriminator>
+			<key>threadKind</key>
+			<defaultValue>unknown</defaultValue>
+		</discriminator>
+		<sift>
+			<appender-ref ref="INDEX_FILE"/>
+		</sift>
+	</appender>
+
 	<appender name="INDEX_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<Append>true</Append>
 		<File>logs/indexer.log</File>

@@ -95,11 +95,14 @@ public class IndexRequestsController {
                 return responseError("Indexing is already in progress").build();
             }
         }
+        try {
+            request = indexRequestProcessor.registerNewFolderRequest(pathToIndex, null);
+            indexRequestProcessor.processRequest(request);
 
-        request = indexRequestProcessor.registerNewFolderRequest(pathToIndex, null);
-        indexRequestProcessor.processRequest(request);
-
-        return responseOk().build();
+            return responseOk().build();
+        } catch (Exception e) {
+            return responseError("Failed to index. Reason: "+e.getMessage(), e);
+        }
     }
 
     @GetMapping(value = {"list/", "list/{parentId}"} )

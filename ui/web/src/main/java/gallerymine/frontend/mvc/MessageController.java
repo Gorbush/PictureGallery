@@ -42,6 +42,9 @@ import gallerymine.model.Customer;
 
 import java.nio.file.*;
 
+import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
+import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
+
 /**
  * @author Rob Winch
  * @author Doo-Hwan Kwak
@@ -113,17 +116,22 @@ public class MessageController {
 
 	@GetMapping(value = "modify/{id}")
 	public ModelAndView modifyForm(@PathVariable("id") Customer message) {
-		return new ModelAndView("messages/form", "message", message);
+		return new ModelAndView("messages/form", "message",  message);
 	}
 
 	@GetMapping(value = "index")
-	public ModelAndView index() {
+	public Object index() {
 		Path path = Paths.get(appConfig.getGalleryRootFolder());
 
-		IndexRequest request = indexRequestProcessor.registerNewFolderRequest(path.toAbsolutePath().toString(), null);
-		indexRequestPool.executeRequest(request);
+		try {
+			IndexRequest request = indexRequestProcessor.registerNewFolderRequest(path.toAbsolutePath().toString(), null);
+			indexRequestPool.executeRequest(request);
 
-		return new ModelAndView("messages/form", "message", "");
+			return new ModelAndView("messages/form", "message", responseOk());
+		} catch (Exception e) {
+			return responseError("Failed to index. Reason: "+e.getMessage(), e);
+		}
+
 	}
 
 }

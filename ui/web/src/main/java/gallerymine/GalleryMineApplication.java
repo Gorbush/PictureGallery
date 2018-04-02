@@ -16,7 +16,6 @@
 
 package gallerymine;
 
-//import de.codecentric.boot.admin.config.EnableAdminServer;
 import gallerymine.model.GeoPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -41,7 +40,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @EnableScheduling
 @EnableMongoAuditing
 @EnableMongoRepositories
-//@EnableAdminServer
 @Import({ WebAppConfig.class, WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter.class })
 @ComponentScan(basePackages = {"gallerymine.backend", "gallerymine.frontend.mvc"})
 public class GalleryMineApplication implements CommandLineRunner {

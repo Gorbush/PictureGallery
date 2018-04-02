@@ -19,10 +19,13 @@ import gallerymine.backend.beans.repository.IndexRequestRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.Collection;
 import java.util.HashSet;
+
+import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
 
 /**
  * Processor for images - analysing the content and methadata
@@ -98,8 +101,8 @@ public class IndexRequestProcessor implements Runnable {
                 request.setStatus(IndexRequest.IndexStatus.ENUMERATED);
                 requestRepository.save(request);
                 log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-            } catch (IOException ex) {
-                // it's ok
+            } catch (IOException e) {
+                log.error("Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
             }
 
             try {
@@ -202,7 +205,7 @@ public class IndexRequestProcessor implements Runnable {
         return request;
     }
 
-    public IndexRequest registerNewFolderRequest(String path, IndexRequest parent) {
+    public IndexRequest registerNewFolderRequest(String path, IndexRequest parent) throws FileNotFoundException {
         path = appConfig.relativizePathToSource(path);
         IndexRequest newRequest = requestRepository.findByPath(path);
         if (newRequest == null) {
@@ -289,7 +292,7 @@ public class IndexRequestProcessor implements Runnable {
             processRequest(request);
             log.info("IndexRequest processing succeed for {}", request.getPath());
         } catch (Exception e){
-            log.error("IndexRequest processing failed for {}", request.getPath(), e);
+            log.error("IndexRequest processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
         }
     }
 }
