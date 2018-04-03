@@ -5,9 +5,11 @@ import gallerymine.model.support.PlaceRef;
 import gallerymine.model.support.SourceRef;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.*;
 
+@Document(collection = "picture")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Picture extends FileInformation {

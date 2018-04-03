@@ -23,6 +23,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -78,7 +79,7 @@ public class ImageFormatAnalyser {
                     source.setThumbPath(info.thumbFile.getAbsolutePath());
                 }
                 if (info.latitude != null && info.longitude != null) {
-                    source.setGeoLocation(new GeoPoint(info.longitude, info.latitude));
+                    source.setGeoLocation(new GeoJsonPoint(info.longitude, info.latitude));
                 } else {
                     source.setGeoLocation(null);
                 }

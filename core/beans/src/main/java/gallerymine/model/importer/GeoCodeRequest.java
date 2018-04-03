@@ -2,9 +2,14 @@ package gallerymine.model.importer;
 
 import gallerymine.model.GeoPoint;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import static gallerymine.model.importer.GeoCodeRequest.RequestStatus.FOUND;
 
+@Document
 @Data
 public class GeoCodeRequest {
 
@@ -16,11 +21,13 @@ public class GeoCodeRequest {
         DONE
     }
 
+    @Id
     public String id;
 
     private String pictureId;
-    private GeoPoint point;
+    private GeoJsonPoint point;
 
+    @Indexed
     private RequestStatus status = FOUND;
 
     public GeoCodeRequest() {
@@ -29,7 +36,7 @@ public class GeoCodeRequest {
 
     public GeoCodeRequest(String pictureId, double longitude, double latitude) {
         this.pictureId = pictureId;
-        this.point = new GeoPoint(longitude, latitude);
+        this.point = new GeoJsonPoint(longitude, latitude);
     }
 
 }

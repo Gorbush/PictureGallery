@@ -17,16 +17,21 @@
 package gallerymine.model;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection = "customer")
 @Data
 public class Customer {
 
+	@Id
 	private String id;
 
 	private String firstName;
 	private String lastName;
 
-	private GeoPoint place;
+	private GeoJsonPoint place;
 
 	public Customer() {
 	}
@@ -36,7 +41,7 @@ public class Customer {
 		this.lastName = lastName;
 	}
 
-    public Customer(String firstName, String lastName, GeoPoint place) {
+    public Customer(String firstName, String lastName, GeoJsonPoint place) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.place = place;

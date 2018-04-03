@@ -2,15 +2,19 @@ package gallerymine.model.importer;
 
 import lombok.Data;
 import org.joda.time.DateTime;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import static gallerymine.model.importer.IndexRequest.IndexStatus.DONE;
-import static gallerymine.model.importer.IndexRequest.IndexStatus.FAILED;
-import static gallerymine.model.importer.IndexRequest.IndexStatus.FOUND;
+import static gallerymine.model.importer.IndexRequest.IndexStatus.*;
 
 /**
  * This bean holds information about request for indexing
  * Created by sergii_puliaiev on 6/11/17.
  */
+@Document(collection = "indexRequest")
 @Data
 public class IndexRequest  {
 
@@ -26,10 +30,12 @@ public class IndexRequest  {
         DONE
     }
 
+    @Id
     private String id;
 
     private String parent;
 
+    @Indexed(unique = true)
     private String path;
 
     private IndexStatus status = FOUND;
@@ -38,9 +44,9 @@ public class IndexRequest  {
     private Boolean allFoldersProcessed = false;
     private String error;
 
-//    @CreatedDate
+    @CreatedDate
     private DateTime created;
-//    @LastModifiedDate
+    @LastModifiedDate
     private DateTime updated;
 
     public IndexRequest() {
@@ -52,10 +58,10 @@ public class IndexRequest  {
 
     public boolean isProcessable() {
         return status != null && (
-                        IndexStatus.AWAITING.equals(status) ||
+                        AWAITING.equals(status) ||
                         FOUND.equals(status) ||
-                        IndexStatus.FAILED.equals(status) ||
-                        IndexStatus.RESTART.equals(status)
+                        FAILED.equals(status) ||
+                        RESTART.equals(status)
         );
     }
 

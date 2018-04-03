@@ -4,10 +4,33 @@
     "count": { "$sum": [ 1 ] }
   }
 }
-,
+
 {
   "$group": {
     "_id":	{ "$arrayElemAt": [ { "$split": [ "$filePath", "/" ] }, 1 ] },
     count: { $sum: 1 }
   }
 }
+
+
+{"$match": {"$and": [{"filePath": {"$regex": "^/[^/]*.*$"}}]}
+} ,
+  {
+    "$project": {
+      "id": 1 ,
+      "levelValue": {"$arrayElemAt": [{"$split": ["$filePath", "/"]}, 1]}
+    }
+  },
+  {
+  "$group": {"_id": {"id": "$id", "levelValue": "$levelValue"}, "count": {"$sum": 1}}
+  },
+  {"$group": {"_id": "$_id.id", "count": {
+  "$sum": 1
+}
+}
+}
+]
+}
+
+
+[{"$match": {"$and": [{"filePath": {"$regex": "^/[^/]*.*$"}}]}}, {"$project": {"id": 1 , "filePath": 1, "name": {"$arrayElemAt": [{"$split": ["$filePath", "/"]}, 1]}}}, {"$group": {"_id": {"name": "$name", "filePath": "$filePath"}, "count": {"$sum": 1}}}, {"$project": {"name": "$_id", "count": 1, "filePath": "$_id.filePath"}}]

@@ -78,8 +78,8 @@ public class GalleryMineApplication implements CommandLineRunner {
 		this.repository.deleteAll();
 
 		// save a couple of customers
-		this.repository.save(new Customer("Alice", "Smith", new GeoPoint(100, 100)));
-		this.repository.save(new Customer("Bob", "Smith", new GeoPoint(-10, +20)));
+		this.repository.save(new Customer("Alice", "Smith", new GeoJsonPoint(100, 100)));
+		this.repository.save(new Customer("Bob", "Smith", new GeoJsonPoint(-10, +20)));
 
 		// fetch all customers
 		System.out.println("Customers found with findAll():");

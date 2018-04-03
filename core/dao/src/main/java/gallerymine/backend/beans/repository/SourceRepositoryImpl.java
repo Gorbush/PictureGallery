@@ -86,7 +86,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
         int selectLevel = StringUtils.countMatches(sourcePath,"/");
 
-        pipelineCount.add(group(fields("_id")).count().as("count"));
+//        pipelineCount.add(group(fields("id")).count().as("count"));
 
 //        AggregationOperation projectStage = new CustomAggregationOperation(
 //                new BasicDBObject("$group",
@@ -100,21 +100,22 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 //        );
 
         pipeline.add(project()
-                        .and("_id").as("id")
-                        .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevel)).as("levelValue")
+                        .and("$filePath").as("filePath")
+                        .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevel)).as("name")
         );
-        pipeline.add(group(fields("_id", "levelValue")).count().as("count"));
+        pipeline.add(group(fields("name").and("filePath")).count().as("count"));
 
         pipelineCount.addAll(pipeline);
 //        pipelineCount.add(new CustomAggregationOperation( new BasicDBObject("$group",
 //                new BasicDBObject("_id", null)
 //                .append("count" ,new BasicDBObject("$sum", 1)) )
 //        ));
-        pipelineCount.add(group(fields("_id")).count().as("count"));
+        pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
 
-        Aggregation aggregationCount  = newAggregation((AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
+        Aggregation aggregationCount  = newAggregation(Source.class, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
 //        AggregationResults<FolderStats> outputCounts = template.aggregate(aggregationCount, "source", FolderStats.class);
-        FolderStats countStats = template.aggregate(aggregationCount, "source", FolderStats.class).getUniqueMappedResult();
+        List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
+        FolderStats countStats = template.aggregate(aggregationCount, Source.class, FolderStats.class).getUniqueMappedResult();
 
         long totalCount = (countStats == null || countStats.getCount() == null) ? 0 : countStats.getCount();
         int newOffset = sourceCriteria.getOffset();
@@ -126,7 +127,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         }
         PageRequest pager = new PageRequest(newPage, sourceCriteria.getSize());
 
-        pipeline.add(sort(new Sort(Sort.Direction.DESC, "_id")));
+        pipeline.add(sort(new Sort(Sort.Direction.DESC, "id")));
         pipeline.add(Aggregation.skip(newOffset));
         pipeline.add(Aggregation.limit(sourceCriteria.getSize()));
 
