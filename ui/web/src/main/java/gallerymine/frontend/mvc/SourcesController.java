@@ -20,12 +20,12 @@ import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.helpers.matchers.SourceFilesMatcher;
-import gallerymine.model.ActionRequest;
+import gallerymine.model.importer.ActionRequest;
 import gallerymine.model.Source;
+import gallerymine.model.mvc.FolderStats;
+import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.*;
-import gallerymine.frontend.mvc.databeans.FolderStats;
 import gallerymine.frontend.mvc.support.ResponseBuilder;
-import gallerymine.frontend.mvc.support.SourceCriteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,7 +144,7 @@ public class SourcesController {
     @ResponseBody
     public Object getFolderStats(@RequestBody String folderPath) {
 
-        SourceFolderStats stats = sourceRepository.getFolderStats(folderPath);
+        SourceFolderStats stats = sourceRepository.getFolderStats(appConfig.getSourcesRootFolder(), folderPath);
 
         if (stats == null) {
             return responseError("Failed to get folder stats")

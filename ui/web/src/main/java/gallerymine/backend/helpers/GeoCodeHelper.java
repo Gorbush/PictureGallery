@@ -4,7 +4,7 @@ import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
 import com.google.maps.model.*;
 import gallerymine.model.GeoCodePlace;
-import gallerymine.model.GeoCodeRequest;
+import gallerymine.model.importer.GeoCodeRequest;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;

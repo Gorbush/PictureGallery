@@ -16,20 +16,22 @@
 
 package gallerymine.backend.beans.repository;
 
-import gallerymine.model.Picture;
+import gallerymine.model.GeoCodePlace;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
-import java.util.HashSet;
-
-//@RepositoryRestResource(collectionResourceRel = "pictures", path = "pictures")
+//@RepositoryRestResource(collectionResourceRel = "geoCodes", path = "geoCodes")
 @Repository()
-public interface PictureRepository extends MongoRepository<Picture, String> {
+public interface GeoCodeRepository extends MongoRepository<GeoCodePlace, String> {
 
-	Picture findByPlacePath(@Param("placePath") String placePath);
+//	@Query("select g from GeoCodePlace where g.point")
+//	GeoCodePlace findByCoords(double latitude, double longitude);
 
-	Collection<Picture> findBySourcesIdIn(HashSet<String> sourceIds);
+//    List<GeoCodePlace> byParent(String parentId);
+
+//    List<GeoCodePlace> findByPointWithin(Polygon polygon);
+
+//    List<GeoCodePlace> findAllByPlace(String placePath, boolean oneLevel);
+
+//    GeoCodePlace findByPlace(String placePath);
 }

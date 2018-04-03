@@ -16,18 +16,26 @@
 
 package gallerymine.backend.beans.repository;
 
-import gallerymine.model.ThumbRequest;
+import gallerymine.model.importer.IndexRequest;
+import gallerymine.model.importer.ThumbRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-//@RepositoryRestResource(collectionResourceRel = "thumbRequest", path = "thumbRequest")
-@Repository()
-public interface ThumbRequestRepository extends MongoRepository<ThumbRequest, String> {
+import java.util.Collection;
 
-	Page<ThumbRequest> findByInProgress(@Param("inProgress") boolean inProgress, Pageable pageable);
+//@RepositoryRestResource(collectionResourceRel = "indexRequests", path = "indexRequests")
+@Repository
+public interface IndexRequestRepository extends MongoRepository<IndexRequest, String> {
 
+    IndexRequest findByPath(@Param("path") String path);
+
+    Page<IndexRequest> findByStatus(@Param("status") IndexRequest.IndexStatus status, Pageable pageable);
+
+    Page<IndexRequest> findByParent(String parent, Pageable pageable);
+
+    Page<IndexRequest> findByParentNull(Pageable pageable);
 }

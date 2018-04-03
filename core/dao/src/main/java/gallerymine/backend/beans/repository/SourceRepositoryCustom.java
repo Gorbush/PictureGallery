@@ -1,10 +1,10 @@
 package gallerymine.backend.beans.repository;
 
 import gallerymine.model.Source;
+import gallerymine.model.mvc.FolderStats;
+import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.DateStats;
 import gallerymine.model.support.SourceFolderStats;
-import gallerymine.frontend.mvc.databeans.FolderStats;
-import gallerymine.frontend.mvc.support.SourceCriteria;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
@@ -19,7 +19,7 @@ public interface SourceRepositoryCustom {
     Page<FolderStats> fetchPathCustom(SourceCriteria criteria);
     List<DateStats> fetchDatesCustom(SourceCriteria criteria);
 
-    SourceFolderStats getFolderStats(String folderPath);
+    SourceFolderStats getFolderStats(String rootFolder, String folderPath);
 //    @Query(value="{'name': ?0}");
 //    Page<Foo> findByMethod(String name, Pageable pageable);
 }

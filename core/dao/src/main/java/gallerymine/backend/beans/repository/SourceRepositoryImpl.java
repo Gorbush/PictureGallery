@@ -1,24 +1,19 @@
 package gallerymine.backend.beans.repository;
 
 import static java.util.Arrays.asList;
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.group;
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.match;
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.project;
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
+import static org.springframework.data.domain.Sort.Direction.ASC;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
-import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
-import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.helpers.CustomAggregationOperation;
 import gallerymine.model.Source;
+import gallerymine.model.mvc.FolderStats;
+import gallerymine.model.mvc.PageHierarchyImpl;
+import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.DateStats;
 import gallerymine.model.support.SourceFolderStats;
 import gallerymine.model.support.SourceKind;
 import gallerymine.backend.utils.RegExpHelper;
-import gallerymine.frontend.mvc.databeans.FolderStats;
-import gallerymine.frontend.mvc.databeans.PageHierarchyImpl;
-import gallerymine.frontend.mvc.support.SourceCriteria;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +25,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.rest.core.config.Projection;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -50,9 +43,6 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
     @Autowired
     MongoTemplate template = null;
 
-    @Autowired
-    private AppConfig appConfig;
-
     @Override
     public Page<Source> fetchCustom(SourceCriteria sourceCriteria) {
 
@@ -63,7 +53,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
                 .limit(sourceCriteria.getSize());
         if (StringUtils.isNotBlank(sourceCriteria.getSortByField())) {
             Sort.Direction direction = (sourceCriteria.getSortDescending()!=null && sourceCriteria.getSortDescending()) ?
-                    Sort.Direction.DESC : Sort.Direction.ASC;
+                    Sort.Direction.DESC : ASC;
             query.with(new Sort(direction, sourceCriteria.getSortByField()));
         }
 
@@ -96,24 +86,32 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
         int selectLevel = StringUtils.countMatches(sourcePath,"/");
 
-        AggregationOperation projectStage = new CustomAggregationOperation(
-                new BasicDBObject("$group",
-                        new BasicDBObject("_id", new BasicDBObject("$arrayElemAt", asList(
-                                    new BasicDBObject("$split", asList("$filePath", "/"))
-                                    , selectLevel))
-                        ).append("count" ,
-                                new BasicDBObject("$sum", 1)
-                        )
-                )
-        );
+        pipelineCount.add(group(fields("_id")).count().as("count"));
 
-        pipeline.add(projectStage);
+//        AggregationOperation projectStage = new CustomAggregationOperation(
+//                new BasicDBObject("$group",
+//                        new BasicDBObject("_id", new BasicDBObject("$arrayElemAt", asList(
+//                                    new BasicDBObject("$split", asList("$filePath", "/"))
+//                                    , selectLevel))
+//                        ).append("count" ,
+//                                new BasicDBObject("$sum", 1)
+//                        )
+//                )
+//        );
+
+        pipeline.add(project()
+                        .and("_id").as("id")
+                        .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("filePath").split("/")).elementAt(selectLevel)).as("levelValue")
+        );
+        pipeline.add(group(fields("_id", "levelValue")).count().as("count"));
 
         pipelineCount.addAll(pipeline);
-        pipelineCount.add(new CustomAggregationOperation( new BasicDBObject("$group",
-                new BasicDBObject("_id", null)
-                .append("count" ,new BasicDBObject("$sum", 1)) )
-        ));
+//        pipelineCount.add(new CustomAggregationOperation( new BasicDBObject("$group",
+//                new BasicDBObject("_id", null)
+//                .append("count" ,new BasicDBObject("$sum", 1)) )
+//        ));
+        pipelineCount.add(group(fields("_id")).count().as("count"));
+
         Aggregation aggregationCount  = newAggregation((AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
 //        AggregationResults<FolderStats> outputCounts = template.aggregate(aggregationCount, "source", FolderStats.class);
         FolderStats countStats = template.aggregate(aggregationCount, "source", FolderStats.class).getUniqueMappedResult();
@@ -223,11 +221,11 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
     }
 
     @Override
-    public SourceFolderStats getFolderStats(String folderPath) {
+    public SourceFolderStats getFolderStats(String rootFolder, String folderPath) {
         SourceFolderStats stats = new SourceFolderStats();
         stats.setPath(folderPath);
 
-        Path path = Paths.get(appConfig.getSourcesRootFolder(), folderPath);
+        Path path = Paths.get(rootFolder, folderPath);
         stats.setExists(path.toFile().exists());
 
         Query query = Query.query(Criteria.where("filePath").is(folderPath));

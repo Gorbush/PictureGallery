@@ -16,9 +16,8 @@
 
 package gallerymine.backend.beans.repository;
 
-import gallerymine.model.GeoCodeRequest;
+import gallerymine.model.importer.GeoCodeRequest;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 //@RepositoryRestResource(collectionResourceRel = "geoCodeRequest", path = "geoCodeRequest")

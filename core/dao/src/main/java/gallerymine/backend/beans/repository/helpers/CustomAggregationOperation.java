@@ -1,18 +1,18 @@
 package gallerymine.backend.beans.repository.helpers;
 
-import com.mongodb.DBObject;
+import org.bson.Document;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperationContext;
 
 public class CustomAggregationOperation implements AggregationOperation {
-    private DBObject operation;
+    private Document operation;
 
-    public CustomAggregationOperation (DBObject operation) {
+    public CustomAggregationOperation (Document operation) {
         this.operation = operation;
     }
 
     @Override
-    public DBObject toDBObject(AggregationOperationContext context) {
-        return context.getMappedObject(operation);
+    public Document toDocument(AggregationOperationContext context) {
+        return new Document("$out", operation);
     }
 }

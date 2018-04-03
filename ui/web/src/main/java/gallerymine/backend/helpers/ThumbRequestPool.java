@@ -1,8 +1,7 @@
 package gallerymine.backend.helpers;
 
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
-import gallerymine.model.ThumbRequest;
-import org.apache.commons.lang3.reflect.FieldUtils;
+import gallerymine.model.importer.ThumbRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +12,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * Manages Pool of ThumbRequests and processors

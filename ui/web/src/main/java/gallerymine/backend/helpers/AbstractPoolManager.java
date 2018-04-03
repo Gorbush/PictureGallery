@@ -1,7 +1,7 @@
 package gallerymine.backend.helpers;
 
 import gallerymine.backend.beans.repository.PoolRepository;
-import gallerymine.model.IndexRequest;
+import gallerymine.model.importer.IndexRequest;
 import gallerymine.model.support.PoolableEntity;
 import gallerymine.model.support.PoolableEntityStatus;
 import org.slf4j.Logger;

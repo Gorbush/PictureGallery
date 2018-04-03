@@ -1,4 +1,4 @@
-package gallerymine.frontend.mvc.databeans;
+package gallerymine.model.mvc;
 
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;

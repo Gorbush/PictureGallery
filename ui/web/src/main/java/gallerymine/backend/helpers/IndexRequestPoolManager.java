@@ -1,7 +1,7 @@
 package gallerymine.backend.helpers;
 
 import gallerymine.backend.beans.repository.IndexRequestRepository;
-import gallerymine.model.IndexRequest;
+import gallerymine.model.importer.IndexRequest;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

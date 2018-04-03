@@ -21,7 +21,7 @@ import gallerymine.backend.beans.repository.CustomerRepository;
 import gallerymine.backend.beans.repository.IndexRequestRepository;
 import gallerymine.backend.helpers.IndexRequestPoolManager;
 import gallerymine.backend.helpers.IndexRequestProcessor;
-import gallerymine.model.IndexRequest;
+import gallerymine.model.importer.IndexRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

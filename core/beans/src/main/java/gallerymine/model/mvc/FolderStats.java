@@ -1,4 +1,4 @@
-package gallerymine.frontend.mvc.databeans;
+package gallerymine.model.mvc;
 
 import java.io.Serializable;
 

@@ -4,7 +4,7 @@ import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.model.Source;
-import gallerymine.model.ThumbRequest;
+import gallerymine.model.importer.ThumbRequest;
 import org.imgscalr.Scalr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
