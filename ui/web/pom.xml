@@ -25,7 +25,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
         <commons_lang.version>3.6</commons_lang.version>
-        <spring-cloud.version>Dalston.SR4</spring-cloud.version>
         <java.version>1.8</java.version>
     </properties>
 
@@ -53,6 +52,8 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <!-- https://stackoverflow.com/questions/47472688/spring-data-mongodb-the-cursor-option-is-required?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa -->
+            <version>1.5.10.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

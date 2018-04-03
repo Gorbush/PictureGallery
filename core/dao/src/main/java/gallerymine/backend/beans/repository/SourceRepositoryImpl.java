@@ -101,7 +101,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
         pipeline.add(project()
                         .and("_id").as("id")
-                        .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("filePath").split("/")).elementAt(selectLevel)).as("levelValue")
+                        .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevel)).as("levelValue")
         );
         pipeline.add(group(fields("_id", "levelValue")).count().as("count"));
 

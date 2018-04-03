@@ -26,7 +26,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
         <commons_lang.version>3.6</commons_lang.version>
-        <spring-cloud.version>Dalston.SR4</spring-cloud.version>
         <java.version>1.8</java.version>
     </properties>
 
@@ -73,6 +72,7 @@
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-mongodb</artifactId>
             <version>RELEASE</version>
+            <!--<version>1.10.10.RELEASE</version>-->
         </dependency>
         <dependency>
             <groupId>spuliaiev.apps.gallerymine</groupId>
