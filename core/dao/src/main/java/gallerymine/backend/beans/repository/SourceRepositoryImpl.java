@@ -69,7 +69,6 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
     @Override
     public Page<FolderStats> fetchPathCustom(SourceCriteria sourceCriteria) {
-
         sourceCriteria.setSortByField("filePath");
         sourceCriteria.setSortDescending(false);
         String sourcePath = sourceCriteria.getPath();
@@ -86,19 +85,6 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
         int selectLevel = StringUtils.countMatches(sourcePath,"/");
 
-//        pipelineCount.add(group(fields("id")).count().as("count"));
-
-//        AggregationOperation projectStage = new CustomAggregationOperation(
-//                new BasicDBObject("$group",
-//                        new BasicDBObject("_id", new BasicDBObject("$arrayElemAt", asList(
-//                                    new BasicDBObject("$split", asList("$filePath", "/"))
-//                                    , selectLevel))
-//                        ).append("count" ,
-//                                new BasicDBObject("$sum", 1)
-//                        )
-//                )
-//        );
-
         pipeline.add(project()
                         .and("$filePath").as("filePath")
                         .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevel)).as("name")
@@ -106,14 +92,9 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         pipeline.add(group(fields("name").and("filePath")).count().as("count"));
 
         pipelineCount.addAll(pipeline);
-//        pipelineCount.add(new CustomAggregationOperation( new BasicDBObject("$group",
-//                new BasicDBObject("_id", null)
-//                .append("count" ,new BasicDBObject("$sum", 1)) )
-//        ));
         pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
 
         Aggregation aggregationCount  = newAggregation(Source.class, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
-//        AggregationResults<FolderStats> outputCounts = template.aggregate(aggregationCount, "source", FolderStats.class);
         List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
         FolderStats countStats = template.aggregate(aggregationCount, Source.class, FolderStats.class).getUniqueMappedResult();
 

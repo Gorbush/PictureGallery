@@ -14,7 +14,7 @@ $(document).ready(function() {
                 }
             }
         },
-        "plugins": ["contextmenu", "dnd"],
+        "plugins": ["contextmenu", "dnd", "wholerow"],
         "contextmenu": {
             "items": function ($node) {
                 return {
@@ -93,16 +93,28 @@ function getIndexRequests(nodeId) {
 function preprocessAsNodes(nodesList) {
     for(nodexIndex in nodesList) {
         var node = nodesList[nodexIndex];
-        node.text = (node.path === "")? "Gallery Root" : node.path;
-        node.icon = "NODE_STATUS_"+node.status;
+        node.text = (node.path === "") ? "Gallery Root" : node.path;
+        node.icon = "NODE_STATUS_" + node.status;
         node.data = node;
-        node.state  = {
-            opened : false
+        node.state = {
+            opened: false
         };
         node.children = true;
         if (node.parent === null) {
             node.parent = '#';
         }
+        node.text += '<div class="node_postblock">';
+        if (node.filesCount != null) {
+            node.text += 'Files <span class="badge">' + node.filesCount + '</span>';
+        }
+        if (node.filesIgnoredCount != null) {
+            node.text += 'Skipped <span class="badge">' + node.filesIgnoredCount + '</span>';
+        }
+        if (node.foldersCount != null) {
+            node.text += 'Folders <span class="badge">' + node.foldersCount + '</span>';
+        }
+        node.text += 'Status <span class="badge">'+node.status+'</span>';
+        node.text += '</div>';
     }
 
     return nodesList;

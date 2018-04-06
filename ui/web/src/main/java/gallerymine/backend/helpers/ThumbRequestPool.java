@@ -71,6 +71,7 @@ public class ThumbRequestPool {
 
     @Scheduled(fixedDelay = 10*1000)
     public void checkForAwaitingRequests() {
+        Thread.currentThread().setName("ThumbRequestRunner");
         int queued = pool.getThreadPoolExecutor().getQueue().size();
         log.info("ThumbRequest check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB

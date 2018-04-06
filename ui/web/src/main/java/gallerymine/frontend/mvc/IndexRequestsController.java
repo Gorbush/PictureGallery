@@ -109,7 +109,7 @@ public class IndexRequestsController {
     @ResponseBody
     public Object listByParent(@PathVariable("parentId") Optional<String> parentId) {
         Page<IndexRequest> page = indexRequestRepository.findByParent(
-                parentId.isPresent()? parentId.get() : null,
+                parentId.orElse(null),
                 new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
 
         return responseOk().put("response", page).build();

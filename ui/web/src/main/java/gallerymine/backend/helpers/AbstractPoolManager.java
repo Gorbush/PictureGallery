@@ -87,6 +87,7 @@ public class AbstractPoolManager<Entity extends PoolableEntity> {
 
     @Scheduled(fixedDelay = 60*1000)
     public void checkForAwaitingRequests() {
+        Thread.currentThread().setName("AbstractPoolRunner");
         int queued = pool.getThreadPoolExecutor().getQueue().size();
         log.info("{} check queue size={}", poolName, queued);
         if (queued < 1) {

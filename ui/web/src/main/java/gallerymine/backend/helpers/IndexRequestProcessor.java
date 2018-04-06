@@ -94,14 +94,20 @@ public class IndexRequestProcessor implements Runnable {
         try {
             Path path = Paths.get(appConfig.getSourcesRootFolder(), request.getPath());
 
+            Path enumeratingDir = null;
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path, file -> file.toFile().isDirectory())) {
+                int foldersCount = 0;
                 for (Path dir : directoryStream) {
                     registerNewFolderRequest(dir.toAbsolutePath().toString(), request);
+                    foldersCount++;
                 }
-                request.setStatus(IndexRequest.IndexStatus.ENUMERATED);
+                request.setFilesCount(foldersCount);
                 requestRepository.save(request);
                 log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             } catch (IOException e) {
+                request.setFilesCount(-1);
+                request.addError("indexing failed for folder "+enumeratingDir);
+                requestRepository.save(request);
                 log.error("Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
             }
 
@@ -110,6 +116,8 @@ public class IndexRequestProcessor implements Runnable {
                 requestRepository.save(request);
                 log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
+                int filesCount = 0;
+                int filesIgnoredCount = 0;
                 try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
                     for (Path file : directoryStream) {
                         String fileName = file.toString().toLowerCase();
@@ -119,14 +127,26 @@ public class IndexRequestProcessor implements Runnable {
                             continue;
                         }
                         if (allowedExtensions.contains(fileExt)) {
+                            filesCount++;
                             processPictureFile(file);
                         } else {
+                            filesIgnoredCount++;
                             logUnknownFormats.error("Unknown format of file {}", file.toAbsolutePath().toString());
                         }
 //                        Thread.sleep(2000);
                     }
                 }
+                request.setFilesCount(filesCount);
+                request.setFilesIgnoredCount(filesIgnoredCount);
+                request.setAllFilesProcessed(true);
+                request.setStatus(IndexRequest.IndexStatus.ENUMERATED);
+                requestRepository.save(request);
             } catch (IOException e) {
+                request.setFilesCount(-1);
+                request.setFilesIgnoredCount(-1);
+                request.setAllFilesProcessed(true);
+                request.addError("indexing failed for file "+path);
+                requestRepository.save(request);
                 log.error(" indexing failed for file {}. Reason: {}", path, e.getMessage());
             }
 

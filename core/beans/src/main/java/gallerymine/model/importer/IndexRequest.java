@@ -43,6 +43,9 @@ public class IndexRequest  {
     private Boolean allFilesProcessed = false;
     private Boolean allFoldersProcessed = false;
     private String error;
+    private Integer filesCount;
+    private Integer filesIgnoredCount;
+    private Integer foldersCount;
 
     @CreatedDate
     private DateTime created;
@@ -67,6 +70,14 @@ public class IndexRequest  {
 
     public boolean isComplete() {
         return DONE.equals(status) || FAILED.equals(status);
+    }
+
+    public void addError(String s) {
+        if (error == null) {
+            error = s;
+        } else {
+            error += "\n"+s;
+        }
     }
 
 }

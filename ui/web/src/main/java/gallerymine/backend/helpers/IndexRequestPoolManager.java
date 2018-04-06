@@ -99,6 +99,7 @@ public class IndexRequestPoolManager {
 
     @Scheduled(fixedDelay = 60*1000)
     public void checkForAwaitingRequests() {
+        Thread.currentThread().setName("IndexRequestRunner");
         int queued = pool.getThreadPoolExecutor().getQueue().size();
         log.info("IndexRequest check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB
