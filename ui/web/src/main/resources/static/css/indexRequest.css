@@ -7,7 +7,15 @@ ul.jstree-contextmenu {
     /*width: 200px;*/
     border: 1px solid red;
 }
-
+#indexRequestsTree .jstree-anchor{
+    padding-right: 30px;
+    width: 100%;
+}
+.node_postblock {
+    float:right;
+    /*border:1px solid red;*/
+    padding-left: 30px;
+}
 li.jstree-node i.NODE_STATUS_FOUND {
     background-image: url(../images/loading-16.gif);
     background-position: 1px 4px;
@@ -43,9 +51,4 @@ li.jstree-node i.NODE_STATUS_FAILED {
 li.jstree-node i.NODE_STATUS_DONE {
     background-image: url(../images/check-16.png);
     background-position: 1px 4px;
-}
-.node_postblock {
-    float:right;
-    border:1px solid red;
-    padding-left: 30px;
 }

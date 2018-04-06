@@ -99,21 +99,29 @@ function preprocessAsNodes(nodesList) {
         node.state = {
             opened: false
         };
-        node.children = true;
         if (node.parent === null) {
             node.parent = '#';
         }
         node.text += '<div class="node_postblock">';
+        node.text += 'Status <span class="badge">'+node.status+'</span>';
         if (node.filesCount != null) {
-            node.text += 'Files <span class="badge">' + node.filesCount + '</span>';
-        }
-        if (node.filesIgnoredCount != null) {
-            node.text += 'Skipped <span class="badge">' + node.filesIgnoredCount + '</span>';
+            node.text += '&nbsp;Files <span class="badge">' + node.filesCount + ' ';
+            if (node.filesIgnoredCount != null && node.filesIgnoredCount > 0) {
+                node.text += '(' + node.filesIgnoredCount + ')</span>';
+            } else {
+                node.text += '</span>';
+            }
         }
         if (node.foldersCount != null) {
-            node.text += 'Folders <span class="badge">' + node.foldersCount + '</span>';
+            if (node.foldersCount > 0) {
+                node.text += '&nbsp;Folders <span class="badge">' + node.foldersCount + '</span>';
+                node.children = true;
+            } else {
+                node.children = false;
+            }
+        } else {
+            node.children = true;
         }
-        node.text += 'Status <span class="badge">'+node.status+'</span>';
         node.text += '</div>';
     }
 

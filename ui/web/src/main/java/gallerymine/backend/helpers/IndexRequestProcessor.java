@@ -101,11 +101,11 @@ public class IndexRequestProcessor implements Runnable {
                     registerNewFolderRequest(dir.toAbsolutePath().toString(), request);
                     foldersCount++;
                 }
-                request.setFilesCount(foldersCount);
+                request.setFoldersCount(foldersCount);
                 requestRepository.save(request);
                 log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             } catch (IOException e) {
-                request.setFilesCount(-1);
+                request.setFoldersCount(-1);
                 request.addError("indexing failed for folder "+enumeratingDir);
                 requestRepository.save(request);
                 log.error("Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
