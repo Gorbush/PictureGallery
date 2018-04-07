@@ -49,8 +49,8 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         Criteria criteria = applyCustomCriteria(sourceCriteria);
 
         Query query = criteria != null ? Query.query(criteria) : new Query();
-        query.skip(sourceCriteria.getOffset())
-                .limit(sourceCriteria.getSize());
+        query.skip((long) sourceCriteria.getOffset())
+             .limit(sourceCriteria.getSize());
         if (StringUtils.isNotBlank(sourceCriteria.getSortByField())) {
             Sort.Direction direction = (sourceCriteria.getSortDescending()!=null && sourceCriteria.getSortDescending()) ?
                     Sort.Direction.DESC : ASC;
@@ -92,10 +92,12 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         pipeline.add(group(fields("name").and("filePath")).count().as("count"));
 
         pipelineCount.addAll(pipeline);
+        // group them as one line
+        pipelineCount.add(group(fields()).sum("count").as("count"));
         pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
 
         Aggregation aggregationCount  = newAggregation(Source.class, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
-        List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
+//        List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
         FolderStats countStats = template.aggregate(aggregationCount, Source.class, FolderStats.class).getUniqueMappedResult();
 
         long totalCount = (countStats == null || countStats.getCount() == null) ? 0 : countStats.getCount();
@@ -108,21 +110,16 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         }
         PageRequest pager = new PageRequest(newPage, sourceCriteria.getSize());
 
-        pipeline.add(sort(new Sort(Sort.Direction.DESC, "id")));
-        pipeline.add(Aggregation.skip(newOffset));
+        pipeline.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
+
+        pipeline.add(sort(new Sort(Sort.Direction.DESC, "name")));
+        pipeline.add(Aggregation.skip((long) newOffset));
         pipeline.add(Aggregation.limit(sourceCriteria.getSize()));
 
-        pipeline.add(Aggregation.project(
-                Fields.from(
-                    Fields.field("name", "$_id"),
-                    Fields.field("count", "$count")
-                )
-        ));
-
-        Aggregation aggregation = newAggregation((AggregationOperation[]) pipeline.toArray(new AggregationOperation[]{}));
+        Aggregation aggregation  = newAggregation(Source.class, (AggregationOperation[]) pipeline.toArray(new AggregationOperation[]{}));
 
         // get distinct path, but before we need to cut the original path - and everything starting from first slash /
-        AggregationResults<FolderStats> output = template.aggregate(aggregation, "source", FolderStats.class);
+        AggregationResults<FolderStats> output = template.aggregate(aggregation, Source.class, FolderStats.class);
 
         return new PageHierarchyImpl<>(output.getMappedResults(), pager, totalCount, sourcePath);
     }
