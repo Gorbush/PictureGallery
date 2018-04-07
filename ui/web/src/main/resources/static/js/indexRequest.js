@@ -103,18 +103,19 @@ function preprocessAsNodes(nodesList) {
             node.parent = '#';
         }
         node.text += '<div class="node_postblock">';
-        node.text += 'Status <span class="badge">'+node.status+'</span>';
+        node.text += '  <div class="status">'+node.status+'</div>';
+        node.text += '  <div class="filesCount">';
         if (node.filesCount != null) {
-            node.text += '&nbsp;Files <span class="badge">' + node.filesCount + ' ';
             if (node.filesIgnoredCount != null && node.filesIgnoredCount > 0) {
-                node.text += '(' + node.filesIgnoredCount + ')</span>';
-            } else {
-                node.text += '</span>';
+                node.text += '(' + node.filesIgnoredCount + ')';
             }
+            node.text += ' ' + node.filesCount;
         }
+        node.text += '  </div>';
+        node.text += '  <div class="foldersCount">';
         if (node.foldersCount != null) {
             if (node.foldersCount > 0) {
-                node.text += '&nbsp;Folders <span class="badge">' + node.foldersCount + '</span>';
+                node.text += node.foldersCount;
                 node.children = true;
             } else {
                 node.children = false;
@@ -122,6 +123,7 @@ function preprocessAsNodes(nodesList) {
         } else {
             node.children = true;
         }
+        node.text += '  </div>';
         node.text += '</div>';
     }
 

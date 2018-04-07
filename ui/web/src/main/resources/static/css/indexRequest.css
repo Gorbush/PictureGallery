@@ -11,10 +11,25 @@ ul.jstree-contextmenu {
     padding-right: 30px;
     width: 100%;
 }
-.node_postblock {
+div.node_postblock {
     float:right;
     /*border:1px solid red;*/
-    padding-left: 30px;
+    width: 210px;
+}
+div.node_postblock div.status {
+    float: left;
+    width: 100px;
+    text-align: left;
+}
+div.node_postblock div.filesCount {
+    float: left;
+    width: 50px;
+    text-align: right;
+}
+div.node_postblock div.foldersCount {
+    float: left;
+    width: 50px;
+    text-align: right;
 }
 li.jstree-node i.NODE_STATUS_FOUND {
     background-image: url(../images/loading-16.gif);
