@@ -1,0 +1,44 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for spuliaiev.apps.gallerymine:gallery-mine-core-dao:jar:1.0-SNAPSHOT
+[WARNING] 'dependencies.dependency.version' for org.springframework.data.build:spring-data-parent:pom is either LATEST or RELEASE (both of them are being deprecated) @ line 64, column 22
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Gallery Mine Core DAO 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.10:tree (default-cli) @ gallery-mine-core-dao ---
+[INFO] spuliaiev.apps.gallerymine:gallery-mine-core-dao:jar:1.0-SNAPSHOT
+[INFO] +- org.projectlombok:lombok:jar:1.16.20:compile
+[INFO] +- joda-time:joda-time:jar:2.9.9:compile
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-joda:jar:2.8.10:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.8.0:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.8.10:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.8.10:compile
+[INFO] +- org.apache.commons:commons-lang3:jar:3.6:compile
+[INFO] +- org.apache.commons:commons-collections4:jar:4.1:compile
+[INFO] +- spuliaiev.apps.gallerymine:gallery-mine-core-beans:jar:1.0-SNAPSHOT:compile
+[INFO] +- org.springframework.data.build:spring-data-parent:pom:2.0.6.RELEASE:compile
+[INFO] |  \- org.slf4j:slf4j-api:jar:1.7.25:compile
+[INFO] +- org.springframework.data:spring-data-mongodb:jar:1.10.10.RELEASE:compile
+[INFO] |  +- org.springframework:spring-tx:jar:4.3.14.RELEASE:compile
+[INFO] |  +- org.springframework:spring-beans:jar:4.3.14.RELEASE:compile
+[INFO] |  +- org.springframework:spring-core:jar:4.3.14.RELEASE:compile
+[INFO] |  +- org.springframework:spring-expression:jar:4.3.14.RELEASE:compile
+[INFO] |  +- org.springframework.data:spring-data-commons:jar:1.13.10.RELEASE:compile
+[INFO] |  +- org.mongodb:mongo-java-driver:jar:3.4.3:compile
+[INFO] |  \- org.slf4j:jcl-over-slf4j:jar:1.7.25:runtime
+[INFO] \- org.springframework:spring-context:jar:5.0.5.RELEASE:compile
+[INFO]    \- org.springframework:spring-aop:jar:4.3.14.RELEASE:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 1.395 s
+[INFO] Finished at: 2018-04-08T08:54:48-07:00
+[INFO] Final Memory: 28M/437M
+[INFO] ------------------------------------------------------------------------
