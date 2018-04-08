@@ -5,7 +5,6 @@ import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
 import com.mongodb.BasicDBObject;
-import gallerymine.backend.beans.repository.helpers.CustomAggregationOperation;
 import gallerymine.model.Source;
 import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.PageHierarchyImpl;
@@ -49,7 +48,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         Criteria criteria = applyCustomCriteria(sourceCriteria);
 
         Query query = criteria != null ? Query.query(criteria) : new Query();
-        query.skip((long) sourceCriteria.getOffset())
+        query.skip(sourceCriteria.getOffset())
              .limit(sourceCriteria.getSize());
         if (StringUtils.isNotBlank(sourceCriteria.getSortByField())) {
             Sort.Direction direction = (sourceCriteria.getSortDescending()!=null && sourceCriteria.getSortDescending()) ?
@@ -113,7 +112,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         pipeline.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
 
         pipeline.add(sort(new Sort(Sort.Direction.DESC, "name")));
-        pipeline.add(Aggregation.skip((long) newOffset));
+        pipeline.add(Aggregation.skip(newOffset));
         pipeline.add(Aggregation.limit(sourceCriteria.getSize()));
 
         Aggregation aggregation  = newAggregation(Source.class, (AggregationOperation[]) pipeline.toArray(new AggregationOperation[]{}));
