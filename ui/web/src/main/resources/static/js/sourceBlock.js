@@ -173,13 +173,13 @@ var SourceBlock = {
             fill: function () {
                 this.matchingImageDiv.attr("title", "id: "+this.dataObject.id);
                 if (this.dataObject.thumbPath != null && validValue(this.dataObject.thumbPath)) {
-                    this.matchingImage.attr("src", "/thumbs/"+this.dataObject.thumbPath.replace(/ /g, "%20"));
-                } else {
+                    this.matchingImage.attr("src", "/thumbs/"+encodeURIComponent(this.dataObject.thumbPath).replace(/%2F/g, "/"));
+                } else { // encodeURIComponent
                     this.matchingImage.attr("src", "/images/document_image_cancel_32.png");
                 }
-                var fullImageSrc = "/srcs/"+this.dataObject.filePath+"/"+this.dataObject.fileName;
+                var fullImageSrc = this.dataObject.filePath+"/"+this.dataObject.fileName;
                 // var fullImagePic = "/pics/"+this.dataObject.filePath+"/"+this.dataObject.fileName;
-                this.matchingImageAnch.attr("href", fullImageSrc.replace(/ /g, "%20"));
+                this.matchingImageAnch.attr("href", "/srcs/"+encodeURIComponent(fullImageSrc).replace(/%2F/g, "/"));
                 this.matchingImageAnch.attr("title", this.dataObject.label);
                 this.fileName.text(this.dataObject.fileName);
                 this.filePath.text(this.dataObject.filePath);

@@ -195,17 +195,18 @@ div.decisionBlock .decisionButton.decision_selected {
     border: 1px solid red;
 }
 div#folderTree {
-    height: 30%;
+    height: 49%;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     overflow: auto;
+    border-bottom: 3px solid #abdaff;
 }
 div#datesTree {
-    height: 30%;
+    height: 49%;
     position: absolute;
-    top: 30%;
+    top: 50%;
     left: 0;
     right: 0;
     overflow: auto;
