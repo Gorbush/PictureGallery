@@ -108,6 +108,7 @@ function clickDatesTreeNode(e, data, tree) {
     refreshSources(0);
 }
 function refreshSources(page) {
+    SourceProperties.hide();
     SourceList.pagerBar.updatePage(page);
 
     var container = $("div#sources");

@@ -34,6 +34,10 @@ var ContextMenuFolderAction = {
             }
             return true;
         });
+        $(document).on("click", ".sourceBlock .matchingProperties", function (e1, e2, e3) {
+            SourceProperties.show();
+        });
+
     }
 };
 var DecisionButtonBlock = {

@@ -72,7 +72,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         sourceCriteria.setSortDescending(false);
         String sourcePath = sourceCriteria.getPath();
         // fixing path - to get all sub-folders - if they have photos
-        sourceCriteria.setPath(sourcePath+"**");
+        sourceCriteria.setPath(sourcePath+"*");
         Criteria criteria = applyCustomCriteria(sourceCriteria);
 
         List<AggregationOperation> pipeline = new ArrayList<>();
@@ -93,13 +93,13 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         pipelineCount.addAll(pipeline);
         // group them as one line
         pipelineCount.add(group(fields()).sum("count").as("count"));
-        pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
+        pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
 
         Aggregation aggregationCount  = newAggregation(Source.class, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
 //        List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
         FolderStats countStats = template.aggregate(aggregationCount, Source.class, FolderStats.class).getUniqueMappedResult();
 
-        long totalCount = (countStats == null || countStats.getCount() == null) ? 0 : countStats.getCount();
+        long totalCount = (countStats == null || countStats.getFilesCount() == null) ? 0 : countStats.getFilesCount();
         int newOffset = sourceCriteria.getOffset();
         int newPage = sourceCriteria.getPage();
         if (sourceCriteria.getOffset() > totalCount) {
@@ -109,7 +109,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         }
         PageRequest pager = new PageRequest(newPage, sourceCriteria.getSize());
 
-        pipeline.add(project().and("$_id.name").as("name").and("$count").as("count").and("$_id.filePath").as("fullPath"));
+        pipeline.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
 
         pipeline.add(sort(new Sort(Sort.Direction.DESC, "name")));
         pipeline.add(Aggregation.skip(newOffset));

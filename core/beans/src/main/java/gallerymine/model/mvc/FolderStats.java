@@ -1,7 +1,10 @@
 package gallerymine.model.mvc;
 
+import lombok.Data;
+
 import java.io.Serializable;
 
+@Data
 public class FolderStats implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -10,29 +13,7 @@ public class FolderStats implements Serializable {
 
     String fullPath;
 
-    Long count;
+    Long filesCount;
+    Long foldersCount;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getFullPath() {
-        return fullPath;
-    }
-
-    public void setFullPath(String fullPath) {
-        this.fullPath = fullPath;
-    }
-
-    public Long getCount() {
-        return count;
-    }
-
-    public void setCount(Long count) {
-        this.count = count;
-    }
 }
