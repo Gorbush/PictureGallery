@@ -193,7 +193,7 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
                 }
             }
         }
-        if (sourceCriteria.getLatitude() != 0 && sourceCriteria.getLongitude() != null &&
+        if (sourceCriteria.getLatitude() != null && sourceCriteria.getLongitude() != null &&
                 sourceCriteria.getDistance() != null) {
             Distance dist = DistanceFormatter.INSTANCE.convert(sourceCriteria.getDistance());
             criteria.add(Criteria.where("geoLocation")

@@ -1,11 +1,55 @@
 var SourceList = {
+    /* data from ajax response with list, criteria and paging information */
+    responseData: null,
     currentPath: null,
     currentRangeStart: null,
     currentRangeEnd: null,
     pagerBar: null,
     breadcrumb: null,
     gallery: null,
+    sourcesRootDiv: null,
 
+    clean: function () {
+        SourceList.sourcesRootDiv.empty();
+        SourceList.responseData = null;
+    },
+    populate: function (data) {
+        SourceList.responseData = data;
+        SourceList.fillBreadcrumb(data.criteria.path);
+        $.each(data.list.content, function (indexSource, source) {
+            SourceBlock.create(source, SourceList.sourcesRootDiv, false, SourceList.gallery).hideDecisionButtons();
+        });
+
+        SourceList.pagerBar.updateTo(data.list.number, data.list.totalPages, data.list.size, data.list.totalElements);
+
+        if (SourceList.gallery.isAwaitingElement() ) {
+            SourceList.gallery.changeSlideToAwaiting();
+        }
+    },
+    get: function (index) {
+        if (SourceList.responseData &&
+            SourceList.responseData.list &&
+            SourceList.responseData.list.content &&
+            SourceList.responseData.list.content.length &&
+            SourceList.responseData.list.content.length > index) {
+            return SourceList.responseData.list.content[index];
+        }
+        return null;
+    },
+    getById: function (id) {
+        if (SourceList.responseData &&
+            SourceList.responseData.list &&
+            SourceList.responseData.list.content &&
+            SourceList.responseData.list.content.length) {
+            var list = SourceList.responseData.list.content;
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === id) {
+                    return list[i];
+                }
+            }
+        }
+        return null;
+    },
     fillBreadcrumb: function (breadcrumbText){
         var crumbs = breadcrumbText.split("/");
         SourceList.breadcrumb.empty();
@@ -20,6 +64,8 @@ var SourceList = {
     },
 
     init : function () {
+        SourceList.sourcesRootDiv = $("div#sources");
+        SourceList.responseData = null;
         SourceList.pagerBar = Pager.create($("#sourcesNav"), pagerChangeHandler);
         SourceList.breadcrumb = $("#breadcrumblist");
 
@@ -146,18 +192,8 @@ function refreshSources(page) {
     });
 }
 function populateSourcesList(data, node) {
-    var sourcesContent = $("div#sources");
-    sourcesContent.empty();
-    SourceList.fillBreadcrumb(data.criteria.path);
-    $.each(data.list.content, function (indexSource, source) {
-        SourceBlock.create(source, sourcesContent, false, SourceList.gallery).hideDecisionButtons();
-    });
-
-    SourceList.pagerBar.updateTo(data.list.number, data.list.totalPages, data.list.size, data.list.totalElements);
-
-    if (SourceList.gallery.isAwaitingElement() ) {
-        SourceList.gallery.changeSlideToAwaiting();
-    }
+    SourceList.clean();
+    SourceList.populate(data);
 }
 function pagerChangeHandler(page, totalPages, size, total, pager) {
     if (SourceList.currentPath) {

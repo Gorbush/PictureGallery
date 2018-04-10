@@ -67,10 +67,10 @@ function Gallery(configuration) {
 	self.bindEvents = function() {
 	    if (!self.eventsBind) {
             self.eventsBind = true;
-            $(configuration.elements.thumbnailAnchor).click(function (event) {
-                self.startSlideshow(this);
-                event.preventDefault();
-            });
+            // $(configuration.elements.thumbnailAnchor).click(function (event) {
+            //     self.startSlideshow(this);
+            //     event.preventDefault();
+            // });
             $(configuration.elements.previousAnchor).click(function (event) {
                 self.showPreviousSlide();
                 event.preventDefault();
@@ -152,8 +152,10 @@ function Gallery(configuration) {
 		self.currentSlide.caption = self.currentSlide.element.attr('title');
 
         if (self.currentSlide.source) {
+            // $(configuration.elements.currentImage)[0].style.backgroundImage = 'url(' + self.currentSlide.source+')';
+
             $(configuration.elements.currentImage).css({
-                'background-image': "url("+self.currentSlide.source.replace(/ /g, "%20")+")"
+                'background-image': "url('"+self.currentSlide.source+"')"
             });
         }
         if (self.currentSlide.caption) {

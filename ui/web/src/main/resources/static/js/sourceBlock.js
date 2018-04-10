@@ -167,7 +167,7 @@ var SourceBlock = {
                 this.decisionButtons.selectButton("");
 
                 var block = this;
-                this.matchingImageDiv.on("click", function() {
+                this.matchingImageDiv.on("click", function(event) {
                     self.gallery.startSlideshow(block.matchingImage);
                     return false;
                 });
@@ -182,8 +182,9 @@ var SourceBlock = {
                     this.matchingImage.attr("src", "/images/document_image_cancel_32.png");
                 }
                 var fullImageSrc = this.dataObject.filePath+"/"+this.dataObject.fileName;
+                fullImageSrc = encodeURIComponent(fullImageSrc).replace(/%2F/g, "/");
                 // var fullImagePic = "/pics/"+this.dataObject.filePath+"/"+this.dataObject.fileName;
-                this.matchingImageAnch.attr("href", "/srcs/"+encodeURIComponent(fullImageSrc).replace(/%2F/g, "/"));
+                this.matchingImageAnch.attr("href", "/srcs/"+fullImageSrc);
                 this.matchingImageAnch.attr("title", this.dataObject.label);
                 this.fileName.text(this.dataObject.fileName);
                 this.filePath.text(this.dataObject.filePath);
