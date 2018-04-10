@@ -11,20 +11,16 @@ import org.springframework.data.domain.PageRequest;
 public class SourceCriteria {
 
     private DateTime fromDate;
-
     private DateTime toDate;
-
     private String path;
-
     private String fileName;
-
     private DateTime timestamp;
-
     private String placePath;
-
     private String sortByField;
-
     private Boolean sortDescending;
+    private Double latitude;
+    private Double longitude;
+    private String distance;
 
     private PageRequest pager = null;
 
@@ -51,4 +47,5 @@ public class SourceCriteria {
     public int getOffset() {
         return pager.getPageNumber() * pager.getPageSize();
     }
+
 }

@@ -1,10 +1,8 @@
 package gallerymine.backend.beans.repository;
 
-import static java.util.Arrays.asList;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
-import com.mongodb.BasicDBObject;
 import gallerymine.model.Source;
 import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.PageHierarchyImpl;
@@ -20,6 +18,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metric;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
+import org.springframework.data.geo.format.DistanceFormatter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -150,13 +153,12 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
         //Convert the aggregation result into a List
         AggregationResults<DateStats> groupResults = template.aggregate(agg, Source.class, DateStats.class);
-        List<DateStats> result = groupResults.getMappedResults();
 
-        return result;
+        return groupResults.getMappedResults();
     }
 
     private Criteria applyCustomCriteria(SourceCriteria sourceCriteria) {
-        List<Criteria> criteria = new ArrayList();
+        List<Criteria> criteria = new ArrayList<>();
 
         if (isNotBlank(sourceCriteria.getFileName())) {
             if (RegExpHelper.isMask(sourceCriteria.getFileName())) {
@@ -191,6 +193,14 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
                 }
             }
         }
+        if (sourceCriteria.getLatitude() != 0 && sourceCriteria.getLongitude() != null &&
+                sourceCriteria.getDistance() != null) {
+            Distance dist = DistanceFormatter.INSTANCE.convert(sourceCriteria.getDistance());
+            criteria.add(Criteria.where("geoLocation")
+                    .near(new Point(sourceCriteria.getLatitude(), sourceCriteria.getLongitude()))
+                    .maxDistance(dist.getNormalizedValue()));
+        }
+
         if (criteria.size() > 0) {
             return new Criteria().andOperator(criteria.toArray(new Criteria[0]));
         } else {

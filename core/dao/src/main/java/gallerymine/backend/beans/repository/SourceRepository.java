@@ -16,6 +16,7 @@
 
 package gallerymine.backend.beans.repository;
 
+import com.mongodb.client.model.geojson.Point;
 import gallerymine.model.Source;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
@@ -41,4 +42,6 @@ public interface SourceRepository extends MongoRepository<Source, String>, Sourc
     Collection<Source> findBySize(long size);
 
     Collection<Source> findByTimestamp(DateTime timestamp);
+
+    Page<Source> findByGeoLocationNear(Point point, Pageable pageable);
 }
