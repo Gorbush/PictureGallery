@@ -1,6 +1,9 @@
-package gallerymine.backend.helpers;
+package gallerymine.backend.pool;
 
+import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.IndexRequestRepository;
+import gallerymine.backend.importer.ImportProcessor;
+import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.IndexRequest;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
@@ -17,32 +20,34 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
+
 /**
- * Pool manager for IndexRequets and processors
- * Created by sergii_puliaiev on 6/14/17.
+ * Pool manager for ImportRequests and processors
+ * Created by sergii_puliaiev on 6/14/18.
  */
 @Component
-public class IndexRequestPoolManager {
+public class ImportRequestPoolManager {
 
-    private static Logger log = LoggerFactory.getLogger(IndexRequestProcessor.class);
+    private static Logger log = LoggerFactory.getLogger(ImportRequestPoolManager.class);
     private static Logger logPools = LoggerFactory.getLogger("pools");
 
     @Autowired
     private ApplicationContext context;
 
     @Autowired
-    private IndexRequestRepository requestRepository;
+    private ImportRequestRepository requestRepository;
 
     private ThreadPoolTaskExecutor pool;
 
-    public IndexRequestPoolManager() {
+    public ImportRequestPoolManager() {
         pool = new ThreadPoolTaskExecutor();
         pool.setCorePoolSize(10);
         pool.setMaxPoolSize(10);
         pool.setWaitForTasksToCompleteOnShutdown(true);
 
-        pool.setThreadGroupName("IndexRequestPool");
-        pool.setThreadNamePrefix("IndexRequest_");
+        pool.setThreadGroupName("ImportRequestPool");
+        pool.setThreadNamePrefix("ImportRequest_");
 
         pool.initialize();
 
@@ -52,45 +57,46 @@ public class IndexRequestPoolManager {
         return pool;
     }
 
-    private IndexRequest checkRequest(IndexRequest requestSrc) {
-        IndexRequest request = requestRepository.findOne(requestSrc.getId());
+    private ImportRequest checkRequest(ImportRequest requestSrc) {
+        ImportRequest request = requestRepository.findOne(requestSrc.getId());
         if (request == null) {
-            log.info("IndexRequest not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
+            log.info("ImportRequest not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
             return null;
         }
         if (!request.isProcessable()) {
-            log.info("IndexRequest status is not processable id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.info("ImportRequest status is not processable id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             return null;
         }
 
-        request.setStatus(IndexRequest.IndexStatus.AWAITING);
-        log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        request.setStatus(AWAITING);
+        log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         requestRepository.save(request);
 
         return request;
     }
 
-    public void executeRequest(IndexRequest requestSrc) {
-        IndexRequestProcessor bean = context.getBean(IndexRequestProcessor.class);
+    public void executeRequest(ImportRequest requestSrc) {
+        ImportProcessor bean = context.getBean(ImportProcessor.class);
 
-        IndexRequest request = checkRequest(requestSrc);
+        ImportRequest request = checkRequest(requestSrc);
         if (request == null) {
             return;
         }
-        log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         bean.setRequest(request);
+        bean.setPool(this);
         pool.execute(bean);
 //        pool.submit(bean);
-        log.info("IndexRequest scheduled id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("ImportRequest scheduled id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
     }
 
-    public Collection<IndexRequestProcessor> getWorkingProcessors() {
-        Collection<IndexRequestProcessor> list = new ArrayList<>();
+    public Collection<ImportProcessor> getWorkingProcessors() {
+        Collection<ImportProcessor> list = new ArrayList<>();
         try {
             Collection<Object> workersFieldUtils = (Collection<Object>) FieldUtils.readField(pool.getThreadPoolExecutor(), "workers", true);
             for(Object worker: workersFieldUtils) {
                 Runnable task = (Runnable) FieldUtils.readField(worker, "firstTask", true);
-                list.add((IndexRequestProcessor) task);
+                list.add((ImportProcessor) task);
             }
         } catch (IllegalAccessException e) {
             log.error("Failed to read workers field from pool");
@@ -100,14 +106,14 @@ public class IndexRequestPoolManager {
 
     @Scheduled(fixedDelay = 60*1000)
     public void checkForAwaitingRequests() {
-        Thread.currentThread().setName("IndexRequestRunner");
+        Thread.currentThread().setName("ImportRequestRunner");
         int queued = pool.getThreadPoolExecutor().getQueue().size();
-        logPools.info("IndexRequest check queue size={}", queued);
+        logPools.info("ImportRequest check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB
-            Page<IndexRequest> foundRequests = requestRepository.findByStatus(IndexRequest.IndexStatus.FOUND,
+            Page<ImportRequest> foundRequests = requestRepository.findByStatus(START,
                     new PageRequest(0, 5, new Sort(new Sort.Order(Sort.Direction.DESC, "updated"))));
-            logPools.info("IndexRequest FOUND size={}", foundRequests.getNumber());
-            for(IndexRequest request: foundRequests) {
+            logPools.info("ImportRequest FOUND size={}", foundRequests.getNumber());
+            for(ImportRequest request: foundRequests) {
                 executeRequest(request);
             }
         }

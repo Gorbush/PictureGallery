@@ -25,6 +25,10 @@ public class AppConfig {
     @Value("${thumbsRootFolder}")
     public String thumbsRootFolder;
 
+    @Value("${importRootFolder}")
+    public String importRootFolder;
+
+
     public String getGalleryRootFolder() {
         checkFolders();
         return galleryRootFolder;

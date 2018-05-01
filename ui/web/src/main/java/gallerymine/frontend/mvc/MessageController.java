@@ -46,8 +46,6 @@ import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
 
 /**
- * @author Rob Winch
- * @author Doo-Hwan Kwak
  */
 @Controller
 @RequestMapping("/mess")

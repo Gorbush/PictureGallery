@@ -14,6 +14,7 @@ import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.photoshop.PsdHeaderDirectory;
 import com.drew.metadata.png.PngDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
+import gallerymine.model.FileInformation;
 import gallerymine.model.GeoPoint;
 import gallerymine.model.Source;
 import gallerymine.model.support.ImageInformation;
@@ -24,6 +25,7 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -35,6 +37,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,6 +47,7 @@ import java.util.regex.Pattern;
  * Analyser for Image files
  * Created by sergii_puliaiev on 6/11/17.
  */
+@Component
 public class ImageFormatAnalyser {
     private static Logger log = LoggerFactory.getLogger(ImageFormatAnalyser.class);
 //    private static Logger logUnknownDirectory = LogManager.getLogger("unknownDirectory");
@@ -53,7 +58,20 @@ public class ImageFormatAnalyser {
     /** format IMG_06012017_182643.png */
     private Pattern parser2 = Pattern.compile("([0-1][0-9][0-3][0-9][1,2][0-9][0-9][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
 
-    public void gatherFileInformation(File rootFolder, Source source, boolean extractThumb) {
+    public static Collection<String> allowedExtensions = new HashSet<String>(){{
+        add("jpg");
+        add("jpeg");
+        add("png");
+//        add("mp4");
+        add("tiff");
+        add("psd");
+        add("bmp");
+        add("gif");
+//        add("pdf");
+//        add("svg");
+    }};
+
+    public void gatherFileInformation(File rootFolder, FileInformation source, boolean extractThumb) {
         ImageInformation info = new ImageInformation();
         try {
             // preset some properties to avoid re-population
@@ -425,5 +443,9 @@ public class ImageFormatAnalyser {
         } catch (Exception e) {
             log.error("Error processing file {}. Reason: {}", info.file.getAbsolutePath(), e.getMessage(), e);
         }
+    }
+
+    public boolean acceptsExtension(String fileExt) {
+        return allowedExtensions.contains(fileExt.toLowerCase());
     }
 }

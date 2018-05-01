@@ -69,19 +69,6 @@ public class IndexRequestProcessor implements Runnable {
         this.request = request;
     }
 
-    public static Collection<String> allowedExtensions = new HashSet<String>(){{
-        add("jpg");
-        add("jpeg");
-        add("png");
-//        add("mp4");
-        add("tiff");
-        add("psd");
-        add("bmp");
-        add("gif");
-//        add("pdf");
-//        add("svg");
-    }};
-
     public void processRequest(IndexRequest requestSrc) {
         log.info("IndexRequest picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
         IndexRequest request = checkRequest(requestSrc);
@@ -126,7 +113,7 @@ public class IndexRequestProcessor implements Runnable {
                             log.info("Ignore system file {}", file.toAbsolutePath().toString());
                             continue;
                         }
-                        if (allowedExtensions.contains(fileExt)) {
+                        if (analyzer.acceptsExtension(fileExt)) {
                             filesCount++;
                             processPictureFile(file);
                         } else {

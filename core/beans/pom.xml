@@ -7,7 +7,7 @@
     <parent>
         <groupId>spuliaiev.apps.gallerymine</groupId>
         <artifactId>gallery-mine-core</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>gallery-mine-core-beans</artifactId>
@@ -15,7 +15,7 @@
     <description>Gallery application Core Beans</description>
 
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <organization>
 	<name>Sergii Puliaiev</name>

@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="utf-8">
+        <title>Main page for Gallery Mine</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="lib/jstree-3.3.4-dist/themes/default/style.min.css" id="csstree"/>
+        <link rel="stylesheet" type="text/css" href="css/jquery-ui.css" id="cssui">
+        <link rel="stylesheet" type="text/css" href="css/common.css" id="cssCommon">
+        <link rel="stylesheet" type="text/css" href="css/indexRequest.css" id="css">
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="lib/bootstrap-3.3.7-dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="lib/bootstrap-datepicker-1.6.4/css/bootstrap-datepicker.css" />
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="lib/bootstrap-3.3.7-dist/css/bootstrap-theme.css"/>
+
+    <!-- Latest compiled and minified JavaScript -->
+        <script src="js/jquery-1.10.2.js" type="application/javascript"></script>
+        <script src="js/jquery-ui-1.11.1.min.js" type="application/javascript"></script>
+        <script src="lib/bootstrap-3.3.7-dist/js/bootstrap.min.js" type="application/javascript"></script>
+        <script src="lib/bootstrap-datepicker-1.6.4/js/bootstrap-datepicker.js" type="application/javascript"></script>
+        <script src="lib/jstree-3.3.4-dist/jstree.js" type="application/javascript"></script>
+        <script src="js/common.js" type="application/javascript"></script>
+        <script src="js/indexRequest.js" type="application/javascript"></script>
+    </head>
+    <body>
+        <div id="pageHeader">
+            <div id="pageHeaderLabel">
+                <nav class="navbar navbar-default navbar-fixed-top">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <a class="navbar-brand" href="#">Gallery Mine - Sources</a>
+                        </div>
+                        <ul class="nav navbar-nav">
+                            <li><a href="#">Home</a></li>
+                            <li><a href="sourceList.html">SourceList</a></li>
+                            <li class="active"><a href="indexRequest.html">Indexing</a></li>
+                            <li><a href="sourceMatching.html">Matching</a></li>
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right">
+                            <li><span class="label label-default navbar-label" id="message-label"></span></li>
+                            <li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                            <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+            <div id="pageMainButtons">
+                <button type="button" id="ReIndexButton" class="btn btn-info navbar-btn">Re-Index</button>
+            </div>
+        </div>
+        <div id="pageContent">
+            <div class="container-fluid">
+                <div id="indexRequestsTree" >
+                </div>
+            </div>
+
+        </div>
+        <div id="pageFooter">
+        </div>
+        <div id="templates">
+            <div id="contextMenuFolderAction" class="dropdown clearfix contextmenu">
+                <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
+                    <li><a tabindex="-1" href="#">Action</a></li>
+                    <li><a tabindex="-1" href="#">Another action</a></li>
+                    <li><a tabindex="-1" href="#">Something else here</a></li>
+                    <li class="divider"></li>
+                    <li><a tabindex="-1" href="#">Separated link</a></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

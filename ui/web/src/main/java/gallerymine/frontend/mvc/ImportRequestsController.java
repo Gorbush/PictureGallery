@@ -18,10 +18,10 @@ package gallerymine.frontend.mvc;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.CustomerRepository;
-import gallerymine.backend.beans.repository.IndexRequestRepository;
-import gallerymine.backend.helpers.IndexRequestPoolManager;
-import gallerymine.backend.helpers.IndexRequestProcessor;
-import gallerymine.model.importer.IndexRequest;
+import gallerymine.backend.beans.repository.ImportRequestRepository;
+import gallerymine.backend.importer.ImportProcessor;
+import gallerymine.backend.pool.ImportRequestPoolManager;
+import gallerymine.model.importer.ImportRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,15 +38,14 @@ import java.util.Optional;
 
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
-import static gallerymine.frontend.mvc.support.ResponseBuilder.responseWarn;
 
 /**
- */
+\ */
 @Controller
-@RequestMapping("/indexing")
-public class IndexRequestsController {
+@RequestMapping("/importing")
+public class ImportRequestsController {
 
-	private static Logger log = LoggerFactory.getLogger(IndexRequestsController.class);
+	private static Logger log = LoggerFactory.getLogger(ImportRequestsController.class);
 
 	@Autowired
 	public AppConfig appConfig;
@@ -55,27 +54,27 @@ public class IndexRequestsController {
 	private CustomerRepository messageRepository;
 
 	@Autowired
-	private IndexRequestRepository indexRequestRepository;
+	private ImportRequestRepository requestRepository;
 
 	@Autowired
-	private IndexRequestProcessor indexRequestProcessor;
+	private ImportProcessor requestProcessor;
 
 	@Autowired
-	private IndexRequestPoolManager indexRequestPool;
+	private ImportRequestPoolManager requestPool;
 
-	public IndexRequestsController() {
+	public ImportRequestsController() {
 	}
 
 	@GetMapping
     @ResponseBody
 	public Object listActive() {
-		Collection<IndexRequestProcessor> workingProcessors = indexRequestPool.getWorkingProcessors();
+		Collection<ImportProcessor> workingProcessors = requestPool.getWorkingProcessors();
 
         return responseOk()
             .put("working", workingProcessors)
-		    .put("queueSize", indexRequestPool.getPool().getThreadPoolExecutor().getQueue().size())
-		    .put("taskCount", indexRequestPool.getPool().getThreadPoolExecutor().getTaskCount())
-		    .put("activeCount", indexRequestPool.getPool().getThreadPoolExecutor().getActiveCount())
+		    .put("queueSize", requestPool.getPool().getThreadPoolExecutor().getQueue().size())
+		    .put("taskCount", requestPool.getPool().getThreadPoolExecutor().getTaskCount())
+		    .put("activeCount", requestPool.getPool().getThreadPoolExecutor().getActiveCount())
 		    .build();
 	}
 
@@ -86,16 +85,16 @@ public class IndexRequestsController {
 
         String pathToIndex = path.toAbsolutePath().toString();
 
-        IndexRequest request = indexRequestRepository.findByPath(pathToIndex);
+        ImportRequest request = requestRepository.findByPath(pathToIndex);
 
         if (!enforce) {
-            if (request != null && request.getStatus() != IndexRequest.IndexStatus.DONE) {
+            if (request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
                 return responseError("Indexing is already in progress").build();
             }
         }
         try {
-            request = indexRequestProcessor.registerNewFolderRequest(pathToIndex, null);
-            indexRequestProcessor.processRequest(request);
+            request = requestProcessor.registerNewFolderRequest(pathToIndex, null);
+            requestProcessor.processRequest(request);
 
             return responseOk().build();
         } catch (Exception e) {
@@ -106,7 +105,7 @@ public class IndexRequestsController {
     @GetMapping(value = {"list/", "list/{parentId}"} )
     @ResponseBody
     public Object listByParent(@PathVariable("parentId") Optional<String> parentId) {
-        Page<IndexRequest> page = indexRequestRepository.findByParent(
+        Page<ImportRequest> page = requestRepository.findByParent(
                 parentId.orElse(null),
                 new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
 
