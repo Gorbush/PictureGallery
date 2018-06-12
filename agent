@@ -1,0 +1,6 @@
+SCRIPT=$(readlink -f "$0" 2>/dev/null )
+[ "$(uname -a | grep -oc Darwin)" == "1" ] && SCRIPT=$(greadlink -f "$0")
+HOME_FOLDER=$(dirname "$SCRIPT")
+
+java -cp $HOME_FOLDER/indexingAgent/target/classes gallerymine.agents.indexing.IndexingAgent "$1" "$2"
+

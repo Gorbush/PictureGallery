@@ -1,0 +1,3 @@
+cd ui/web
+JAVA_OPT="-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=7008,suspend=n"
+mvn spring-boot:run -Drun.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007"

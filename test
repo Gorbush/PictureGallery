@@ -1,0 +1,1 @@
+curl -X PUT "http://localhost:8070/files/TEST/332/2014-08-13T14:30:30/mnt/Red1/Photoes/_Parse/iPhone/100APP"
