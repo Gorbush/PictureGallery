@@ -16,6 +16,7 @@ import com.drew.metadata.png.PngDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
 import gallerymine.model.FileInformation;
 import gallerymine.model.GeoPoint;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 import gallerymine.model.support.ImageInformation;
 import gallerymine.model.support.TimestampKind;
@@ -71,7 +72,7 @@ public class ImageFormatAnalyser {
 //        add("svg");
     }};
 
-    public void gatherFileInformation(File rootFolder, FileInformation source, boolean extractThumb) {
+    public void gatherFileInformation(File rootFolder, PictureInformation source, boolean extractThumb) {
         ImageInformation info = new ImageInformation();
         try {
             // preset some properties to avoid re-population

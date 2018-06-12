@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "importSource")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class ImportSource extends FileInformation {
+public class ImportSource extends PictureInformation {
 
     @Indexed
     String importRequestId;

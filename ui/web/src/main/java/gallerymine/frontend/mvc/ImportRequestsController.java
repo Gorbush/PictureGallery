@@ -22,6 +22,8 @@ import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.model.importer.ImportRequest;
+import org.apache.commons.io.FileUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,20 +80,22 @@ public class ImportRequestsController {
 		    .build();
 	}
 
-    @GetMapping("index")
+    @GetMapping("import")
     @ResponseBody
-    public Object index(@RequestParam(value = "enforce", defaultValue = "false", required = false) boolean enforce) {
-        Path path = Paths.get(appConfig.getSourcesRootFolder());
+    public Object importFolder(@RequestParam(value = "enforce", defaultValue = "false", required = false) boolean enforce) {
+        Path pathExposed = Paths.get(appConfig.getImportExposedRootFolder());
+        Path pathToImport = Paths.get(appConfig.getImportRootFolder(), DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
 
-        String pathToIndex = path.toAbsolutePath().toString();
+        String pathToIndex = pathToImport.toAbsolutePath().toString();
 
         ImportRequest request = requestRepository.findByPath(pathToIndex);
 
         if (!enforce) {
             if (request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
-                return responseError("Indexing is already in progress").build();
+                return responseError("Importing is already in progress").build();
             }
         }
+
         try {
             request = requestProcessor.registerNewFolderRequest(pathToIndex, null);
             requestProcessor.processRequest(request);

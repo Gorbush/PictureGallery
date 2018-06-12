@@ -47,7 +47,7 @@ $(document).ready(function() {
         alert('Call Reindex!!');
         $.ajax({
             type: "GET",
-            url: "/indexing/index",
+            url: "/importing/import",
             success: function(data) {
                 if (data.status != "200") {
                     alert("ReIndex failed "+data.message);
@@ -67,7 +67,7 @@ $(document).ready(function() {
 
 function getIndexRequests(nodeId) {
     var response = "";
-    var url = "/indexing/list/"+(nodeId==="#"?"":nodeId);
+    var url = "/importing/list/"+(nodeId==="#"?"":nodeId);
     $.ajax({
         type: "GET",
         url: url,
@@ -90,6 +90,7 @@ function getIndexRequests(nodeId) {
     }
     return [{"text" : "ERROR", "id" : "1", "children" : false}];
 }
+
 function preprocessAsNodes(nodesList) {
     for(nodexIndex in nodesList) {
         var node = nodesList[nodexIndex];

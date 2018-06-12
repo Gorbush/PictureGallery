@@ -83,7 +83,7 @@ public class ImportUtils {
             timestamp = new DateTime();
         }
 
-        String picFolderName = timestamp.toString("/yyyy/MM/dd/SSSSS");
+        String picFolderName = timestamp.toString("/yyyy/MM/dd/SSSSSSSSS"); //SSSSSSSSS
         Path thumbFolder = Paths.get(appConfig.getThumbsRootFolder(), picFolderName);
 
         if (!thumbFolder.toFile().exists()) {

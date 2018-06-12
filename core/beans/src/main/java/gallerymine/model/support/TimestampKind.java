@@ -6,6 +6,7 @@ import org.joda.time.DateTime;
  * Created by sergii_puliaiev on 6/11/17.
  */
 public enum TimestampKind {
+    TS_UNKNOWN("UNKNOWN", 0),
     TS_FILE_CREATE("FILE_CREATE", 100),
     TS_FILE_MODIFY("FILE_MODIFY", 200),
     TS_FILE_EXIF("EXIF", 300),

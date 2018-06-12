@@ -12,7 +12,7 @@ import java.util.*;
 @Document(collection = "picture")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class Picture extends FileInformation {
+public class Picture extends PictureInformation {
 
     private String label;
 

@@ -28,6 +28,8 @@ public class AppConfig {
     @Value("${importRootFolder}")
     public String importRootFolder;
 
+    @Value("${importExposedRootFolder}")
+    public String importExposedRootFolder;
 
     public String getGalleryRootFolder() {
         checkFolders();
@@ -42,6 +44,16 @@ public class AppConfig {
     public String getThumbsRootFolder() {
         checkFolders();
         return thumbsRootFolder;
+    }
+
+    public String getImportRootFolder() {
+        checkFolders();
+        return importRootFolder;
+    }
+
+    public String getImportExposedRootFolder() {
+        checkFolders();
+        return importExposedRootFolder;
     }
 
     public String relativizePathToGallery(String filePath) throws FileNotFoundException {

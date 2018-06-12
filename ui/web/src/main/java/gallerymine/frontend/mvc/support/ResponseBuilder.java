@@ -79,6 +79,13 @@ public class ResponseBuilder {
         return builder;
     }
 
+    public static ResponseBuilder responseWarn(String message) {
+        ResponseBuilder builder = new ResponseBuilder();
+        builder.put("warning", message);
+        builder.put("status", "399");
+        return builder;
+    }
+
     public static ResponseBuilder responseError(String message) {
         ResponseBuilder builder = new ResponseBuilder();
         builder.put("error", message);
@@ -97,5 +104,36 @@ public class ResponseBuilder {
     public ModelAndView buildModel(String view) {
         ModelAndView model = new ModelAndView(view, build());
         return model;
+    }
+
+    public ResponseBuilder putId(String id) {
+        Object criteria = map.get("criteria");
+        if (criteria == null) {
+            HashMap criteriaMap = new HashMap();
+            map.put("criteria", criteriaMap);
+            criteriaMap.put("id", id);
+        } else {
+            if (criteria instanceof Map) {
+                ((Map)criteria).put("id", id);
+            } else {
+                throw new RuntimeException("critearia is not a map!");
+            }
+        }
+        return this;
+    }
+
+    public ResponseBuilder result(Object result) {
+        map.put("result", result);
+        return this;
+    }
+
+    public ResponseBuilder op(String operationName) {
+        map.put("op", operationName);
+        return this;
+    }
+
+    public ResponseBuilder original(Object originalObject) {
+        map.put("original", originalObject);
+        return this;
     }
 }

@@ -37,6 +37,7 @@
         <module>core</module>
         <module>plugins</module>
         <module>ui</module>
+        <module>indexingAgent</module>
     </modules>
 
 </project>

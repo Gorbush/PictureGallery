@@ -139,7 +139,7 @@
         <!--</filter>-->
     <!--</appender>-->
 
-	<logger name="org.springframework" level="DEBUG" />
+	<logger name="org.springframework" level="INFO" />
 
 	<logger name="gallerymine" level="INFO" additivity="true">
 		<!--<appender-ref ref="INDEX_FILE" />-->
@@ -169,11 +169,11 @@
 		<appender-ref ref="INDEX_FILE_UNKNOWN_DIR" />
 	</logger>
 
-	<logger name="org.springframework.data.mongodb" level="DEBUG" additivity="true">
+	<logger name="org.springframework.data.mongodb" level="INFO" additivity="true">
 		<appender-ref ref="MONGO_FILE" />
 	</logger>
 
-	<logger name="org.springframework.web" level="DEBUG" additivity="true">
+	<logger name="org.springframework.web" level="INFO" additivity="true">
 		<appender-ref ref="SPRING_WEB_FILE" />
 	</logger>
 
@@ -193,9 +193,18 @@
 		<appender-ref ref="SPRING_FILE" />
 	</logger -->
 
-	<logger name="org.springframework" level="DEBUG" additivity="true">
+    <logger name="org.springframework.data" level="INFO" additivity="true">
+    </logger>
+
+    <logger name="org.springframework.data.auditing.AuditingHandler" level="INFO" additivity="true">
+    </logger>
+
+    <logger name="org.springframework" level="INFO" additivity="true">
 		<appender-ref ref="SPRING_FILE" />
 	</logger>
+
+	<logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="WARN" additivity="true" />
+	<logger name="org.springframework.beans.factory.support.DefaultListableBeanFactory" level="WARN" additivity="true" />
 
 	<root level="INFO">
 		<!--<appender-ref ref="stdout"/>-->

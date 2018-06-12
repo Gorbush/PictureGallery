@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "source")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class Source extends FileInformation {
+public class Source extends PictureInformation {
 
     SourceKind kind = SourceKind.UNSET;
 

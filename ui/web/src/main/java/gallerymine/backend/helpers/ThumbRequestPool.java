@@ -73,14 +73,15 @@ public class ThumbRequestPool {
     public void checkForAwaitingRequests() {
         Thread.currentThread().setName("ThumbRequestRunner");
         int queued = pool.getThreadPoolExecutor().getQueue().size();
-        log.info("ThumbRequest check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB
             Page<ThumbRequest> foundRequests = requestRepository.findByInProgress(false,
                     new PageRequest(0, 5, new Sort(new Sort.Order(Sort.Direction.DESC, "updated"))));
-            log.info("ThumbRequest FOUND size={}", foundRequests.getNumber());
+            log.info("ThumbRequest check db queue size={} (nothing in memory) ", foundRequests.getNumber());
             for(ThumbRequest request: foundRequests) {
                 executeRequest(request);
             }
+        } else {
+            log.info("ThumbRequest check memory queue size={}", queued);
         }
     }
 

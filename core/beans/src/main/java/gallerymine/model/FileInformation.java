@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -26,6 +27,8 @@ public class FileInformation implements Comparable<FileInformation> {
     private String id;
 
     @Indexed
+    private String storage;
+    @Indexed
     private String filePath;
     @Indexed
     private String fileName;
@@ -35,18 +38,14 @@ public class FileInformation implements Comparable<FileInformation> {
     private SortedSet<Timestamp> timestamps = new TreeSet<>();
     @Indexed
     private long size;
-    private long width;
-    private long height;
-    private int orientation;
-    private GeoJsonPoint geoLocation;
+
     private String error;
     @Indexed
     private String thumbPath;
     @Indexed
     private DateTime timestamp;
-    private String device;
 
-    private boolean assignedToPicture = false;
+    private String indexProcessId;
 
     @CreatedDate
     private DateTime indexed;
@@ -61,8 +60,12 @@ public class FileInformation implements Comparable<FileInformation> {
         }
     }
 
-    public void addStamps(SortedSet<Timestamp> timestamps) {
+    public void addStamps(Collection<Timestamp> timestamps) {
         this.timestamps.addAll(timestamps);
+    }
+
+    public void addStamp(Timestamp timestamp) {
+        this.timestamps.add(timestamp);
     }
 
     public boolean hasThumb() {
@@ -70,7 +73,18 @@ public class FileInformation implements Comparable<FileInformation> {
     }
 
     public String getFullFilePath() {
-        return filePath+'/'+fileName;
+        if (StringUtils.isNotBlank(filePath)) {
+            return filePath + '/' + fileName;
+        } else {
+            return fileName;
+        }
+    }
+
+    public String getLocation() {
+        return
+            (StringUtils.isNotBlank(storage) ? (storage+":") : "") +
+            (StringUtils.isNotBlank(filePath) ? (filePath + '/') : "") +
+            fileName;
     }
 
     public void copyFrom(Source sourceToMatch) {
@@ -83,17 +97,10 @@ public class FileInformation implements Comparable<FileInformation> {
         timestamps.addAll(sourceToMatch.getTimestamps());
 
         size = sourceToMatch.getSize();
-        width = sourceToMatch.getWidth();
-        height = sourceToMatch.getHeight();
-        orientation = sourceToMatch.getOrientation();
 
-        geoLocation = sourceToMatch.getGeoLocation();
         error = sourceToMatch.getError();
         thumbPath = sourceToMatch.getThumbPath();
         timestamp = sourceToMatch.getTimestamp();
-        device = sourceToMatch.getDevice();
-
-        assignedToPicture = sourceToMatch.isAssignedToPicture();
     }
 
     @Override
