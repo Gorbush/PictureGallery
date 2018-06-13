@@ -399,8 +399,8 @@ drwxr-xr-x   16 gorbush  staff         18 2015-01-11 14:20:33 _Backup_Hero/
             indexProcessStatus(context.indexProcessId, "RUNNING");
             java.nio.file.Files.lines(lsFile, Charset.forName("UTF8")).forEach(consumer);
 
-            String message = String.format("Statistics:\n  lines   : %8s\n   folders: %8s\n   sent   : %8s\n" +
-                            "    SKIP : %8s\n    OK   : %8s\n    EXIST: %8s\n    FAIL : %8s\n    BAD  : %8s",
+            String message = String.format("Statistics:\n  lines   : %10s\n   folders: %10s\n   sent   : %10s\n" +
+                            "    SKIP : %10s\n    OK   : %10s\n    EXIST: %10s\n    FAIL : %10s\n    BAD  : %10s\n",
                     formatNumber(context.lineIndex.get()),
                     formatNumber(context.foldersProcessed.get()),
                     formatNumber(context.linesSent.get()),
