@@ -103,7 +103,7 @@ public class IndexingAgent {
                 slashStep = 0;
             }
 
-            System.out.print(LINE_START + chars.charAt(step) + message);
+            System.out.print(LINE_START + chars.charAt(step) + " " + message);
             slashStepUpdated = now;
         }
     }
@@ -129,6 +129,12 @@ public class IndexingAgent {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern ( "HH:mm:ss" );
         String output = formatter.format ( zdt ).replaceAll("^[0:]+", "");
+        if (output.isEmpty()) {
+            output = "0";
+        }
+        if (!output.contains(":")) {
+            output += " sec";
+        }
         return output;
     }
 
@@ -203,7 +209,7 @@ public class IndexingAgent {
 
             context.status = status;
 
-            rotatingSlash(" " + millisToIntervalSeconds(spentTime) + status);
+            rotatingSlash(millisToIntervalSeconds(spentTime) + status);
             if (currentLine > context.skipLines) {
                 try {
                     Files.write(context.fileDone, (String.valueOf(currentLine-1) + "\n" + status + (message!=null?message:"") ).getBytes());
@@ -215,7 +221,7 @@ public class IndexingAgent {
         public void accept(String line) {
             long spentTime = System.currentTimeMillis() - context.started;
 
-            rotatingSlash(" " + millisToIntervalSeconds(spentTime) + context.status);
+            rotatingSlash(millisToIntervalSeconds(spentTime) + (context.status == null ? "" : context.status ));
             long processedSize = context.processed.addAndGet(line.getBytes().length);
 
             int currentLine = context.lineIndex.getAndIncrement();
@@ -564,7 +570,8 @@ drwxr-xr-x   16 gorbush  staff         18 2015-01-11 14:20:33 _Backup_Hero/
         String content = "{ " +
                 "\"indexProcessId\": \""+indexProcessId+"\","+
                 "\"storage\": \""+escapeJSon(storage)+"\","+
-                "\"fileSize\": "+fileSize+","+
+                "\"exists\": true,"+
+                "\"size\": "+fileSize+","+
                 "\"timestamp\": \""+fileStamp+"\","+
                 "\"filePath\": \""+escapeJSon(filePath)+"\","+
                 "\"fileName\": \""+escapeJSon(fileName)+"\""+
