@@ -1,0 +1,10 @@
+TARGET=$1
+[[ "$TARGET" == "" ]] && TARGET = "."
+
+echo "Reset sticky bits for $TARGET"
+chmod  -R -t "$TARGET"
+
+ if [ "$(uname -a | grep -oc Darwin)" == "1" ]; then
+    echo "Reset tags for mac os"
+    find -L "$TARGET" -type f -exec label 00 "{}" \;
+ fi

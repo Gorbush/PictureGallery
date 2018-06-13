@@ -1,0 +1,49 @@
+FILE="$1"
+
+[[ ! -f $FILE ]] && echo "File not found!" && exit 1
+
+SIZE=$(stat -f%z "$1")
+URL="http://localhost:8070/files/$SIZE/$FILE"
+
+# Set Finder label color
+label(){
+  [ ! "$(uname -a | grep -oc Darwin)" == "1" ] && return
+  if [ $# -lt 2 ]; then
+    echo "USAGE: label [0-7] file1 [file2] ..."
+    echo "Sets the Finder label (color) for files"
+    echo "Default colors:"
+    echo " 0  No color"
+    echo " 1  Orange"
+    echo " 2  Red"
+    echo " 3  Yellow"
+    echo " 4  Blue"
+    echo " 5  Purple"
+    echo " 6  Green"
+    echo " 7  Gray"
+  else
+    osascript - "$@" &> /dev/null << EOF
+    on run argv
+        set labelIndex to (item 1 of argv as number)
+        repeat with i from 2 to (count of argv)
+          tell application "Finder"
+              set theFile to POSIX file (item i of argv) as alias
+              set label index of theFile to labelIndex
+          end tell
+        end repeat
+    end run
+EOF
+  fi
+}
+
+httpcode=$(curl -s -X PUT -o /dev/null -w "%{http_code}" "$URL")
+if [[ "$httpcode" == "200" ]];then
+    label 02 "$FILE"
+    # Reset the sticky bit
+    chmod -t "$FILE"
+    echo "not found $FILE" &>2
+else
+    label 06 "$FILE"
+    # Set the sticky bit
+    chmod +t "$FILE"
+    echo "existing $FILE"
+fi

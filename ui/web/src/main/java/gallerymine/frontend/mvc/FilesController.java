@@ -91,7 +91,7 @@ public class FilesController {
 
     @GetMapping("{size}/{fileName}")
     @ResponseBody
-	public String findFile(@PathVariable Long size,@PathVariable String fileName) {
+	public String findFile(HttpServletResponse response, @PathVariable Long size,@PathVariable String fileName) {
 		Collection<FileInformation> sources;
 
 		if (size != null) {
@@ -99,8 +99,12 @@ public class FilesController {
 		} else {
 			sources = fileRepository.findByFileName(fileName);
 		}
-
-        return sources.stream().map(FileInformation::getLocation).collect( Collectors.joining( "\n" ) );
+		if (sources.size() == 0) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return "";
+		} else {
+			return sources.stream().map(FileInformation::getLocation).collect(Collectors.joining("\n"));
+		}
 	}
 
     @GetMapping("{storage}/{size}/{fileName}")
