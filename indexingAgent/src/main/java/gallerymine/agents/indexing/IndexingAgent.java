@@ -117,7 +117,7 @@ public class IndexingAgent {
         Instant instant = Instant.ofEpochMilli ( millis );
         ZonedDateTime zdt = ZonedDateTime.ofInstant ( instant, ZoneOffset.systemDefault() );
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern ( "YYYY/MM/dd HH:mm:ss.SSS" );
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern ( "YYYY/MM/dd HH:mm:ss" );
         String output = formatter.format ( zdt );
         return output;
     }
@@ -217,10 +217,13 @@ public class IndexingAgent {
                 rate = sent / (spentTime / 1000);
             }
 
-            String status = String.format("  %3d%%  rate:%4d call/sec Estimate: %s " +
-                                          " SKIP : %6d  OK: %6d    EXIST: %6d    FAIL: %6d    BAD: %6d",
+            String status = String.format("%s  %3d%%  rate:%4d call/sec Estimate: %s " +
+                                          " SKIP: %s  OK: %s    EXIST: %s    FAIL: %s    BAD: %s",
+                    millisToIntervalSeconds(spentTime),
                     newPerc, rate, millisToInterval(newPerc == 0 ? 0 : (spentTime * 100 / newPerc)),
-                    context.linesSkipped.get(), context.putOk.get(), context.putExists.get(), context.putFail.get(), context.putBad.get());
+                    formatNumber(context.linesSkipped.get()), formatNumber(context.putOk.get()),
+                    formatNumber(context.putExists.get()), formatNumber(context.putFail.get()),
+                    formatNumber(context.putBad.get()));
 
             context.status = status;
 
@@ -396,10 +399,17 @@ drwxr-xr-x   16 gorbush  staff         18 2015-01-11 14:20:33 _Backup_Hero/
             indexProcessStatus(context.indexProcessId, "RUNNING");
             java.nio.file.Files.lines(lsFile, Charset.forName("UTF8")).forEach(consumer);
 
-            String message = String.format("Statistics:\n  lines   : %6d\n   folders: %6d\n   sent   : %6d\n" +
-                            "    SKIP : %6d\n    OK   : %6d\n    EXIST: %6d\n    FAIL : %6d\n    BAD  : %6d",
-                    context.lineIndex.get(), context.foldersProcessed.get(), context.linesSent.get(),
-                    context.linesSkipped.get(), context.putOk.get(), context.putExists.get(), context.putFail.get(), context.putBad.get());
+            String message = String.format("Statistics:\n  lines   : %8s\n   folders: %8s\n   sent   : %8s\n" +
+                            "    SKIP : %8s\n    OK   : %8s\n    EXIST: %8s\n    FAIL : %8s\n    BAD  : %8s",
+                    formatNumber(context.lineIndex.get()),
+                    formatNumber(context.foldersProcessed.get()),
+                    formatNumber(context.linesSent.get()),
+                    formatNumber(context.linesSkipped.get()),
+                    formatNumber(context.putOk.get()),
+                    formatNumber(context.putExists.get()),
+                    formatNumber(context.putFail.get()),
+                    formatNumber(context.putBad.get())
+            );
             log(message);
             consumer.writeDoneFile(context.lineIndex.get(), context.sourceFileSize, message+context.previousDoneFileStats);
             indexProcessStatus(context.indexProcessId, "FINISHED");
