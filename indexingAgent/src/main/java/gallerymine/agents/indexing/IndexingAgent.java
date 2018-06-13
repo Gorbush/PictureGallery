@@ -1,5 +1,6 @@
 package gallerymine.agents.indexing;
 
+import org.joda.time.DateTime;
 import sun.net.ConnectionResetException;
 
 import java.io.*;
@@ -19,6 +20,7 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.lang.System.exit;
 
@@ -108,12 +110,24 @@ public class IndexingAgent {
         }
     }
 
+    private static String millisToDateTime(long millis) {
+        if (millis == 0) {
+            return "???";
+        }
+        Instant instant = Instant.ofEpochMilli ( millis );
+        ZonedDateTime zdt = ZonedDateTime.ofInstant ( instant, ZoneOffset.systemDefault() );
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern ( "YYYY/MM/dd HH:mm:ss.SSS" );
+        String output = formatter.format ( zdt );
+        return output;
+    }
+
     private static String millisToInterval(long millis) {
         if (millis == 0) {
             return "???";
         }
         Instant instant = Instant.ofEpochMilli ( millis );
-        ZonedDateTime zdt = ZonedDateTime.ofInstant ( instant , ZoneOffset.UTC );
+        ZonedDateTime zdt = ZonedDateTime.ofInstant ( instant, ZoneOffset.systemDefault() );
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern ( "HH:mm:ss.SSS" );
         String output = formatter.format ( zdt );
@@ -167,6 +181,7 @@ public class IndexingAgent {
 
         String status;
         public String indexProcessId;
+        String previousDoneFileStats = "";
     }
 
     private class LineConsumer implements Consumer<String> {
@@ -226,7 +241,7 @@ public class IndexingAgent {
 
             int currentLine = context.lineIndex.getAndIncrement();
 
-            writeDoneFile(currentLine, processedSize, null);
+            writeDoneFile(currentLine, processedSize, context.previousDoneFileStats);
 
             if (line.matches("^\\./.*")) {
                 // this is current processing folder line - saving
@@ -356,6 +371,10 @@ public class IndexingAgent {
             log("DONE file found, continue parsing: %s", context.fileDone.getFileName());
             List<String> doneText = Files.readAllLines(context.fileDone);
             context.skipLines = Long.parseLong(doneText.get(0));
+            String lastRunDate = millisToDateTime(context.fileDone.toFile().lastModified());
+            context.previousDoneFileStats =
+                    "\n\nLast Run on " +lastRunDate + "\n" +
+                    doneText.stream().collect(Collectors.joining("\n"));
             log("   starting line %d >> %s", context.skipLines, doneText.get(1));
         }
         try (BufferedWriter writerError = Files.newBufferedWriter(errorFile);
@@ -382,7 +401,7 @@ drwxr-xr-x   16 gorbush  staff         18 2015-01-11 14:20:33 _Backup_Hero/
                     context.lineIndex.get(), context.foldersProcessed.get(), context.linesSent.get(),
                     context.linesSkipped.get(), context.putOk.get(), context.putExists.get(), context.putFail.get(), context.putBad.get());
             log(message);
-            consumer.writeDoneFile(context.lineIndex.get(), context.sourceFileSize, message);
+            consumer.writeDoneFile(context.lineIndex.get(), context.sourceFileSize, message+context.previousDoneFileStats);
             indexProcessStatus(context.indexProcessId, "FINISHED");
         } catch (Exception e) {
             indexProcessStatus(context.indexProcessId, "FAILED");
