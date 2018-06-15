@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+<title>Processes : View all</title>
+</head>
+<body>
+	<h1 layout:fragment="header">Processes : View all</h1>
+	<div layout:fragment="content" class="container">
+		<div class="pull-right">
+			<a href="form.html" th:href="@{/(form)}">Create Process</a>
+		</div>
+		<table class="table table-bordered table-striped">
+			<thead>
+				<tr>
+					<td>ID</td>
+					<td>Status</td>
+					<td>Type</td>
+					<td>Name</td>
+					<td>Started</td>
+					<td>Finished</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:if="${processes.size == 0}">
+					<td colspan="3">No processes</td>
+				</tr>
+				<tr th:each="process : ${processes}">
+					<td th:text="${process.id}">1</td>
+					<td th:text="${process.status}">1</td>
+					<td th:text="${process.type}">1</td>
+					<td th:text="${process.name}">1</td>
+					<td th:text="${process.started}">1</td>
+					<td th:text="${process.finished}">1</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

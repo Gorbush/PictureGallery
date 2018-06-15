@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+<title>Tests</title>
+</head>
+<body>
+	<h1 layout:fragment="header">Test</h1>
+	<div layout:fragment="content" class="container">
+		<div class="pull-right">
+			<a href="form.html" th:href="@{/(form)}">Action</a>
+            <p th:text="${files.size}"></p>
+		</div>
+		<div class="pull-left">
+			<h1>Format ISO</h1>
+			<p th:text="${#dates.formatISO(standardDate)}"></p>
+			<!--<p th:text="${#temporals.formatISO(localDateTime)}"></p>-->
+			<!--<p th:text="${#temporals.formatISO(localDate)}"></p>-->
+			<!--<p th:text="${#temporals.formatISO(timestamp)}"></p>-->
+
+            <h1>Format manually</h1>
+            <!--<p th:text="${#dates.format(standardDate, 'dd-MM-yyyy HH:mm')}"></p>-->
+            <!--<p th:text="${#temporals.format(localDateTime, 'dd-MM-yyyy HH:mm')}"></p>-->
+            <!--<p th:text="${#temporals.format(localDate, 'MM-yyyy')}"></p>-->
+
+            <h1>Joda format</h1>
+			<!--<p th:text="${#joda.mediumDate(dt)}"></p>-->
+            <!--<p th:text="${#joda.fullDate(dt)}"></p>-->
+            <!--<p th:text="${#joda.fullDateTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.fullTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.longDate(dt)}"></p>-->
+            <!--<p th:text="${#joda.longDateTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.longTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.mediumDate(dt)}"></p>-->
+            <!--<p th:text="${#joda.mediumDateTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.mediumTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.shortDate(dt)}"></p>-->
+            <!--<p th:text="${#joda.shortDateTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.shortTime(dt)}"></p>-->
+            <!--<p th:text="${#joda.isoDateTime(dt)}"></p>-->
+		</div>
+	</div>
+</body>
+</html>

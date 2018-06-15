@@ -45,6 +45,7 @@ public class FileInformation implements Comparable<FileInformation> {
     @Indexed
     private DateTime timestamp;
 
+    @Indexed
     private String indexProcessId;
 
     @CreatedDate

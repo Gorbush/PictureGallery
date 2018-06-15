@@ -1,5 +1,6 @@
 package gallerymine.model;
 
+//import com.mysema.query.annotations.QueryEntity;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import lombok.Data;
@@ -10,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
+//@QueryEntity
 @Data
 public class Process {
     @Id

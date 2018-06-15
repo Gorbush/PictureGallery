@@ -21,15 +21,25 @@ import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 public class ImportRequest {
 
     public enum ImportStatus {
-        START,
-        AWAITING,
-        ENUMERATING,
-        ENUMERATED,
-        FILES_PROCESSING,
-        RESTART,
-        SUB,
-        FAILED,
-        DONE
+        START(false),
+        AWAITING(false),
+        ENUMERATING(false),
+        ENUMERATED(false),
+        FILES_PROCESSING(false),
+        RESTART(false),
+        SUB(false),
+        FAILED(true),
+        DONE(true);
+
+        private boolean aFinal;
+
+        private ImportStatus(boolean aFinal) {
+            this.aFinal = aFinal;
+        }
+
+        public boolean isFinal() {
+            return aFinal;
+        }
     }
 
     @Id
@@ -51,6 +61,9 @@ public class ImportRequest {
     private Integer filesCount;
     private Integer filesIgnoredCount;
     private Integer foldersCount;
+
+    @Indexed
+    private String indexProcessId;
 
     @CreatedDate
     private DateTime created;

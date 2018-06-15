@@ -203,6 +203,9 @@
 		<appender-ref ref="SPRING_FILE" />
 	</logger>
 
+	<logger name="org.thymeleaf.standard.expression" level="DEBUG" additivity="true">
+	</logger>
+
 	<logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="WARN" additivity="true" />
 	<logger name="org.springframework.beans.factory.support.DefaultListableBeanFactory" level="WARN" additivity="true" />
 

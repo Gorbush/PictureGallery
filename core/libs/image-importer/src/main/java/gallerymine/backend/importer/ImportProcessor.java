@@ -3,16 +3,18 @@ package gallerymine.backend.importer;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
+import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
 import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.ImportSource;
-import gallerymine.model.Source;
+import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
-import gallerymine.model.importer.IndexRequest;
 import gallerymine.model.importer.ThumbRequest;
-import org.apache.commons.io.FileUtils;
+import gallerymine.model.support.ProcessStatus;
+import gallerymine.model.support.ProcessType;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,9 @@ public class ImportProcessor implements Runnable {
 
     @Autowired
     protected ImportRequestRepository requestRepository;
+
+    @Autowired
+    protected ProcessRepository processRepository;
 
     @Autowired
     protected ImportSourceRepository sourceRepository;
@@ -112,14 +117,29 @@ public class ImportProcessor implements Runnable {
     }
 
     public void run() {
+        Process process = null;
         try {
             log.info("ImportRequest processing started for {}", request.getPath());
-            processRequest(request);
-            log.info("ImportRequest processing succeed for {}", request.getPath());
+            if (StringUtils.isNotBlank(request.getIndexProcessId())) {
+                process = processRepository.findOne(request.getIndexProcessId());
+            }
+            if (process == null) {
+                process = new Process();
+                process.setName("Pictures Folder Import ?");
+                process.setType(ProcessType.IMPORT);
+            }
+            process.setStatus(ProcessStatus.STARTED);
+            process.setStarted(DateTime.now());
+            processRepository.save(process);
+
+            processRequest(request, process);
+
+
+            log.info("ImportRequest processing started successfuly for {}", request.getPath());
         } catch (Exception e){
             log.error("ImportRequest processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
         }
-    }
+}
 
     private ImportRequest checkRequest(ImportRequest requestSrc) {
         ImportRequest request = requestRepository.findOne(requestSrc.getId());
@@ -139,7 +159,7 @@ public class ImportProcessor implements Runnable {
         return request;
     }
 
-    public void processRequest(ImportRequest requestSrc) {
+    public void processRequest(ImportRequest requestSrc, Process process) {
         log.info("ImportRequest picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
         ImportRequest request = checkRequest(requestSrc);
         if (request == null) {
@@ -155,7 +175,7 @@ public class ImportProcessor implements Runnable {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path, file -> file.toFile().isDirectory())) {
                 int foldersCount = 0;
                 for (Path dir : directoryStream) {
-                    registerNewFolderRequest(dir.toAbsolutePath().toString(), request);
+                    registerNewFolderRequest(dir.toAbsolutePath().toString(), request, process.getId());
                     foldersCount++;
                 }
                 request.setFoldersCount(foldersCount);
@@ -243,7 +263,7 @@ public class ImportProcessor implements Runnable {
 
         ImportRequest request = requestRepository.findOne(requestId);
         if (request == null) {
-            log.error("Failed to check subs for request id={}", requestId);
+            log.error("Request not found, failed to check subs for id={}", requestId);
             return;
         }
 
@@ -257,7 +277,27 @@ public class ImportProcessor implements Runnable {
             request.setStatus(SUB);
         }
         requestRepository.save(request);
+
         log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        if (request.getStatus().isFinal()) {
+            log.info("ImportRequest finished id={} status={}", requestId, request.getStatus());
+        }
+
+        if (request.getStatus().isFinal() && StringUtils.isNotBlank(request.getIndexProcessId()) && StringUtils.isBlank(request.getParent())) {
+            Process process = processRepository.findOne(request.getIndexProcessId());
+            if (process != null) {
+                if (request.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
+                    process.setStatus(ProcessStatus.FINISHED);
+                } else {
+                    process.setStatus(ProcessStatus.FAILED);
+                }
+                process.setFinished(DateTime.now());
+                processRepository.save(process);
+                log.info("Process finished id={} status={}", process.getId(), process.getStatus());
+            } else {
+                log.info("Process not found id={} importRequest={}", process.getId(), request.getId());
+            }
+        }
 
         if (allDone && request.getParent() != null) {
             checkSubsAndDone(request.getParent());
@@ -304,7 +344,7 @@ public class ImportProcessor implements Runnable {
         }
     }
 
-    public ImportRequest registerNewFolderRequest(String path, ImportRequest parent) throws FileNotFoundException {
+    public ImportRequest registerNewFolderRequest(String path, ImportRequest parent, String indexProcessId) throws FileNotFoundException {
         path = appConfig.relativizePathToSource(path);
         ImportRequest newRequest = requestRepository.findByPath(path);
         if (newRequest == null) {
@@ -314,6 +354,7 @@ public class ImportProcessor implements Runnable {
             newRequest.setParent(parent.getId());
             newRequest.setRootId(parent.getRootId());
         }
+        newRequest.setIndexProcessId(indexProcessId);
         newRequest.setError(null);
         newRequest.setStatus(START);
         newRequest.setPath(path);

@@ -1,6 +1,7 @@
 package gallerymine.model.support;
 
 public enum ProcessStatus {
+    PREPARING(false),
     STARTING(false),
     STARTED(false),
     RUNNING(false),

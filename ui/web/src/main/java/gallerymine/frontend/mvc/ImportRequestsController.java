@@ -19,9 +19,13 @@ package gallerymine.frontend.mvc;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.CustomerRepository;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
+import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportRequestPoolManager;
+import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.support.ProcessStatus;
+import gallerymine.model.support.ProcessType;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -30,9 +34,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -57,6 +64,9 @@ public class ImportRequestsController {
 
 	@Autowired
 	private ImportRequestRepository requestRepository;
+
+	@Autowired
+    private ProcessRepository processRepository;
 
 	@Autowired
 	private ImportProcessor requestProcessor;
@@ -86,19 +96,35 @@ public class ImportRequestsController {
         Path pathExposed = Paths.get(appConfig.getImportExposedRootFolder());
         Path pathToImport = Paths.get(appConfig.getImportRootFolder(), DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
 
-        String pathToIndex = pathToImport.toAbsolutePath().toString();
+        Process process = new Process();
+        try {
+            process.setName("Pictures Folder Import "+pathToImport.getFileName());
+            process.setType(ProcessType.IMPORT);
+            process.setStarted(DateTime.now());
+            process.setStatus(ProcessStatus.PREPARING);
+            processRepository.save(process);
 
-        ImportRequest request = requestRepository.findByPath(pathToIndex);
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pathExposed)) {
+                for (Path srcFile : directoryStream) {
+                    FileUtils.moveFileToDirectory(srcFile.toFile(), pathToImport.toFile(), true);
+                }
+                process.setStatus(ProcessStatus.STARTING);
+                processRepository.save(process);
+            } catch (Exception e) {
+                process.setStatus(ProcessStatus.FAILED);
+                processRepository.save(process);
+                return responseError("Failed to index. Reason: Failed to move files from exposed folder. Reason: "+e.getMessage(), e);
+            }
 
-        if (!enforce) {
-            if (request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
+            String pathToIndex = pathToImport.toAbsolutePath().toString();
+            ImportRequest request = requestRepository.findByPath(pathToIndex);
+
+            if ((!enforce) && request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
                 return responseError("Importing is already in progress").build();
             }
-        }
 
-        try {
-            request = requestProcessor.registerNewFolderRequest(pathToIndex, null);
-            requestProcessor.processRequest(request);
+            request = requestProcessor.registerNewFolderRequest(pathToIndex, null, process.getId());
+            requestProcessor.processRequest(request, process);
 
             return responseOk().build();
         } catch (Exception e) {
