@@ -43,6 +43,12 @@ public class MainPageController {
         return new ModelAndView("main/files", "files", files);
     }
 
+    @GetMapping("/main")
+    public ModelAndView mainPage(Principal principal) {
+        Page<FileInformation> files = fileRepository.findAll(new PageRequest(0, 50, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
+        return new ModelAndView("main/main", "main", files);
+    }
+
     @GetMapping("/processes")
     public ModelAndView listTopActiveProcesses(Principal principal) {
 
