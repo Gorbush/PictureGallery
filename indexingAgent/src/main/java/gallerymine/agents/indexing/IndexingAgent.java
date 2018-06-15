@@ -585,7 +585,7 @@ drwxr-xr-x   16 gorbush  staff         18 2015-01-11 14:20:33 _Backup_Hero/
         if (code == HttpURLConnection.HTTP_SEE_OTHER) {
             return FilePutResult.ALREADY_EXISTS;
         }
-        if (code == HttpURLConnection.HTTP_OK) {
+        if (code == HttpURLConnection.HTTP_CREATED) {
             return FilePutResult.OK;
         }
         if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -634,7 +634,7 @@ drwxr-xr-x   16 gorbush  staff         18 2015-01-11 14:20:33 _Backup_Hero/
         if (code == HttpURLConnection.HTTP_SEE_OTHER) {
             return FilePutResult.ALREADY_EXISTS;
         }
-        if (code == HttpURLConnection.HTTP_OK) {
+        if (code == HttpURLConnection.HTTP_CREATED) {
             return FilePutResult.OK;
         }
         if (code == HttpURLConnection.HTTP_BAD_REQUEST) {

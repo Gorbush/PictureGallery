@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+<title>Files : View all</title>
+</head>
+<body>
+	<h1 layout:fragment="header">Files : View all</h1>
+	<div layout:fragment="content" class="container">
+		<div class="pull-right">
+			<a href="form.html" th:href="@{/(form)}">Create File</a>
+		</div>
+		<table class="table table-bordered table-striped">
+			<thead>
+				<tr>
+					<td>ID</td>
+					<td>Created</td>
+					<td>fileName</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:if="${files.size > 0}">
+					<td colspan="3">No files</td>
+				</tr>
+				<tr th:each="file : ${files}">
+					<td th:text="${file.id}">1</td>
+					<td th:text="${file.timestamp}">1</td>
+					<td th:text="${file.fileName}">1</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

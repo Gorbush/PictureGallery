@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gallerymine.frontend.mvc;
+package gallerymine.services.rest;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ProcessRepository;

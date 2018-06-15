@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package gallerymine.frontend.mvc;
+package gallerymine.services.rest;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.FileRepository;
-import gallerymine.backend.beans.repository.PictureRepository;
-import gallerymine.backend.beans.repository.SourceRepository;
-import gallerymine.backend.helpers.matchers.SourceFilesMatcher;
-import gallerymine.frontend.mvc.support.ResponseBuilder;
 import gallerymine.model.FileInformation;
-import gallerymine.model.Source;
-import gallerymine.model.importer.ActionRequest;
 import gallerymine.model.mvc.FileCriteria;
-import gallerymine.model.mvc.FolderStats;
-import gallerymine.model.mvc.SourceCriteria;
-import gallerymine.model.support.*;
+import gallerymine.model.support.TimestampKind;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.joda.time.DateTime;
@@ -36,8 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
@@ -45,9 +35,11 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
@@ -138,7 +130,7 @@ public class FilesController {
 
 		if (files.size() > 0) {
 			// should be return code 303
-			response.setStatus(303);
+			response.setStatus(HttpURLConnection.HTTP_SEE_OTHER);
 			return files.stream().map(FileInformation::getLocation).collect( Collectors.joining( "\n" ) );
 		}
 
@@ -168,7 +160,7 @@ public class FilesController {
 			}
 		}
 		FileInformation info = fileRepository.save(newInfo);
-
+		response.setStatus(HttpURLConnection.HTTP_CREATED);
 		return info.getId();
 	}
 
@@ -181,7 +173,7 @@ public class FilesController {
 
 		if (files.size() > 0) {
 			// should be return code 303
-			response.setStatus(303);
+			response.setStatus(HttpURLConnection.HTTP_SEE_OTHER);
 			return files.stream().map(FileInformation::getLocation).collect( Collectors.joining( "\n" ) );
 		}
 
@@ -191,7 +183,7 @@ public class FilesController {
 		}
 
 		FileInformation info = fileRepository.save(newInfo);
-
+		response.setStatus(HttpURLConnection.HTTP_CREATED);
 		return info.getId();
 	}
 
