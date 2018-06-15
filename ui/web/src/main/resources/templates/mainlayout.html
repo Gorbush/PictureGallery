@@ -34,6 +34,7 @@
 	<script type="application/javascript" src="js/TreeDates.js"></script>
 </head>
 <body>
+    <section layout:fragment="bodylevel" th:remove="tag">Fake body level</section>
 	<div class="container">
         <div id="pageHeader">
             <div id="pageHeaderLabel">
@@ -67,7 +68,6 @@
                 </div>
             </div>
         </div>
-		<section layout:fragment="header" th:remove="tag">Layout</section>
         <div id="pageContent" class="container-fluid row full-size ">
 		    <section layout:fragment="content" th:remove="tag">Fake content</section>
         </div>

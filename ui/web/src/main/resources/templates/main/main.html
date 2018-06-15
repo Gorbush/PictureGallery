@@ -10,12 +10,12 @@
     <script type="application/javascript" src="lib/gallery/js/gallery.js"></script>
 </head>
 <body>
-	<h1 layout:fragment="header">Files : View all</h1>
 	<section layout:fragment="pageButtons" class="pageButtons">
         <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
         <button type="button" id="apply" class="btn btn-success navbar-btn">Apply</button>
         <button type="button" id="reset" class="btn btn-warning navbar-btn">Reset</button>
     </section>
+
 	<section layout:fragment="pageNavigation" class="pageButtons">
         <ul class="pagination pagination-sm">
             <li>
@@ -47,6 +47,7 @@
             </li>
         </ul>
 	</section>
+
 	<section layout:fragment="pageButtonsRight" class="container">
         <div id="breadcrumb">
             <ol class="breadcrumb" id="breadcrumblist">
@@ -63,27 +64,8 @@
             </div>
         </div>
     </section>
-	<section layout:fragment="content" class="container">
-        <div id="matchedSourcesContent" class="col-sm-2">
-            <div id="folderTree">
-            </div>
-            <div id="datesTree">
-            </div>
-        </div>
-        <div id="matchingLinesContent" class="col-sm-10">
-            <div id="sources" class="SourceBlockContainer">
-            </div>
-            <div id="sourceProperties" class="SourcePropsContainer">
-                <div id="sourcePropHeader" class="blockHeader">
-                    <div class="title">Title</div>
-                    <div class="icon">Ic</div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <section layout:fragment="footer" class="container">
-    </section>
-    <section layout:fragment="dialogs" class="container">
+
+	<section layout:fragment="bodylevel" class="container">
         <div id="slideshow">
             <ul class="controls">
                 <li class="control previous">
@@ -101,6 +83,31 @@
                 <p class="caption"></p>
             </div>
         </div>
+    </section>
+
+    <section layout:fragment="content" class="container">
+        <div id="matchedSourcesContent" class="col-sm-2">
+            <div id="folderTree">
+            </div>
+            <div id="datesTree">
+            </div>
+        </div>
+        <div id="matchingLinesContent" class="col-sm-10">
+            <div id="sources" class="SourceBlockContainer">
+            </div>
+            <div id="sourceProperties" class="SourcePropsContainer">
+                <div id="sourcePropHeader" class="blockHeader">
+                    <div class="title">Title</div>
+                    <div class="icon">Ic</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section layout:fragment="footer" class="container">
+    </section>
+
+    <section layout:fragment="dialogs" class="container">
         <div id="contextMenuFolderAction" class="dropdown clearfix contextmenu">
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
                 <li><a tabindex="-1" href="#">Action</a></li>
@@ -129,7 +136,7 @@
                         <div class="timeStamp"></div>
                     </div>
                     <div class="source_image" title="SimpleHint">
-                        <img class="img-thumbnail" />
+                        <a href="#" class="source_anch"><img class="img-thumbnail" /></a>
                     </div>
                     <div class="decisionBlock">
                         <span class="decisionButton btn_LATER glyphicon glyphicon-time" value="later"></span>
@@ -138,7 +145,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
         <div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -148,7 +154,7 @@
                         <h4 class="modal-title" id="myModalLabel">Image preview</h4>
                     </div>
                     <div class="modal-body">
-                        <img src="" id="imagepreview"  />
+                        <img src="" id="imagepreview" />
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
