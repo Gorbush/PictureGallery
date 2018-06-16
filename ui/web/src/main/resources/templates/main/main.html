@@ -3,20 +3,20 @@
 	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
 	layout:decorator="mainlayout">
 <head>
-	<title>GalleryMine : View all</title>
+	<title>GalleryMine</title>
     <link rel="stylesheet" type="text/css" href="lib/gallery/css/slideshow.css" id="cssSlideshow" />
     <script type="application/javascript" src="js/sourceProperties.js"></script>
 
     <script type="application/javascript" src="lib/gallery/js/gallery.js"></script>
 </head>
 <body>
-	<section layout:fragment="pageButtons" class="pageButtons">
+	<section layout:fragment="pageButtons" class="container">
         <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
         <button type="button" id="apply" class="btn btn-success navbar-btn">Apply</button>
         <button type="button" id="reset" class="btn btn-warning navbar-btn">Reset</button>
     </section>
 
-	<section layout:fragment="pageNavigation" class="pageButtons">
+	<section layout:fragment="pageNavigation" class="container">
         <ul class="pagination pagination-sm">
             <li>
                 <a href="#" aria-label="First">

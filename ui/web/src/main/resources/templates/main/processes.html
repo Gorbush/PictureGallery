@@ -1,41 +1,79 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
-	layout:decorator="layout">
+	  xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	  layout:decorator="mainlayout">
 <head>
-<title>Processes : View all</title>
+	<title>GalleryMine</title>
+	<link rel="stylesheet" type="text/css" href="lib/gallery/css/slideshow.css" id="cssSlideshow" />
+	<script type="application/javascript" src="js/sourceProperties.js"></script>
+
+	<script type="application/javascript" src="lib/gallery/js/gallery.js"></script>
 </head>
 <body>
-	<h1 layout:fragment="header">Processes : View all</h1>
-	<div layout:fragment="content" class="container">
-		<div class="pull-right">
-			<a href="form.html" th:href="@{/(form)}">Create Process</a>
-		</div>
-		<table class="table table-bordered table-striped">
-			<thead>
-				<tr>
-					<td>ID</td>
-					<td>Status</td>
-					<td>Type</td>
-					<td>Name</td>
-					<td>Started</td>
-					<td>Finished</td>
-				</tr>
-			</thead>
-			<tbody>
-				<tr th:if="${processes.size == 0}">
-					<td colspan="3">No processes</td>
-				</tr>
-				<tr th:each="process : ${processes}">
-					<td th:text="${process.id}">1</td>
-					<td th:text="${process.status}">1</td>
-					<td th:text="${process.type}">1</td>
-					<td th:text="${process.name}">1</td>
-					<td th:text="${process.started}">1</td>
-					<td th:text="${process.finished}">1</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+    <section layout:fragment="pageButtons" class="container">
+        <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
+        <button type="button" id="apply" class="btn btn-success navbar-btn">Apply</button>
+        <button type="button" id="reset" class="btn btn-warning navbar-btn">Reset</button>
+    </section>
+
+    <section layout:fragment="pageNavigation" class="container">
+    </section>
+
+	<section layout:fragment="pageButtonsRight" class="container">
+        <div id="breadcrumb">
+            <ol class="breadcrumb" id="breadcrumblist">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Library</a></li>
+                <li class="active">Data</li>
+            </ol>
+        </div>
+        <div id="daterange">
+            <div class="input-daterange input-group" id="datepicker">
+                <input type="text" class="input-sm form-control" name="start" />
+                <span class="input-group-addon">to</span>
+                <input type="text" class="input-sm form-control" name="end" />
+            </div>
+        </div>
+    </section>
+
+    <section layout:fragment="bodylevel" class="container">
+    </section>
+
+    <section layout:fragment="content" class="container">
+        <div class="col-sm-10">
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <td>ID</td>
+                    <td>Status</td>
+                    <td>Type</td>
+                    <td>Name</td>
+                    <td>Started</td>
+                    <td>Finished</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${processes.size == 0}">
+                    <td colspan="3">No processes</td>
+                </tr>
+                <tr th:each="process : ${processes}">
+                    <td th:text="${process.id}">1</td>
+                    <td th:text="${process.status}">1</td>
+                    <td th:text="${process.type}">1</td>
+                    <td th:text="${process.name}">1</td>
+                    <td th:text="${process.started}">1</td>
+                    <td th:text="${process.finished}">1</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section layout:fragment="footer" class="container">
+    </section>
+
+    <section layout:fragment="dialogs" class="container">
+
+    </section>
 </body>
 </html>

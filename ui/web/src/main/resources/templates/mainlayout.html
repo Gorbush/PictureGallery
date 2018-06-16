@@ -41,10 +41,14 @@
                 <nav class="navbar navbar-default navbar-fixed-top">
                     <div class="container-fluid">
                         <div class="navbar-header">
-                            <a class="navbar-brand" href="#">Gallery Mine - Home</a>
+                            <a class="navbar-brand" href="#">Gallery Mine</a>
                         </div>
                         <ul class="nav navbar-nav">
-                            <li class="active"><a href="#">Home</a></li>
+                            <li th:classappend="${#httpServletRequest.requestURI == '/test'}?active"><a href="test">Test</a></li>
+                            <li th:classappend="${#httpServletRequest.requestURI == '/main'}?active"><a href="main">Home</a></li>
+                            <li th:classappend="${#httpServletRequest.requestURI == '/processes'}?active"><a href="processes">Processes</a></li>
+                            <li th:classappend="${#httpServletRequest.requestURI == '/Files'}?active"><a href="files">Files</a></li>
+                            <li>--></li>
                             <li><a href="sourceList.html">SourceList</a></li>
                             <li><a href="indexRequest.html">Indexing</a></li>
                             <li><a href="importRequest.html">Importing</a></li>
