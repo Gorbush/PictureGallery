@@ -16,17 +16,28 @@
 
 package gallerymine.services.rest;
 
+import com.querydsl.core.types.Predicate;
 import gallerymine.backend.beans.AppConfig;
+import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
+import gallerymine.backend.services.ProcessService;
 import gallerymine.model.Process;
+import gallerymine.model.QProcess;
+import gallerymine.model.support.ProcessDetails;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
@@ -46,7 +57,13 @@ public class ProcessController {
 	@Autowired
 	private ProcessRepository processRepository;
 
-	public ProcessController() {
+    @Autowired
+    ProcessService processService;
+
+    @Autowired
+    private ImportRequestRepository importRepository;
+
+    public ProcessController() {
 	}
 
     @PutMapping("/")
@@ -101,9 +118,6 @@ public class ProcessController {
                     .build();
         }
         process.setStatus(newStatus);
-        if (process.getStatus().isFinalStatus()) {
-            process.setFinished(DateTime.now());
-        }
         Process processSaved = processRepository.save(process);
 
         return responseOk()
@@ -112,6 +126,49 @@ public class ProcessController {
                 .put("status", newStatus)
                 .put("oldStatus", oldStatus)
                 .putId(id)
+                .build();
+    }
+
+    @GetMapping("/restart/{id}")
+    @ResponseBody
+    public Object restart(@PathVariable("id") String id, @RequestParam(value = "force", defaultValue = "false") boolean force) {
+        Process process = processRepository.findOne(id);
+        if (process == null) {
+            return responseError("Process not found")
+                    .op("restart")
+                    .putId(id)
+                    .build();
+        }
+        ProcessStatus oldStatus = process.getStatus();
+        if (!oldStatus.isFinalStatus() && !force) {
+            return responseWarn("Process status is not final")
+                    .op("restart")
+                    .putId(id)
+                    .put("oldStatus", oldStatus)
+                    .build();
+        }
+        process.setStatus(ProcessStatus.RESTARTING);
+        Process processSaved = processRepository.save(process);
+
+        return responseOk()
+                .result(processSaved)
+                .op("restart")
+                .put("status", ProcessStatus.RESTARTING)
+                .put("oldStatus", oldStatus)
+                .putId(id)
+                .build();
+    }
+
+    @GetMapping("/top")
+    @ResponseBody
+    public Object getTop() {
+
+        List<Process> processes = processService.getTop();
+        List<ProcessDetails> running = processService.populateDetails(processes);
+
+        return responseOk()
+                .results(running)
+                .op("top")
                 .build();
     }
 

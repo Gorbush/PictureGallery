@@ -1,35 +1,59 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
-	layout:decorator="layout">
+	  xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	  layout:decorator="mainlayout">
 <head>
-<title>Files : View all</title>
+	<title>GalleryMine</title>
+	<link rel="stylesheet" type="text/css" href="lib/gallery/css/slideshow.css" id="cssSlideshow" />
+	<script type="application/javascript" src="js/sourceProperties.js"></script>
+
+	<script type="application/javascript" src="lib/gallery/js/gallery.js"></script>
 </head>
 <body>
-	<h1 layout:fragment="header">Files : View all</h1>
-	<div layout:fragment="content" class="container">
-		<div class="pull-right">
-			<a href="form.html" th:href="@{/(form)}">Create File</a>
-		</div>
+<section layout:fragment="pageButtons" class="container">
+	<button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
+	<button type="button" id="apply" class="btn btn-success navbar-btn">Apply</button>
+	<button type="button" id="reset" class="btn btn-warning navbar-btn">Reset</button>
+</section>
+
+<section layout:fragment="pageNavigation" class="container">
+</section>
+
+<section layout:fragment="pageButtonsRight" class="container">
+</section>
+
+<section layout:fragment="bodylevel" class="container">
+</section>
+
+<section layout:fragment="content" class="container">
+	<div class="col-sm-10">
 		<table class="table table-bordered table-striped">
 			<thead>
-				<tr>
-					<td>ID</td>
-					<td>Created</td>
-					<td>fileName</td>
-				</tr>
+			<tr>
+				<td>ID</td>
+				<td>Created</td>
+				<td>fileName</td>
+			</tr>
 			</thead>
 			<tbody>
-				<tr th:if="${files.size == 0}">
-					<td colspan="3">No files</td>
-				</tr>
-				<tr th:each="file : ${files}">
-					<td th:text="${file.id}">1</td>
-					<td th:text="${file.timestamp}">1</td>
-					<td th:text="${file.fileName}">1</td>
-				</tr>
+			<tr th:if="${files.size == 0}">
+				<td colspan="3">No files</td>
+			</tr>
+			<tr th:each="file : ${files}">
+				<td th:text="${file.id}">1</td>
+                <td th:text="${file.timestamp.toString('yyyy-MM-dd HH:mm')}">1</td>
+				<td th:text="${file.fileName}">1</td>
+			</tr>
 			</tbody>
 		</table>
 	</div>
+</section>
+
+<section layout:fragment="footer" class="container">
+</section>
+
+<section layout:fragment="dialogs" class="container">
+
+</section>
 </body>
 </html>

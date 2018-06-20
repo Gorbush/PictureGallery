@@ -1,11 +1,9 @@
 package gallerymine.frontend.mvc.support;
 
+import gallerymine.model.Process;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by sergii_puliaiev on 6/14/17.
@@ -127,6 +125,23 @@ public class ResponseBuilder {
         return this;
     }
 
+    public ResponseBuilder results(Collection results) {
+        map.put("list", results);
+        return this;
+    }
+
+    public ResponseBuilder results(Iterable processes) {
+        List results = new ArrayList();
+        processes.forEach(result -> results.add(result));
+        map.put("list", results);
+        return this;
+    }
+
+    public ResponseBuilder results(Map<Process, Object> running) {
+        map.put("map", running);
+        return this;
+    }
+
     public ResponseBuilder op(String operationName) {
         map.put("op", operationName);
         return this;
@@ -136,4 +151,5 @@ public class ResponseBuilder {
         map.put("original", originalObject);
         return this;
     }
+
 }

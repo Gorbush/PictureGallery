@@ -2,9 +2,11 @@ package gallerymine.frontend.mvc;
 
 import gallerymine.backend.beans.repository.FileRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
+import gallerymine.backend.services.ProcessService;
 import gallerymine.model.Customer;
 import gallerymine.model.FileInformation;
 import gallerymine.model.Process;
+import gallerymine.model.support.ProcessDetails;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Controller
 @RequestMapping("/")
@@ -30,6 +33,9 @@ public class MainPageController {
 
     @Autowired
     ProcessRepository processRepository;
+
+    @Autowired
+    ProcessService processService;
 
     @GetMapping
     public ModelAndView list(Principal principal) {
@@ -50,16 +56,26 @@ public class MainPageController {
     }
 
     @GetMapping("/processes")
-    public ModelAndView listTopActiveProcesses(Principal principal) {
+    public ModelAndView listProcesses(Principal principal) {
 
-//        QProcess predicate
-//        processRepository.findAll(
-//                predicate,
-//                new PageRequest(0, 50, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
         Page<Process> processes = processRepository.findAll(
                 new PageRequest(0, 50,
                         new Sort(new Sort.Order(Sort.Direction.DESC, "started"))));
-        return new ModelAndView("main/processes", "processes", processes);
+
+        Page<ProcessDetails> detailed = processes.map(processService::populateDetails);
+
+        ModelAndView model = new ModelAndView("main/processes", "processes", detailed);
+        return model;
+    }
+
+    @GetMapping("/processes?top")
+    public ModelAndView listTopActiveProcesses(Principal principal) {
+
+        List<Process> processes = processService.getTop();
+        List<ProcessDetails> running = processService.populateDetails(processes);
+
+        ModelAndView model = new ModelAndView("main/processes", "processes", running);
+        return model;
     }
 
     @GetMapping("/test")

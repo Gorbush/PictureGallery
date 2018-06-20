@@ -40,7 +40,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @EnableMongoAuditing
 @EnableMongoRepositories
 @Import({ WebAppConfig.class, WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter.class })
-@ComponentScan(basePackages = {"gallerymine.backend", "gallerymine.frontend.mvc"})
+@ComponentScan(basePackages = {
+		"gallerymine.backend",
+		"gallerymine.frontend.mvc",
+		"gallerymine.services.rest"})
 public class GalleryMineApplication implements CommandLineRunner {
 
 	@Autowired

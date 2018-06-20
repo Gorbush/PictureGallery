@@ -7,33 +7,18 @@
 	<link rel="stylesheet" type="text/css" href="lib/gallery/css/slideshow.css" id="cssSlideshow" />
 	<script type="application/javascript" src="js/sourceProperties.js"></script>
 
-	<script type="application/javascript" src="lib/gallery/js/gallery.js"></script>
+	<script type="application/javascript" src="js/processes.js"></script>
 </head>
 <body>
     <section layout:fragment="pageButtons" class="container">
         <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
-        <button type="button" id="apply" class="btn btn-success navbar-btn">Apply</button>
-        <button type="button" id="reset" class="btn btn-warning navbar-btn">Reset</button>
+        <button type="button" id="btnRunImport" class="btn btn-success navbar-btn">Run Import</button>
     </section>
 
     <section layout:fragment="pageNavigation" class="container">
     </section>
 
 	<section layout:fragment="pageButtonsRight" class="container">
-        <div id="breadcrumb">
-            <ol class="breadcrumb" id="breadcrumblist">
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Library</a></li>
-                <li class="active">Data</li>
-            </ol>
-        </div>
-        <div id="daterange">
-            <div class="input-daterange input-group" id="datepicker">
-                <input type="text" class="input-sm form-control" name="start" />
-                <span class="input-group-addon">to</span>
-                <input type="text" class="input-sm form-control" name="end" />
-            </div>
-        </div>
     </section>
 
     <section layout:fragment="bodylevel" class="container">
@@ -43,26 +28,56 @@
         <div class="col-sm-10">
             <table class="table table-bordered table-striped">
                 <thead>
-                <tr>
-                    <td>ID</td>
-                    <td>Status</td>
-                    <td>Type</td>
-                    <td>Name</td>
-                    <td>Started</td>
-                    <td>Finished</td>
-                </tr>
+                    <tr>
+                        <!--<td>ID</td>-->
+                        <td rowspan="2">Commands</td>
+                        <td colspan="5">Process</td>
+                        <td colspan="2">Details</td>
+                    </tr>
+                    <tr>
+                        <!--<td>ID</td>-->
+                        <td>Status</td>
+                        <td>Type</td>
+                        <td>Name</td>
+                        <td>Started</td>
+                        <td>Finished</td>
+
+                        <td>Status</td>
+                        <td>Progress</td>
+                    </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${processes.size == 0}">
                     <td colspan="3">No processes</td>
                 </tr>
-                <tr th:each="process : ${processes}">
-                    <td th:text="${process.id}">1</td>
-                    <td th:text="${process.status}">1</td>
-                    <td th:text="${process.type}">1</td>
-                    <td th:text="${process.name}">1</td>
-                    <td th:text="${process.started}">1</td>
-                    <td th:text="${process.finished}">1</td>
+                <tr th:each="detailed : ${processes}">
+                    <td>
+
+                        <a onclick="Processes.restartProcess(this);return false;" rowid="${detailed.process.id}">restart</a>
+                    </td>
+
+                    <!--<td th:text="${process.id}">1</td>-->
+                    <td class="nowrap">
+                        <span th:text="${detailed.process.status}">1</span>&nbsp;
+                        <span class="glyphicon glyphicon-info-sign log-container" th:if="${detailed.process.errors.size() > 0}">
+                            <div class="log-content" th:text="${detailed.process.errors}"></div>
+                        </span>
+                    </td>
+                    <td th:text="${detailed.process.type}">1</td>
+                    <td th:text="${detailed.process.name}">1</td>
+                    <td th:text="${detailed.process.started}">1</td>
+                    <td th:text="${detailed.process.finished}">1</td>
+
+                    <td class="nowrap">
+                        <span th:text="${detailed.details.status}">1</span>&nbsp;
+                        <span class="glyphicon glyphicon-info-sign log-container" th:if="${detailed.details.error != null}">
+                            <div class="log-content" th:text="${detailed.details.error}"></div>
+                        </span>
+                    </td>
+                    <td>
+                        <p class="nowrap">filesCount: <span th:text="${detailed.details.filesCount}"></span></p>
+                        <p class="nowrap">foldersCount: <span th:text="${detailed.details.foldersCount}"></span></p>
+                    </td>
                 </tr>
                 </tbody>
             </table>

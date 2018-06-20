@@ -39,6 +39,7 @@ public interface ImportSourceRepository extends MongoRepository<ImportSource, St
     ImportSource findByFilePathAndFileName(@Param("filePath") String filePath, @Param("fileName") String fileName);
 
     Collection<ImportSource> findByFileName(String fileName);
+    Collection<ImportSource> findByFileNameAndSize(String fileName, long size);
 
     Collection<ImportSource> findBySize(long size);
 

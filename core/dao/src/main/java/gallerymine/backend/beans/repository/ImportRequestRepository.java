@@ -36,4 +36,6 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
     Page<ImportRequest> findByParent(String parent, Pageable pageable);
 
     Page<ImportRequest> findByParentNull(Pageable pageable);
+
+    ImportRequest findByIndexProcessId(@Param("indexProcessId") String path);
 }

@@ -94,7 +94,10 @@ public class ImportRequest {
         return DONE.equals(status) || FAILED.equals(status);
     }
 
-    public ImportRequest addError(String s) {
+    public ImportRequest addError(String s, Object... params) {
+        if (params != null && params.length > 0) {
+            s = String.format(s, params);
+        }
         if (error == null) {
             error = s;
         } else {

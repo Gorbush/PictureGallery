@@ -14,6 +14,7 @@ import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.ThumbRequest;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -171,11 +173,22 @@ public class ImportProcessor implements Runnable {
         try {
             Path path = Paths.get(appConfig.getSourcesRootFolder(), request.getPath());
 
+            if (!path.toFile().exists()) {
+                String error = String.format("Path not found for request : %s", path.toFile().getAbsolutePath());
+                log.error(error);
+                request.addError(error);
+                request.setStatus(FAILED);
+                requestRepository.save(request);
+                process.addError(error);
+                processRepository.save(process);
+                return;
+            }
             Path enumeratingDir = null;
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path, file -> file.toFile().isDirectory())) {
+            try (DirectoryStream<Path> directoryStreamOfFolders = Files.newDirectoryStream(path, file -> file.toFile().isDirectory())) {
                 int foldersCount = 0;
-                for (Path dir : directoryStream) {
-                    registerNewFolderRequest(dir.toAbsolutePath().toString(), request, process.getId());
+                for (Path dir : directoryStreamOfFolders) {
+                    enumeratingDir = dir;
+                    registerNewImportFolderRequest(dir.toAbsolutePath().toString(), request, process.getId());
                     foldersCount++;
                 }
                 request.setFoldersCount(foldersCount);
@@ -195,22 +208,24 @@ public class ImportProcessor implements Runnable {
 
                 int filesCount = 0;
                 int filesIgnoredCount = 0;
-                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
-                    for (Path file : directoryStream) {
-                        String fileName = file.toString().toLowerCase();
-                        String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
-                        if (fileName.startsWith(".")) {
-                            log.info("Ignore system file {}", file.toAbsolutePath().toString());
-                            continue;
+                try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
+                    for (Path file : directoryStreamOfFiles) {
+                        if (!checkIfDuplicate(file, request)) {
+                            String fileName = file.toString().toLowerCase();
+                            String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
+                            if (fileName.startsWith(".")) {
+                                log.info("Ignore system file {}", file.toAbsolutePath().toString());
+                                continue;
+                            }
+                            if (analyzer.acceptsExtension(fileExt)) {
+                                filesCount++;
+                                processPictureFile(file);
+                            } else {
+                                filesIgnoredCount++;
+                                logUnknownFormats.error("Unknown format of file {}", file.toAbsolutePath().toString());
+                            }
+//                          Thread.sleep(2000);
                         }
-                        if (analyzer.acceptsExtension(fileExt)) {
-                            filesCount++;
-                            processPictureFile(file);
-                        } else {
-                            filesIgnoredCount++;
-                            logUnknownFormats.error("Unknown format of file {}", file.toAbsolutePath().toString());
-                        }
-//                        Thread.sleep(2000);
                     }
                 }
                 request.setFilesCount(filesCount);
@@ -237,6 +252,20 @@ public class ImportProcessor implements Runnable {
         } finally {
             pool.checkForAwaitingRequests();
         }
+    }
+
+    private boolean checkIfDuplicate(Path file, ImportRequest request) throws IOException {
+        Collection<ImportSource> duplicate = importUtils.findDuplicates(file.toFile().getName(), file.toFile().length());
+        if (duplicate.size() > 0) {
+            importUtils.moveToDuplicates(file, request.getPath());
+            return true;
+        }
+        Collection<ImportSource> similar = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
+        if (similar.size() > 0) {
+            importUtils.moveToSimilar(file, request.getPath());
+            return true;
+        }
+        return false;
     }
 
     private void checkSubsAndDone(String requestId) {
@@ -287,11 +316,12 @@ public class ImportProcessor implements Runnable {
             Process process = processRepository.findOne(request.getIndexProcessId());
             if (process != null) {
                 if (request.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
+                    process.addError("Import finished");
                     process.setStatus(ProcessStatus.FINISHED);
                 } else {
+                    process.addError("Import failed");
                     process.setStatus(ProcessStatus.FAILED);
                 }
-                process.setFinished(DateTime.now());
                 processRepository.save(process);
                 log.info("Process finished id={} status={}", process.getId(), process.getStatus());
             } else {
@@ -344,8 +374,8 @@ public class ImportProcessor implements Runnable {
         }
     }
 
-    public ImportRequest registerNewFolderRequest(String path, ImportRequest parent, String indexProcessId) throws FileNotFoundException {
-        path = appConfig.relativizePathToSource(path);
+    public ImportRequest registerNewImportFolderRequest(String path, ImportRequest parent, String indexProcessId) throws FileNotFoundException {
+        path = appConfig.relativizePathToImport(path);
         ImportRequest newRequest = requestRepository.findByPath(path);
         if (newRequest == null) {
             newRequest = new ImportRequest();

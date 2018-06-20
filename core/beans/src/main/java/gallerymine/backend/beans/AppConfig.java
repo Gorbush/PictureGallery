@@ -68,6 +68,10 @@ public class AppConfig {
         return relativizePath(filePath, thumbsRootFolder);
     }
 
+    public String relativizePathToImport(String filePath) throws FileNotFoundException {
+        return relativizePath(filePath, importRootFolder);
+    }
+
     public String relativizePath(String fileName, String rootFolder) throws FileNotFoundException {
         checkFolders();
         Path root = Paths.get(rootFolder);
@@ -83,16 +87,19 @@ public class AppConfig {
         return relativePath;
     }
 
+    private String amendFolder(String folder) {
+        if (folder != null && folder.startsWith("~")) {
+            folder = folder.replace("~", System.getenv("HOME"));
+        }
+        return folder;
+    }
+
     private void checkFolders() {
-        if (galleryRootFolder != null && galleryRootFolder.startsWith("~")) {
-            galleryRootFolder = galleryRootFolder.replace("~", System.getenv("HOME"));
-        }
-        if (sourcesRootFolder != null && sourcesRootFolder.startsWith("~")) {
-            sourcesRootFolder = sourcesRootFolder.replace("~", System.getenv("HOME"));
-        }
-        if (thumbsRootFolder != null && thumbsRootFolder.startsWith("~")) {
-            thumbsRootFolder = thumbsRootFolder.replace("~", System.getenv("HOME"));
-        }
+        galleryRootFolder = amendFolder(galleryRootFolder);
+        sourcesRootFolder = amendFolder(sourcesRootFolder);
+        thumbsRootFolder = amendFolder(thumbsRootFolder);
+        importRootFolder = amendFolder(importRootFolder);
+        importExposedRootFolder = amendFolder(importExposedRootFolder);
     }
 
 }

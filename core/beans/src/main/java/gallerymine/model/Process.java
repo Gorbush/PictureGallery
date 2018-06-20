@@ -1,6 +1,6 @@
 package gallerymine.model;
 
-//import com.mysema.query.annotations.QueryEntity;
+import com.querydsl.core.annotations.QueryEntity;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import lombok.Data;
@@ -10,8 +10,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Document
-//@QueryEntity
+@QueryEntity
 @Data
 public class Process {
     @Id
@@ -23,11 +26,30 @@ public class Process {
     private String name;
     private ProcessType type;
 
+    /** ID of parent, for example - matching process after import */
+    private String parentProcessId;
+
     private ProcessStatus status;
+
+    private List<String> errors = new ArrayList<>();
 
     @CreatedDate
     private DateTime created;
     @LastModifiedDate
     private DateTime updated;
 
+
+    public void addError(String error, Object... params) {
+        if (params!= null && params.length > 0) {
+            error = String.format(error, params);
+        }
+        errors.add(error);
+    }
+
+    public void setStatus(ProcessStatus status) {
+        if (status != null && status.isFinalStatus() && finished == null) {
+            finished = DateTime.now();
+        }
+        this.status = status;
+    }
 }

@@ -32,6 +32,7 @@
     <modules>
         <module>image-parser</module>
         <module>image-importer</module>
+        <module>services</module>
     </modules>
 
 </project>

@@ -82,3 +82,19 @@ div#pageFooter {
 .full-height{
     height: 100%;
 }
+div.log-content {
+    display: none;
+    position: absolute;
+    border: 1px solid red;
+    border-radius: 6px;
+    background: white;
+    vertical-align: middle;
+    padding: 5px;
+    font-family: sans-serif;
+}
+.log-content {
+    position: relative;
+}
+.nowrap {
+    white-space: nowrap;
+}
