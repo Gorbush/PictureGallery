@@ -77,7 +77,7 @@ public class ImageFormatAnalyser {
     @Autowired
     private AppConfig appConfig;
 
-    public void gatherFileInformation(Path file, Path rootFolder, PictureInformation source, boolean extractThumb) {
+    public void gatherFileInformation(Path file, PictureInformation source, boolean extractThumb) {
         try {
             ImageInformation info = new ImageInformation();
             // preset some properties to avoid re-population

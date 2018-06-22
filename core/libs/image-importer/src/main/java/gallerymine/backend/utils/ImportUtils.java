@@ -151,7 +151,7 @@ public class ImportUtils {
 
     public String prepareImportFolder(boolean enforce, Process process) throws ImportFailedException {
         Path pathExposed = Paths.get(appConfig.getImportExposedRootFolder());
-        Path pathToImport = Paths.get(appConfig.getImportRootFolder(), DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
+        Path pathToImport = appConfig.getImportRootFolderPath().resolve(DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
 
         Path pathToImportSource = pathToImport.resolve(FOLDER_SOURCE);
         Path pathToImportDuplicates = pathToImport.resolve(FOLDER_DUP);
@@ -186,12 +186,17 @@ public class ImportUtils {
             int folders = 0;
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pathExposed)) {
                 for (Path srcFile : directoryStream) {
-                    if (srcFile.toFile().isDirectory()) {
-                        folders++;
-                        FileUtils.moveDirectoryToDirectory(srcFile.toFile(), pathToImportSource.toFile(), true);
+                    if (!appConfig.isDryRunImportMoves()) {
+                        if (srcFile.toFile().isDirectory()) {
+                            folders++;
+                            FileUtils.moveDirectoryToDirectory(srcFile.toFile(), pathToImportSource.toFile(), true);
+                        } else {
+                            files++;
+                            FileUtils.moveFileToDirectory(srcFile.toFile(), pathToImportSource.toFile(), true);
+                        }
                     } else {
-                        files++;
-                        FileUtils.moveFileToDirectory(srcFile.toFile(), pathToImportSource.toFile(), true);
+                        // Simply create symlynk
+                        Files.createSymbolicLink(pathToImportSource.resolve(srcFile.getFileName()), srcFile);
                     }
                 }
                 process.setStatus(ProcessStatus.STARTING);
@@ -223,7 +228,8 @@ public class ImportUtils {
                 throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: "+e.getMessage(), e);
             }
 
-            String pathToIndex = appConfig.relativizePathToImport(pathToImport.resolve(FOLDER_SOURCE)).toString();
+//            String pathToIndex = appConfig.relativizePathToImport(pathToImport.resolve(FOLDER_SOURCE)).toString();
+            String pathToIndex = pathToImport.getFileName()+"/"+ FOLDER_SOURCE;
             ImportRequest request = requestRepository.findByPath(pathToIndex);
 
             if ((!enforce) && request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
@@ -251,42 +257,46 @@ public class ImportUtils {
     }
 
     public Path moveToSimilar(Path file, String importPath) throws IOException {
-        String absolutePath = file.toFile().getAbsolutePath();
-        String relativePath = appConfig.relativizePath(absolutePath, importPath);
+        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
         Path targetPath = Paths.get(importPath);
-        targetPath = calcSimilarsPath(targetPath);
-        Path fullTargetPath = targetPath.resolve(relativePath);
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        targetPath = appConfig.getImportRootFolderPath().resolve(calcSimilarsPath(targetPath));
+        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
+        if (!appConfig.isDryRunImportMoves()) {
+            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        }
         return targetPath;
     }
 
     public Path moveToDuplicates(Path file, String importPath) throws IOException {
-        String absolutePath = file.toFile().getAbsolutePath();
-        String relativePath = appConfig.relativizePath(absolutePath, importPath);
+        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
         Path targetPath = Paths.get(importPath);
-        targetPath = calcDuplicatesPath(targetPath);
-        Path fullTargetPath = targetPath.resolve(relativePath);
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        targetPath = appConfig.getImportRootFolderPath().resolve(calcDuplicatesPath(targetPath));
+        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
+        if (!appConfig.isDryRunImportMoves()) {
+            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        }
         return targetPath;
     }
 
     public Path moveToApprove(Path file, String importPath) throws IOException {
-        String absolutePath = file.toFile().getAbsolutePath();
-        String relativePath = appConfig.relativizePath(absolutePath, importPath);
+        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
         Path targetPath = Paths.get(importPath);
-        targetPath = calcApprovePath(targetPath);
-        Path fullTargetPath = targetPath.resolve(relativePath);
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        targetPath = appConfig.getImportRootFolderPath().resolve(calcApprovePath(targetPath));
+        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
+        if (!appConfig.isDryRunImportMoves()) {
+            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        }
         return targetPath;
     }
 
     public Path moveToFailed(Path file, String importPath) throws IOException {
-        String absolutePath = file.toFile().getAbsolutePath();
-        String relativePath = appConfig.relativizePath(absolutePath, importPath);
+        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
         Path targetPath = Paths.get(importPath);
-        targetPath = calcFailedPath(targetPath);
-        Path fullTargetPath = targetPath.resolve(relativePath);
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        targetPath = appConfig.getImportRootFolderPath().resolve(calcFailedPath(targetPath));
+        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
+        if (!appConfig.isDryRunImportMoves()) {
+            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        }
         return targetPath;
     }
 }

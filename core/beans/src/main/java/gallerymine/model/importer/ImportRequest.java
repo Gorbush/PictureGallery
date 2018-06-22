@@ -22,6 +22,7 @@ import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 public class ImportRequest {
 
     public enum ImportStatus {
+        PREREARING(false),
         START(false),
         AWAITING(false),
         ENUMERATING(false),
@@ -116,8 +117,12 @@ public class ImportRequest {
     private String parent;
     private String rootId;
 
+    /** Import process current folder */
     @Indexed(unique = true)
     private String path;
+
+    /** Import process root folder */
+    private String rootPath;
 
     private String originalPath;
 

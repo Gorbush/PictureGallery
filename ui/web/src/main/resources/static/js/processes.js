@@ -8,18 +8,7 @@ var Processes = {
             Processes.runImport();
             return false;
         });
-        $(".log-container").on({
-            mouseenter: function (event) {
-                $("div.log-content", event.target).show();
-            },
-            mouseleave: function (event) {
-                if (event.target.className === "log-content") {
-                    $(event.target).hide();
-                } else {
-                    $("div.log-content", event.target).hide();
-                }
-            }
-        });
+        LogContainer.init();
     },
 
     runImport : function () {
@@ -33,6 +22,11 @@ var Processes = {
         AjaxHelper.runGET("/processes/restart/"+rowid, function (response) {
             alert("Import restarted in folder  "+response.importFolder);
         });
+    },
+
+    openDetails: function (element) {
+        var rowid = $(element).attr("rowid");
+        window.open("/importProgress/"+rowid, "_blank");
     }
 };
 

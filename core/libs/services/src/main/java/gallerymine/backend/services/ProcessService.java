@@ -66,7 +66,24 @@ public class ProcessService {
 
         switch (process.getType()) {
             case IMPORT: {
-                details.setDetails(importRepository.findByIndexProcessId(process.getId()));
+                details.setDetail(importRepository.findByIndexProcessId(process.getId()));
+                break;
+            }
+            default: {
+                break;
+            }
+
+        }
+        return details;
+    }
+
+    public ProcessDetails populateAllDetails(Process process) {
+        ProcessDetails details = new ProcessDetails();
+        details.setProcess(process);
+
+        switch (process.getType()) {
+            case IMPORT: {
+                details.setDetails(importRepository.findAllByIndexProcessIdAndParentIsNullOrderByCreatedAsc(process.getId()));
                 break;
             }
             default: {

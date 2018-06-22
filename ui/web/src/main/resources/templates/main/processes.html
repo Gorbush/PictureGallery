@@ -52,8 +52,9 @@
                 </tr>
                 <tr th:each="detailed : ${processes}">
                     <td>
-
-                        <a onclick="Processes.restartProcess(this);return false;" rowid="${detailed.process.id}">restart</a>
+                        <a onclick="Processes.restartProcess(this);return false;" th:attr="rowid=${detailed.process.id}">restart</a>
+                        &nbsp;
+                        <a th:if="${detailed.process.type.name() == 'IMPORT'}" onclick="Processes.openDetails(this);return false;" th:attr="rowid=${detailed.process.id}">details</a>
                     </td>
 
                     <!--<td th:text="${process.id}">1</td>-->
@@ -72,14 +73,14 @@
                     <td th:text="${detailed.process.finished}">1</td>
 
                     <td class="nowrap">
-                        <span th:text="${detailed.details?.status}">1</span>&nbsp;
-                        <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.details?.error != null}">
-                            <div class="log-content" th:text="${detailed.details.error}"></div>
+                        <span th:text="${detailed.lastDetail?.status}">1</span>&nbsp;
+                        <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.lastDetail?.error != null}">
+                            <div class="log-content" th:text="${detailed.lastDetail.error}"></div>
                         </span>
                     </td>
                     <td>
-                        <p class="nowrap">filesCount: <span th:text="${detailed.details?.filesCount}"></span></p>
-                        <p class="nowrap">foldersCount: <span th:text="${detailed.details?.foldersCount}"></span></p>
+                        <p class="nowrap">filesCount: <span th:text="${detailed.lastDetail?.filesCount}"></span></p>
+                        <p class="nowrap">foldersCount: <span th:text="${detailed.lastDetail?.foldersCount}"></span></p>
                     </td>
                 </tr>
                 </tbody>

@@ -76,11 +76,12 @@ public class GenericFileAnalyser {
         this.appConfig = appConfig;
     }
 
-    public void gatherFileInformation(Path file, Path rootFolder, FileInformation info) {
+    public void gatherFileInformation(Path file, Path importRootFolder, FileInformation info) {
         try {
             // preset some properties to avoid re-population
-            info.setRootPath(rootFolder.toFile().getAbsolutePath());
-            info.setFilePath(appConfig.relativizePath(file, rootFolder));
+            Path fullImportPath = appConfig.getImportRootFolderPath().resolve(importRootFolder);
+            info.setRootPath(fullImportPath.toString());
+            info.setFilePath(appConfig.relativizePath(file, fullImportPath));
             info.setFileName(file.toFile().getName());
             info.setSize(file.toFile().length());
 

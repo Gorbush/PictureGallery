@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	  layout:decorator="mainlayout">
+<head>
+	<title>GalleryMine</title>
+    <link rel="stylesheet" type="text/css" href="/css/importRequest.css" id="css"> </link>
+
+    <script type="application/javascript" src="/js/importRequest.js" ></script>
+</head>
+<body>
+    <section layout:fragment="pageButtons" class="container">
+        <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
+        <button type="button" id="btnRunImport" class="btn btn-success navbar-btn">Run Import</button>
+    </section>
+
+    <section layout:fragment="pageNavigation" class="container">
+    </section>
+
+	<section layout:fragment="pageButtonsRight" class="container">
+    </section>
+
+    <section layout:fragment="bodylevel" class="container">
+    </section>
+
+    <section layout:fragment="content" class="container">
+        <div class="col-sm-10">
+            <div id="importList" class="col-sm-4" >
+                <div id="importDetailsListData" >
+                    table with import: StartDate EndDate Status
+                    <input type="hidden" id="processId" th:value="${process.id}"></input>
+                    <input type="hidden" id="activeDetailId" th:value="${latestDetail?.id}"></input>
+                    <table class="table table-bordered table-striped">
+                        <tr><td> Name </td><td th:text="${process.name}"></td> </tr>
+                        <tr><td> Status </td>
+                            <td>
+                                <span th:text="${process.status}"></span>
+                                <span class="glyphicon glyphicon-warning-sign log-container" th:if="${process.errors.size() > 0}">
+                                    <div class="log-content" th:text="${process.errorsText()}"></div>
+                                </span>
+                                <span class="glyphicon glyphicon-info-sign log-container" th:if="${process.notes.size() > 0}">
+                                    <div class="log-content" th:text="${process.notesText()}"></div>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr><td> Started </td><td th:text="${process.started}"></td> </tr>
+                        <tr><td> Finished </td><td th:text="${process.finished}"></td> </tr>
+                    </table>
+                    <span class="section-header">Imports:</span>
+                    <table class="table table-bordered table-striped">
+                        <tr th:each="detail : ${details}">
+                            <td> Details status </td><td>
+                                <span th:text="${detail.status}">1</span>&nbsp;
+                                <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.error != null}">
+                                        <div class="log-content" th:text="${detail.error}"></div>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div id="importDetailsTree" class="col-sm-8" >
+                <div id="indexRequestsTree" >
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section layout:fragment="footer" class="container">
+    </section>
+
+    <section layout:fragment="dialogs" class="container">
+
+    </section>
+</body>
+</html>

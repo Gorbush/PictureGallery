@@ -104,3 +104,20 @@ function lastDayOfMonth(year, month, day) {
     var d = new Date(year, month + 1, 0);
     return formatToDateDateObject(d);
 }
+
+var LogContainer = {
+    init: function () {
+        $(".log-container").on({
+            mouseenter: function (event) {
+                $("div.log-content", event.target).show();
+            },
+            mouseleave: function (event) {
+                if (event.target.className === "log-content") {
+                    $(event.target).hide();
+                } else {
+                    $("div.log-content", event.target).hide();
+                }
+            }
+        });
+    }
+}

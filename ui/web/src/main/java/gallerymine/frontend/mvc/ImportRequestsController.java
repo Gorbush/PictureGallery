@@ -114,4 +114,15 @@ public class ImportRequestsController {
         return responseOk().put("response", page).build();
     }
 
+    @GetMapping("{id}" )
+    @ResponseBody
+    public Object get(@PathVariable("id") String id) {
+        ImportRequest request = requestRepository.findOne(id);
+
+        return responseOk()
+				.op("get")
+				.result(request)
+				.build();
+    }
+
 }

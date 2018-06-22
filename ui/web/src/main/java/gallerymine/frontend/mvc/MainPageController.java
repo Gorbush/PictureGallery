@@ -14,9 +14,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.websocket.server.PathParam;
 import java.security.Principal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -65,6 +67,19 @@ public class MainPageController {
         Page<ProcessDetails> detailed = processes.map(processService::populateDetails);
 
         ModelAndView model = new ModelAndView("main/processes", "processes", detailed);
+        return model;
+    }
+
+    @GetMapping("/importProgress/{importId}")
+    public ModelAndView importProgress(Principal principal, @PathVariable("importId") String importProcessId) {
+
+        Process process = processRepository.findOne(importProcessId);
+        ProcessDetails details = process != null ? processService.populateAllDetails(process) : null;
+
+        ModelAndView model = new ModelAndView("main/importProgress", "process", process);
+        model.addObject("details", details==null ? null : details.getDetails());
+        model.addObject("latestDetail", (details==null || details.getLastDetail() == null) ? null : details.getLastDetail());
+
         return model;
     }
 

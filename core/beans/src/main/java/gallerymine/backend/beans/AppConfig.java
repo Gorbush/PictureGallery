@@ -31,6 +31,10 @@ public class AppConfig {
     @Value("${importExposedRootFolder}")
     public String importExposedRootFolder;
 
+    public boolean dryRunImportMoves = true;
+
+    Path importRootFolderPath;
+
     public String getGalleryRootFolder() {
         checkFolders();
         return galleryRootFolder;
@@ -49,6 +53,11 @@ public class AppConfig {
     public String getImportRootFolder() {
         checkFolders();
         return importRootFolder;
+    }
+
+    public Path getImportRootFolderPath() {
+        checkFolders();
+        return importRootFolderPath;
     }
 
     public String getImportExposedRootFolder() {
@@ -72,7 +81,6 @@ public class AppConfig {
         return relativizePath(filePath, importRootFolder);
     }
 
-
     public String relativizePathToGallery(Path filePath) throws FileNotFoundException {
         return relativizePath(filePath, Paths.get(galleryRootFolder));
     }
@@ -95,13 +103,16 @@ public class AppConfig {
 
     public String relativizePath(Path file, Path rootFolder) throws FileNotFoundException {
         checkFolders();
+        if (!file.isAbsolute()) {
+            return file.toString();
+        }
         if (rootFolder == null || !rootFolder.toFile().exists()) {
             throw new FileNotFoundException("Root folder not found: "+rootFolder);
         }
         Path relative = rootFolder.relativize(file);
         String relativePath = relative.toString();
-        if (!relativePath.startsWith("/")) {
-            relativePath = "/"+relativePath;
+        if (relativePath.startsWith("/") && relativePath.length() > 1) {
+            relativePath = relativePath.substring(1);
         }
         return relativePath;
     }
@@ -119,6 +130,10 @@ public class AppConfig {
         thumbsRootFolder = amendFolder(thumbsRootFolder);
         importRootFolder = amendFolder(importRootFolder);
         importExposedRootFolder = amendFolder(importExposedRootFolder);
+
+        if (importRootFolderPath == null) {
+            importRootFolderPath = Paths.get(importRootFolder);
+        }
     }
 
 }

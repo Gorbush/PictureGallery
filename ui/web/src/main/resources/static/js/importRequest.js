@@ -3,11 +3,17 @@
  */
 
 $(document).ready(function() {
+    LogContainer.init();
+
     $('#indexRequestsTree').jstree({
         'core': {
             'data' : {
                 "url" : function (node, cb, par2) {
-                    return "/indexing/list/"+node.id;
+                    var id = node.id;
+                    if (node.id === "#") {
+                        id = $("#activeDetailId").val();
+                    }
+                    return "/importing/list/"+id;
                 },
                 "postprocessor": function (node, data, par2) {
                     return preprocessAsNodes(data.response.content);
@@ -100,7 +106,7 @@ function preprocessAsNodes(nodesList) {
         node.state = {
             opened: false
         };
-        if (node.parent === null) {
+        if (node.parent === null || node.parent === node.rootId) {
             node.parent = '#';
         }
         node.text += '<div class="node_postblock">';

@@ -250,7 +250,7 @@ public class IndexRequestProcessor implements Runnable {
 
             boolean hadThumb = pictureSource.hasThumb();
 
-            analyzer.gatherFileInformation(file,  Paths.get(appConfig.getSourcesRootFolder()), pictureSource, !hadThumb);
+            analyzer.gatherFileInformation(file,  pictureSource, !hadThumb);
 
             if (pictureSource.hasThumb() && !hadThumb) {
                 File thumbStoredFile = generatePicThumbName(pictureSource);

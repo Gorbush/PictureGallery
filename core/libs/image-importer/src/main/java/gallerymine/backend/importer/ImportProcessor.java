@@ -123,8 +123,6 @@ public class ImportProcessor implements Runnable {
         request.setCreated(importStamp);
 
         requestRepository.save(request);
-        request.setRootId(request.getId());
-        requestRepository.save(request);
 
         log.info("Saved request to import folder %s", originalPath.toFile().getAbsolutePath());
         return request;
@@ -182,7 +180,7 @@ public class ImportProcessor implements Runnable {
         log.info("ImportRequest started processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         try {
-            Path path = Paths.get(appConfig.getImportRootFolder(), request.getPath());
+            Path path = appConfig.getImportRootFolderPath().resolve(request.getPath());
 
             if (!path.toFile().exists()) {
                 String error = String.format("Path not found for request : %s", path.toFile().getAbsolutePath());
@@ -201,7 +199,8 @@ public class ImportProcessor implements Runnable {
                 int foldersCount = 0;
                 for (Path dir : directoryStreamOfFolders) {
                     enumeratingDir = dir;
-                    importService.registerNewImportFolderRequest(dir.toAbsolutePath().toString(), request, process.getId());
+                    String relative = appConfig.relativizePathToImport(dir);
+                    importService.registerNewImportFolderRequest(relative, request, process.getId());
                     foldersCount++;
                 }
                 request.setFoldersCount(foldersCount);
@@ -219,7 +218,7 @@ public class ImportProcessor implements Runnable {
                 request.setStatus(FILES_PROCESSING);
                 requestRepository.save(request);
                 log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-                Path importFolder = Paths.get(request.getPath());
+                Path importRootFolder = Paths.get(request.getRootPath());
                 int filesCount = 0;
                 int filesIgnoredCount = 0;
                 try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
@@ -234,12 +233,13 @@ public class ImportProcessor implements Runnable {
                         ImportSource info = new ImportSource();
                         info.setImportRequestId(request.getId());
                         info.setIndexProcessId(request.getIndexProcessId());
-                        fileAnalyzer.gatherFileInformation(file, importFolder, info);
+                        info.setImportRequestRootId(request.getRootId());
+                        fileAnalyzer.gatherFileInformation(file, importRootFolder, info);
 
                         if (imageAnalyzer.acceptsExtension(fileExt)) {
                             filesCount++;
                             request.getStats().incFiles();
-                            processPictureFile(file, importFolder, info);
+                            processPictureFile(file, importRootFolder, info);
 
                             if (!info.isFailed()) {
                                 if (!checkIfDuplicate(file, request, info)) {
@@ -303,7 +303,7 @@ public class ImportProcessor implements Runnable {
 //        }
         boolean similarFound = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
         if (similarFound) {
-            Path targetFolder = importUtils.moveToSimilar(file, request.getPath());
+            Path targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
             info.setRootPath(targetFolder.toFile().getAbsolutePath());
             return true;
         }
@@ -387,13 +387,13 @@ public class ImportProcessor implements Runnable {
         }
     }
 
-    private void processPictureFile(Path file, Path rootFolder, ImportSource info) {
+    private void processPictureFile(Path file, Path importRootFolder, ImportSource info) {
         try {
             log.debug("  Visiting file {}", file.toAbsolutePath());
 
             boolean hadThumb = info.hasThumb();
 
-            imageAnalyzer.gatherFileInformation(file, rootFolder, info, !hadThumb);
+            imageAnalyzer.gatherFileInformation(file, info, !hadThumb);
 
             if (info.hasThumb() && !hadThumb) {
                 Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
@@ -434,12 +434,20 @@ public class ImportProcessor implements Runnable {
         if (parent != null) {
             newRequest.setParent(parent.getId());
             newRequest.setRootId(parent.getRootId());
+            newRequest.setRootPath(parent.getRootPath());
+        } else {
+            newRequest.setRootPath(path);
         }
         newRequest.setIndexProcessId(indexProcessId);
         newRequest.setError(null);
-        newRequest.setStatus(START);
+        newRequest.setStatus(PREREARING);
         newRequest.setPath(path);
 
+        requestRepository.save(newRequest);
+        newRequest.setStatus(START);
+        if (parent == null) {
+            newRequest.setRootId(newRequest.getId());
+        }
         requestRepository.save(newRequest);
         log.info("ImportRequest status changed id={} status={} path={}", newRequest.getId(), newRequest.getStatus(), newRequest.getPath());
 
