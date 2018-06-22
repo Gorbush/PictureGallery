@@ -3,11 +3,11 @@ package gallerymine.backend.utils;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
+import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
-import gallerymine.backend.importer.ImportProcessor;
-import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.model.ImportSource;
+import gallerymine.model.Picture;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessStatus;
@@ -35,6 +35,7 @@ public class ImportUtils {
     public static final String FOLDER_DUP = "dup";
     public static final String FOLDER_SIMILAR = "similar";
     public static final String FOLDER_APPROVE = "approve";
+    public static final String FOLDER_FAILED = "failed";
 
     private static Logger log = LoggerFactory.getLogger(ImportUtils.class);
 
@@ -45,16 +46,13 @@ public class ImportUtils {
     private ProcessRepository processRepository;
 
     @Autowired
-    private ImportRequestPoolManager requestPool;
-
-    @Autowired
     private ImportRequestRepository requestRepository;
 
     @Autowired
-    private ImportProcessor requestProcessor;
+    private ImportSourceRepository importSourceRepository;
 
     @Autowired
-    private ImportSourceRepository importSourceRepository;
+    private PictureRepository pictureRepository;
 
     public Path makeNewImportStamp(DateTime importStamp) {
         String stamp = importStamp.toString("yyyy-MM-dd_HH-mm-ss");
@@ -147,7 +145,11 @@ public class ImportUtils {
         return importPath.getParent().resolve(FOLDER_APPROVE);
     }
 
-    public ImportRequest prepareImportFolder(boolean enforce) throws ImportFailedException {
+    public Path calcFailedPath(Path importPath) {
+        return importPath.getParent().resolve(FOLDER_FAILED);
+    }
+
+    public String prepareImportFolder(boolean enforce, Process process) throws ImportFailedException {
         Path pathExposed = Paths.get(appConfig.getImportExposedRootFolder());
         Path pathToImport = Paths.get(appConfig.getImportRootFolder(), DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
 
@@ -155,8 +157,8 @@ public class ImportUtils {
         Path pathToImportDuplicates = pathToImport.resolve(FOLDER_DUP);
         Path pathToImportSimilar = pathToImport.resolve(FOLDER_SIMILAR);
         Path pathToImportApprove = pathToImport.resolve(FOLDER_APPROVE);
+        Path pathToImportFailed = pathToImport.resolve(FOLDER_FAILED);
 
-        Process process = new Process();
         try {
             if (!pathToImportSource.toFile().mkdirs()) {
                 log.warn("Failed to create folder for import %s", pathToImportSource.toFile().getAbsolutePath());
@@ -169,6 +171,9 @@ public class ImportUtils {
             }
             if (!pathToImportSimilar.toFile().mkdirs()) {
                 log.warn("Failed to create folder for import %s", pathToImportSimilar.toFile().getAbsolutePath());
+            }
+            if (!pathToImportFailed.toFile().mkdirs()) {
+                log.warn("Failed to create folder for import %s", pathToImportFailed.toFile().getAbsolutePath());
             }
 
             process.setName("Pictures Folder Import "+pathToImport.getFileName());
@@ -190,46 +195,42 @@ public class ImportUtils {
                     }
                 }
                 process.setStatus(ProcessStatus.STARTING);
-                process.addError("Prepared for import:");
+                process.addNote("Prepared for import:");
                 if (files > 0) {
-                    process.addError("  Files  : %5d", files);
+                    process.addNote("  Files  : %5d", files);
                 }
                 if (folders > 0) {
-                    process.addError("  Folders: %5d", folders);
+                    process.addNote("  Folders: %5d", folders);
                 }
                 if (files == 0 && folders == 0) {
-                    process.addError("  None");
+                    process.addNote("  None");
                 }
                 processRepository.save(process);
             } catch (Exception e) {
                 process.setStatus(ProcessStatus.FAILED);
                 process.addError("Failed to move data into internal folder. Reason: %s", e.getMessage());
-                process.addError("Prepared for import:");
+                process.addNote("Prepared for import:");
                 if (files > 0) {
-                    process.addError("  Files  : %5d", files);
+                    process.addNote("  Files  : %5d", files);
                 }
                 if (folders > 0) {
-                    process.addError("  Folders: %5d", folders);
+                    process.addNote("  Folders: %5d", folders);
                 }
                 if (files == 0 && folders == 0) {
-                    process.addError("  None");
+                    process.addNote("  None");
                 }
                 processRepository.save(process);
                 throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: "+e.getMessage(), e);
             }
 
-            String pathToIndex = pathToImport.resolve(FOLDER_SOURCE).toAbsolutePath().toString();
+            String pathToIndex = appConfig.relativizePathToImport(pathToImport.resolve(FOLDER_SOURCE)).toString();
             ImportRequest request = requestRepository.findByPath(pathToIndex);
 
             if ((!enforce) && request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
                 throw new ImportFailedException("Importing is already in progress");
             }
 
-            request = requestProcessor.registerNewImportFolderRequest(pathToIndex, null, process.getId());
-            requestPool.executeRequest(request);
-//            requestProcessor.processRequest(request, process);
-
-            return request;
+            return pathToIndex;
         } catch (ImportFailedException e) {
             throw e;
         } catch (Exception e) {
@@ -237,33 +238,55 @@ public class ImportUtils {
         }
     }
 
-    public Collection<ImportSource> findSimilar(String fileName, Long fileSize) {
-        Collection<ImportSource> found = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
-        return found;
+    public boolean findSimilar(String fileName, Long fileSize) {
+        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
+        Collection<Picture> foundPictures = pictureRepository.findByFileNameAndSize(fileName, fileSize);
+        return !foundPictures.isEmpty() || !foundImports.isEmpty();
     }
 
-    public Collection<ImportSource> findDuplicates(String fileName, Long fileSize) {
-        Collection<ImportSource> found = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
-        return found;
+    public boolean findDuplicates(String fileName, Long fileSize) {
+        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
+        Collection<Picture> foundPictures = pictureRepository.findByFileNameAndSize(fileName, fileSize);
+        return !foundPictures.isEmpty() || !foundImports.isEmpty();
     }
 
-    public void moveToSimilar(Path file, String importPath) throws IOException {
+    public Path moveToSimilar(Path file, String importPath) throws IOException {
         String absolutePath = file.toFile().getAbsolutePath();
         String relativePath = appConfig.relativizePath(absolutePath, importPath);
-        Path similarPath = Paths.get(importPath);
-        similarPath = calcSimilarsPath(similarPath);
-        similarPath = similarPath.resolve(relativePath);
-        FileUtils.moveFileToDirectory(file.toFile(), similarPath.toFile(), true);
+        Path targetPath = Paths.get(importPath);
+        targetPath = calcSimilarsPath(targetPath);
+        Path fullTargetPath = targetPath.resolve(relativePath);
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        return targetPath;
     }
 
-    public void moveToDuplicates(Path file, String importPath) throws IOException {
+    public Path moveToDuplicates(Path file, String importPath) throws IOException {
         String absolutePath = file.toFile().getAbsolutePath();
         String relativePath = appConfig.relativizePath(absolutePath, importPath);
-        Path duplicatePath = Paths.get(importPath);
-        duplicatePath = calcDuplicatesPath(duplicatePath);
-        duplicatePath = duplicatePath.resolve(relativePath);
-        FileUtils.moveFileToDirectory(file.toFile(), duplicatePath.toFile(), true);
+        Path targetPath = Paths.get(importPath);
+        targetPath = calcDuplicatesPath(targetPath);
+        Path fullTargetPath = targetPath.resolve(relativePath);
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        return targetPath;
     }
 
+    public Path moveToApprove(Path file, String importPath) throws IOException {
+        String absolutePath = file.toFile().getAbsolutePath();
+        String relativePath = appConfig.relativizePath(absolutePath, importPath);
+        Path targetPath = Paths.get(importPath);
+        targetPath = calcApprovePath(targetPath);
+        Path fullTargetPath = targetPath.resolve(relativePath);
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        return targetPath;
+    }
 
+    public Path moveToFailed(Path file, String importPath) throws IOException {
+        String absolutePath = file.toFile().getAbsolutePath();
+        String relativePath = appConfig.relativizePath(absolutePath, importPath);
+        Path targetPath = Paths.get(importPath);
+        targetPath = calcFailedPath(targetPath);
+        Path fullTargetPath = targetPath.resolve(relativePath);
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
+        return targetPath;
+    }
 }

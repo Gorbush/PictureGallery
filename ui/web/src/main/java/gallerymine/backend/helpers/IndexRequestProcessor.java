@@ -3,6 +3,7 @@ package gallerymine.backend.helpers;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 import gallerymine.model.importer.IndexRequest;
 import gallerymine.model.importer.ThumbRequest;
@@ -143,6 +144,7 @@ public class IndexRequestProcessor implements Runnable {
             request.setStatus(IndexRequest.IndexStatus.FAILED);
             request.setError(e.getMessage());
             requestRepository.save(request);
+//            importService.finishRequestProcessing(request);
             log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         } finally {
             pool.checkForAwaitingRequests();
@@ -246,11 +248,11 @@ public class IndexRequestProcessor implements Runnable {
             pictureSource.setFileName(fileName);
             pictureSource.setFilePath(filePath);
 
-            boolean hasThumb = pictureSource.hasThumb();
-//            ImageInformation info =
-            analyzer.gatherFileInformation(new File(appConfig.getSourcesRootFolder()), pictureSource, !hasThumb);
+            boolean hadThumb = pictureSource.hasThumb();
 
-            if (pictureSource.hasThumb() && !hasThumb) {
+            analyzer.gatherFileInformation(file,  Paths.get(appConfig.getSourcesRootFolder()), pictureSource, !hadThumb);
+
+            if (pictureSource.hasThumb() && !hadThumb) {
                 File thumbStoredFile = generatePicThumbName(pictureSource);
                 File thumbGeneratedFile = new File(pictureSource.getThumbPath());
                 if (thumbGeneratedFile.exists()) {

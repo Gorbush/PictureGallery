@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.lang.Process;
 import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -32,6 +33,8 @@ public class FileInformation implements Comparable<FileInformation> {
     private String filePath;
     @Indexed
     private String fileName;
+    /** This should be a path to the original root folder */
+    private String rootPath;
     private String source;
     private boolean filled;
     private boolean exists;
@@ -63,10 +66,12 @@ public class FileInformation implements Comparable<FileInformation> {
 
     public void addStamps(Collection<Timestamp> timestamps) {
         this.timestamps.addAll(timestamps);
+        updateTimestamp();
     }
 
     public void addStamp(Timestamp timestamp) {
         this.timestamps.add(timestamp);
+        updateTimestamp();
     }
 
     public boolean hasThumb() {
@@ -107,5 +112,20 @@ public class FileInformation implements Comparable<FileInformation> {
     @Override
     public int compareTo(FileInformation o) {
         return StringUtils.compare(o.id, id, true);
+    }
+
+    public void addError(String message, Object... params) {
+        if (params != null && params.length > 0) {
+            message = String.format(message, params);
+        }
+        if (this.error == null) {
+            this.error = message;
+        } else {
+            this.error += "\n" + message;
+        }
+    }
+
+    public boolean isFailed() {
+        return StringUtils.isNotBlank(error);
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Document
 @QueryEntity
@@ -33,6 +34,8 @@ public class Process {
 
     private List<String> errors = new ArrayList<>();
 
+    private List<String> notes = new ArrayList<>();
+
     @CreatedDate
     private DateTime created;
     @LastModifiedDate
@@ -46,10 +49,25 @@ public class Process {
         errors.add(error);
     }
 
+    public void addNote(String note, Object... params) {
+        if (params!= null && params.length > 0) {
+            note = String.format(note, params);
+        }
+        notes.add(note);
+    }
+
     public void setStatus(ProcessStatus status) {
         if (status != null && status.isFinalStatus() && finished == null) {
             finished = DateTime.now();
         }
         this.status = status;
+    }
+
+    public String notesText() {
+        return notes.stream().collect(Collectors.joining("\n"));
+    }
+
+    public String errorsText() {
+        return errors.stream().collect(Collectors.joining("\n"));
     }
 }

@@ -23,6 +23,8 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+
 //@RepositoryRestResource(collectionResourceRel = "importRequests", path = "importRequests")
 @Repository
 public interface ImportRequestRepository extends MongoRepository<ImportRequest, String> {
@@ -34,6 +36,8 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
     Page<ImportRequest> findByStatus(@Param("status") ImportRequest.ImportStatus status, Pageable pageable);
 
     Page<ImportRequest> findByParent(String parent, Pageable pageable);
+
+    Collection<ImportRequest> findByParent(String parent);
 
     Page<ImportRequest> findByParentNull(Pageable pageable);
 

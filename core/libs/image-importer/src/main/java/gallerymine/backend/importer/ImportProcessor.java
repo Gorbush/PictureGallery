@@ -5,16 +5,19 @@ import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
+import gallerymine.backend.exceptions.ImportFailedException;
+import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
 import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
 import gallerymine.backend.pool.ImportRequestPoolManager;
+import gallerymine.backend.services.ImportService;
 import gallerymine.backend.utils.ImportUtils;
+import gallerymine.model.FileInformation;
 import gallerymine.model.ImportSource;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.ThumbRequest;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -64,7 +67,16 @@ public class ImportProcessor implements Runnable {
     protected ImportSourceRepository sourceRepository;
 
     @Autowired
-    private ImageFormatAnalyser analyzer = new ImageFormatAnalyser();
+    private ImageFormatAnalyser imageAnalyzer;
+
+    @Autowired
+    private GenericFileAnalyser fileAnalyzer;
+
+    @Autowired
+    private ImportSourceRepository importSourceRepository;
+
+    @Autowired
+    private ImportService importService;
 
     private ImportRequest request;
     private ImportRequestPoolManager pool;
@@ -136,7 +148,6 @@ public class ImportProcessor implements Runnable {
 
             processRequest(request, process);
 
-
             log.info("ImportRequest processing started successfuly for {}", request.getPath());
         } catch (Exception e){
             log.error("ImportRequest processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
@@ -171,16 +182,18 @@ public class ImportProcessor implements Runnable {
         log.info("ImportRequest started processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         try {
-            Path path = Paths.get(appConfig.getSourcesRootFolder(), request.getPath());
+            Path path = Paths.get(appConfig.getImportRootFolder(), request.getPath());
 
             if (!path.toFile().exists()) {
                 String error = String.format("Path not found for request : %s", path.toFile().getAbsolutePath());
-                log.error(error);
+                log.error("ImportRequest "+error);
                 request.addError(error);
                 request.setStatus(FAILED);
                 requestRepository.save(request);
                 process.addError(error);
                 processRepository.save(process);
+
+                checkSubsAndDone(request.getId(), null);
                 return;
             }
             Path enumeratingDir = null;
@@ -188,46 +201,68 @@ public class ImportProcessor implements Runnable {
                 int foldersCount = 0;
                 for (Path dir : directoryStreamOfFolders) {
                     enumeratingDir = dir;
-                    registerNewImportFolderRequest(dir.toAbsolutePath().toString(), request, process.getId());
+                    importService.registerNewImportFolderRequest(dir.toAbsolutePath().toString(), request, process.getId());
                     foldersCount++;
                 }
                 request.setFoldersCount(foldersCount);
+                request.getStats().incFolders();
                 requestRepository.save(request);
                 log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             } catch (IOException e) {
                 request.setFoldersCount(-1);
                 request.addError("ImportRequest indexing failed for folder "+enumeratingDir);
                 requestRepository.save(request);
-                log.error("Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
+                log.error("ImportRequest Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
             }
 
             try {
                 request.setStatus(FILES_PROCESSING);
                 requestRepository.save(request);
                 log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-
+                Path importFolder = Paths.get(request.getPath());
                 int filesCount = 0;
                 int filesIgnoredCount = 0;
                 try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
                     for (Path file : directoryStreamOfFiles) {
-                        if (!checkIfDuplicate(file, request)) {
-                            String fileName = file.toString().toLowerCase();
-                            String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
-                            if (fileName.startsWith(".")) {
-                                log.info("Ignore system file {}", file.toAbsolutePath().toString());
-                                continue;
-                            }
-                            if (analyzer.acceptsExtension(fileExt)) {
-                                filesCount++;
-                                processPictureFile(file);
+                        String fileName = file.toString().toLowerCase();
+                        String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
+                        if (fileName.startsWith(".")) {
+                            log.info("ImportRequest Ignore system file {}", file.toAbsolutePath().toString());
+                            continue;
+                        }
+
+                        ImportSource info = new ImportSource();
+                        info.setImportRequestId(request.getId());
+                        info.setIndexProcessId(request.getIndexProcessId());
+                        fileAnalyzer.gatherFileInformation(file, importFolder, info);
+
+                        if (imageAnalyzer.acceptsExtension(fileExt)) {
+                            filesCount++;
+                            request.getStats().incFiles();
+                            processPictureFile(file, importFolder, info);
+
+                            if (!info.isFailed()) {
+                                if (!checkIfDuplicate(file, request, info)) {
+                                    Path targetFolder = importUtils.moveToApprove(file, request.getPath());
+                                    request.getStats().incMovedToApprove();
+                                    info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                                }
                             } else {
                                 filesIgnoredCount++;
-                                logUnknownFormats.error("Unknown format of file {}", file.toAbsolutePath().toString());
+                                request.getStats().incFailed();
+                                Path targetFolder = importUtils.moveToFailed(file, request.getPath());
+                                info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                                logUnknownFormats.error("ImportRequest Unknown format of file {}", file.toAbsolutePath().toString());
                             }
-//                          Thread.sleep(2000);
+                        } else {
+                            Path targetFolder = importUtils.moveToFailed(file, request.getPath());
+                            info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                            request.getStats().incFailed();
                         }
+                        importSourceRepository.save(info);
                     }
                 }
+
                 request.setFilesCount(filesCount);
                 request.setFilesIgnoredCount(filesIgnoredCount);
                 request.setAllFilesProcessed(true);
@@ -239,42 +274,48 @@ public class ImportProcessor implements Runnable {
                 request.setAllFilesProcessed(true);
                 request.addError("indexing failed for file "+path);
                 requestRepository.save(request);
-                log.error(" indexing failed for file {}. Reason: {}", path, e.getMessage());
+                log.error("ImportRequest  indexing failed for file {}. Reason: {}", path, e.getMessage());
             }
 
-            checkSubsAndDone(request.getId());
+            checkSubsAndDone(request.getId(), null);
 
         } catch (Exception e) {
             request.setStatus(FAILED);
             request.setError(e.getMessage());
             requestRepository.save(request);
+            importService.finishRequestProcessing(request);
             log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         } finally {
             pool.checkForAwaitingRequests();
         }
     }
 
-    private boolean checkIfDuplicate(Path file, ImportRequest request) throws IOException {
-        Collection<ImportSource> duplicate = importUtils.findDuplicates(file.toFile().getName(), file.toFile().length());
-        if (duplicate.size() > 0) {
-            importUtils.moveToDuplicates(file, request.getPath());
-            return true;
-        }
-        Collection<ImportSource> similar = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
-        if (similar.size() > 0) {
-            importUtils.moveToSimilar(file, request.getPath());
+    /**
+     * Not only checks if we already have such kind of file imported, but also identifies
+     * match - similar or duplicate and moves the file to the right import subfolder
+     * */
+    private boolean checkIfDuplicate(Path file, ImportRequest request, FileInformation info) throws IOException {
+        // TODO make better check for duplicates, disable for now as it is equal to similar
+//        boolean duplicatesFound = importUtils.findDuplicates(file.toFile().getName(), file.toFile().length());
+//        if (duplicatesFound) {
+//            importUtils.moveToDuplicates(file, request.getPath());
+//            return true;
+//        }
+        boolean similarFound = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
+        if (similarFound) {
+            Path targetFolder = importUtils.moveToSimilar(file, request.getPath());
+            info.setRootPath(targetFolder.toFile().getAbsolutePath());
             return true;
         }
         return false;
     }
 
-    private void checkSubsAndDone(String requestId) {
+    private void checkSubsAndDone(String requestId, ImportRequest child) {
         if (requestId == null) {
-            log.error("Failed to check subs for request id={}", requestId);
+            log.error("ImportRequest Failed to check subs for request id={}", requestId);
             return;
         }
-        Page<ImportRequest> subrequests = requestRepository.findByParent(requestId,
-                new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
+        Collection<ImportRequest> subrequests = requestRepository.findByParent(requestId);
 
         boolean allDone = true;
         boolean someErrors = false;
@@ -282,18 +323,26 @@ public class ImportProcessor implements Runnable {
         for (ImportRequest subRequest: subrequests) {
             if (FAILED.equals(subRequest.getStatus())) {
                 someErrors = true;
+            }
+            if (!subRequest.getStatus().isFinal()) {
+                allDone = false;
+            }
+            if (someErrors && !allDone) {
+                // we already noticed that we have some unfinished work and some failed tasks
+                // no need to check everything
                 break;
             }
-            if (DONE.equals(subRequest.getStatus())) {
-                continue;
-            }
-            allDone = false;
         }
 
         ImportRequest request = requestRepository.findOne(requestId);
         if (request == null) {
-            log.error("Request not found, failed to check subs for id={}", requestId);
+            log.error("ImportRequest Request not found, failed to check subs for id={}", requestId);
             return;
+        }
+
+        if (child != null) {
+            log.info("ImportRequest Adding child substats from id={}", child.getId());
+            request.getSubStats().append(child.getTotalStats());
         }
 
         if (allDone) {
@@ -306,76 +355,78 @@ public class ImportProcessor implements Runnable {
             request.setStatus(SUB);
         }
         requestRepository.save(request);
-
         log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-        if (request.getStatus().isFinal()) {
-            log.info("ImportRequest finished id={} status={}", requestId, request.getStatus());
-        }
-
-        if (request.getStatus().isFinal() && StringUtils.isNotBlank(request.getIndexProcessId()) && StringUtils.isBlank(request.getParent())) {
+        if (request.getStatus().isFinal() &&
+                StringUtils.isNotBlank(request.getIndexProcessId()) && // has process
+                StringUtils.isBlank(request.getParent())) {            // this is the top import request
             Process process = processRepository.findOne(request.getIndexProcessId());
             if (process != null) {
+                log.info("ImportRequest updating process of id={} process={}", requestId, request.getIndexProcessId());
                 if (request.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
-                    process.addError("Import finished");
+                    process.addNote("Import finished");
                     process.setStatus(ProcessStatus.FINISHED);
                 } else {
                     process.addError("Import failed");
                     process.setStatus(ProcessStatus.FAILED);
                 }
                 processRepository.save(process);
-                log.info("Process finished id={} status={}", process.getId(), process.getStatus());
+                log.info("ImportRequest Process finished id={} status={}", process.getId(), process.getStatus());
             } else {
-                log.info("Process not found id={} importRequest={}", process.getId(), request.getId());
+                log.info("ImportRequest Process not found id={} importRequest={}", request.getIndexProcessId(), request.getId());
             }
         }
 
-        if (allDone && request.getParent() != null) {
-            checkSubsAndDone(request.getParent());
+        if (allDone && StringUtils.isNotBlank(request.getParent())) {
+            log.info("ImportRequest processing parent of id={} parent={}", requestId, request.getParent());
+            checkSubsAndDone(request.getParent(), request);
+        }
+
+        if (request.getStatus().isFinal()) {
+            importService.finishRequestProcessing(request);
+            log.info("ImportRequest finished id={} status={}", requestId, request.getStatus());
         }
     }
 
-    private void processPictureFile(Path file) {
+    private void processPictureFile(Path file, Path rootFolder, ImportSource info) {
         try {
             log.debug("  Visiting file {}", file.toAbsolutePath());
 
-            String fileName = file.getFileName().toString();
-            String filePath = file.getParent().toAbsolutePath().toString();
-            filePath = appConfig.relativizePath(filePath, appConfig.getSourcesRootFolder());
+            boolean hadThumb = info.hasThumb();
 
-            ImportSource pictureSource = new ImportSource();
-            pictureSource.setFileName(fileName);
-            pictureSource.setFilePath(filePath);
+            imageAnalyzer.gatherFileInformation(file, rootFolder, info, !hadThumb);
 
-            boolean hasThumb = pictureSource.hasThumb();
-            analyzer.gatherFileInformation(new File(appConfig.getSourcesRootFolder()), pictureSource, !hasThumb);
-
-            if (pictureSource.hasThumb() && !hasThumb) {
-                Path thumbStoredFile = importUtils.generatePicThumbName(pictureSource.getFileName(), pictureSource.getTimestamp());
-                File thumbGeneratedFile = new File(pictureSource.getThumbPath());
+            if (info.hasThumb() && !hadThumb) {
+                Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
+                File thumbGeneratedFile = new File(info.getThumbPath());
                 if (thumbGeneratedFile.exists()) {
                     String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
-                    thumbGeneratedFile.renameTo(thumbStoredFile.toFile());
-                    pictureSource.setThumbPath(relativeStoredPath);
+                    if (!thumbGeneratedFile.renameTo(thumbStoredFile.toFile())) {
+                        log.warn("Thumb file renaming for %s is failed", file.toFile().getAbsolutePath());
+                    };
+                    info.setThumbPath(relativeStoredPath);
                 }
             }
-            sourceRepository.save(pictureSource);
 
-            if (!pictureSource.hasThumb()) {
-                log.warn(" No thumbnail injected - need to generate one for {} in {}", pictureSource.getFileName(), pictureSource.getFilePath());
-                Path thumbStoredFile = importUtils.generatePicThumbName(pictureSource.getFileName(), pictureSource.getTimestamp());
+            if (!info.hasThumb()) {
+                log.warn(" No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
+                Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
                 String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
-                ThumbRequest request = new ThumbRequest(pictureSource.getFilePath(), pictureSource.getFileName(), relativeStoredPath);
+                ThumbRequest request = new ThumbRequest(info.getFilePath(), info.getFileName(), relativeStoredPath);
                 thumbRequestRepository.save(request);
             }
-
         } catch (Exception e) {
+            info.addError("Failed: "+e.getMessage());
             log.error("   Failed to process {}. Reason: {}", file.toAbsolutePath(), e.getMessage(), e);
             logFailed.error("   Failed to process {}. Reason: {}", file.toAbsolutePath(), e.getMessage(), e);
         }
     }
 
-    public ImportRequest registerNewImportFolderRequest(String path, ImportRequest parent, String indexProcessId) throws FileNotFoundException {
-        path = appConfig.relativizePathToImport(path);
+    public ImportRequest registerNewImportFolderRequest(String path, ImportRequest parent, String indexProcessId) throws ImportFailedException {
+        try {
+            path = appConfig.relativizePathToImport(path);
+        } catch (FileNotFoundException e) {
+            throw new ImportFailedException("File not found "+ path, e);
+        }
         ImportRequest newRequest = requestRepository.findByPath(path);
         if (newRequest == null) {
             newRequest = new ImportRequest();

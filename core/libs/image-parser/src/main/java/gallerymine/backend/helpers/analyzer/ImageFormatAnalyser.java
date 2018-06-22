@@ -14,6 +14,7 @@ import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.photoshop.PsdHeaderDirectory;
 import com.drew.metadata.png.PngDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
+import gallerymine.backend.beans.AppConfig;
 import gallerymine.model.FileInformation;
 import gallerymine.model.GeoPoint;
 import gallerymine.model.PictureInformation;
@@ -25,6 +26,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Component;
 
@@ -72,25 +74,25 @@ public class ImageFormatAnalyser {
 //        add("svg");
     }};
 
-    public void gatherFileInformation(File rootFolder, PictureInformation source, boolean extractThumb) {
-        ImageInformation info = new ImageInformation();
+    @Autowired
+    private AppConfig appConfig;
+
+    public void gatherFileInformation(Path file, Path rootFolder, PictureInformation source, boolean extractThumb) {
         try {
+            ImageInformation info = new ImageInformation();
             // preset some properties to avoid re-population
             info.extractThumb = extractThumb;
+            info.file = file.toFile();
 
-            File folder = new File(rootFolder, source.getFilePath());
-            info.file = new File(folder, source.getFileName());
             if (StringUtils.isNotBlank(source.getThumbPath())) {
                 info.thumbFile = new File(source.getThumbPath());
             }
+
             info = readImageInformation(info);
+
             if (info != null) {
-                source.setFilled(true);
-                source.setExists(true);
-                source.setError(null);
                 source.addStamps(info.timestamps);
-                source.updateTimestamp();
-                source.setSize(info.file.length());
+
                 source.setHeight(info.height);
                 source.setWidth(info.width);
                 source.setOrientation(info.orientation);
@@ -111,38 +113,6 @@ public class ImageFormatAnalyser {
         }
     }
 
-    private void fetchStampsFromFileAndName
-            (ImageInformation info) {
-        try {
-            Path javaPath = Paths.get(info.file.getAbsolutePath());
-            //      val attr = Files.readAttributes(javaPath, classOf[BasicFileAttributes], LinkOption.NOFOLLOW_LINKS)
-            BasicFileAttributes view = Files.getFileAttributeView(javaPath, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
-
-            info.addStamp(TimestampKind.TS_FILE_CREATE.create(view.creationTime().toMillis()));
-        } catch (Exception e){
-            log.warn("Failed to index basic file attributes for {}", info.file.getAbsolutePath(), e);
-        }
-
-        try {
-            String fileName = info.file.getName();
-            Matcher dt = parser1.matcher(fileName);
-            if (dt.find()) {
-                String stampPart = dt.group(1);
-                info.addStamp(TimestampKind.TS_FILE_NAME.create(LocalDateTime.parse(stampPart,
-                            DateTimeFormatter.ofPattern("yyyyMMdd'_'HHmmss")).atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()));
-            } else {
-                dt = parser2.matcher(fileName);
-                if (dt.find()) {
-                    String stampPart = dt.group(1);
-                    info.addStamp(TimestampKind.TS_FILE_NAME.create(LocalDateTime.parse(stampPart,
-                            DateTimeFormatter.ofPattern("ddMMyyyy'_'HHmmss")).atZone(ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli()));
-                }
-            }
-        } catch (Exception e){
-            log.warn("Failed to index basic file attributes for {}", info.file.getAbsolutePath(), e);
-        }
-    }
-
     private ImageInformation readImageInformation(ImageInformation info) throws Exception {
         Metadata metadata = ImageMetadataReader.readMetadata(info.file);
 
@@ -150,7 +120,6 @@ public class ImageFormatAnalyser {
             populateDirectoryInfo(info, directory);
         }
 
-        fetchStampsFromFileAndName(info);
         return info;
     }
 

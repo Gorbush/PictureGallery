@@ -59,8 +59,11 @@
                     <!--<td th:text="${process.id}">1</td>-->
                     <td class="nowrap">
                         <span th:text="${detailed.process.status}">1</span>&nbsp;
-                        <span class="glyphicon glyphicon-info-sign log-container" th:if="${detailed.process.errors.size() > 0}">
-                            <div class="log-content" th:text="${detailed.process.errors}"></div>
+                        <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.process.errors.size() > 0}">
+                            <div class="log-content" th:text="${detailed.process.errorsText()}"></div>
+                        </span>
+                        <span class="glyphicon glyphicon-info-sign log-container" th:if="${detailed.process.notes.size() > 0}">
+                            <div class="log-content" th:text="${detailed.process.notesText()}"></div>
                         </span>
                     </td>
                     <td th:text="${detailed.process.type}">1</td>
@@ -69,14 +72,14 @@
                     <td th:text="${detailed.process.finished}">1</td>
 
                     <td class="nowrap">
-                        <span th:text="${detailed.details.status}">1</span>&nbsp;
-                        <span class="glyphicon glyphicon-info-sign log-container" th:if="${detailed.details.error != null}">
+                        <span th:text="${detailed.details?.status}">1</span>&nbsp;
+                        <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.details?.error != null}">
                             <div class="log-content" th:text="${detailed.details.error}"></div>
                         </span>
                     </td>
                     <td>
-                        <p class="nowrap">filesCount: <span th:text="${detailed.details.filesCount}"></span></p>
-                        <p class="nowrap">foldersCount: <span th:text="${detailed.details.foldersCount}"></span></p>
+                        <p class="nowrap">filesCount: <span th:text="${detailed.details?.filesCount}"></span></p>
+                        <p class="nowrap">foldersCount: <span th:text="${detailed.details?.foldersCount}"></span></p>
                     </td>
                 </tr>
                 </tbody>

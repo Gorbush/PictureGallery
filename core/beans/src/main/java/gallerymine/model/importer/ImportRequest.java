@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -42,6 +43,73 @@ public class ImportRequest {
         }
     }
 
+    @Data
+    public class ImportStats {
+        AtomicLong processed = new AtomicLong();
+        AtomicLong movedToApprove = new AtomicLong();
+        AtomicLong similar = new AtomicLong();
+        AtomicLong duplicates = new AtomicLong();
+        AtomicLong failed = new AtomicLong();
+
+        AtomicLong folders = new AtomicLong();
+        AtomicLong files = new AtomicLong();
+        AtomicLong foldersDone = new AtomicLong();
+
+        public ImportStats append(ImportStats subStats) {
+            processed.addAndGet(subStats.processed.get());
+            movedToApprove.addAndGet(subStats.movedToApprove.get());
+            similar.addAndGet(subStats.similar.get());
+            duplicates.addAndGet(subStats.duplicates.get());
+            failed.addAndGet(subStats.failed.get());
+
+            folders.addAndGet(subStats.folders.get());
+            foldersDone.addAndGet(subStats.foldersDone.get());
+            files.addAndGet(subStats.files.get());
+            return this;
+        }
+
+        public ImportStats incProcessed() {
+            processed.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incFailed() {
+            failed.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incMovedToApprove() {
+            movedToApprove.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incSimilar() {
+            similar.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incDuplicates() {
+            duplicates.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incFolders() {
+            folders.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incFoldersDone() {
+            foldersDone.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incFiles() {
+            files.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+    }
+
     @Id
     private String id;
 
@@ -64,6 +132,9 @@ public class ImportRequest {
 
     @Indexed
     private String indexProcessId;
+
+    private ImportStats stats = new ImportStats();
+    private ImportStats subStats = new ImportStats();
 
     @CreatedDate
     private DateTime created;
@@ -111,4 +182,14 @@ public class ImportRequest {
         return this;
     }
 
+    public void appendSubStats(ImportStats subStats) {
+        this.subStats.append(subStats);
+        setUpdated(DateTime.now());
+    }
+
+    public ImportStats getTotalStats() {
+        return new ImportStats()
+                .append(subStats)
+                .append(stats);
+    }
 }

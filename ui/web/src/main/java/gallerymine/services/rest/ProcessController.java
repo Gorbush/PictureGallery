@@ -23,6 +23,7 @@ import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.services.ProcessService;
 import gallerymine.model.Process;
 import gallerymine.model.QProcess;
+import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessDetails;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
@@ -149,12 +150,18 @@ public class ProcessController {
         }
         process.setStatus(ProcessStatus.RESTARTING);
         Process processSaved = processRepository.save(process);
+        ProcessDetails processDetails = processService.populateDetails(processSaved);
 
+        String importFolder = null;
+        if (processDetails.getDetails() != null && processDetails.getDetails() instanceof ImportRequest) {
+            importFolder = ((ImportRequest)processDetails.getDetails()).getPath();
+        }
         return responseOk()
                 .result(processSaved)
                 .op("restart")
                 .put("status", ProcessStatus.RESTARTING)
                 .put("oldStatus", oldStatus)
+                .putIfNotNull("importFolder", importFolder)
                 .putId(id)
                 .build();
     }

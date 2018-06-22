@@ -16,6 +16,7 @@
 
 package gallerymine.backend.beans.repository;
 
+import gallerymine.model.ImportSource;
 import gallerymine.model.Picture;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +32,6 @@ public interface PictureRepository extends MongoRepository<Picture, String> {
 	Picture findByPlacePath(@Param("placePath") String placePath);
 
 	Collection<Picture> findBySourcesIdIn(HashSet<String> sourceIds);
+
+	Collection<Picture> findByFileNameAndSize(String fileName, long size);
 }

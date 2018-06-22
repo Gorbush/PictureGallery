@@ -112,18 +112,18 @@
         <dependency>
             <groupId>spuliaiev.apps.gallerymine</groupId>
             <artifactId>gallery-mine-core-beans</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>spuliaiev.apps.gallerymine</groupId>
             <artifactId>gallery-mine-core-dao</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>spuliaiev.apps.gallerymine</groupId>
             <artifactId>gallery-mine-core-lib-image-parser</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 

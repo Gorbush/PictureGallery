@@ -60,6 +60,14 @@ div#pageContent {
     padding-right: 0;
     margin-right: 0;
 }
+div#pageContentScroller {
+    overflow: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
 div#pageFooter {
     border: 1px solid #ffe0fb;
     position: absolute;
@@ -91,6 +99,7 @@ div.log-content {
     vertical-align: middle;
     padding: 5px;
     font-family: sans-serif;
+    white-space: pre;
 }
 .log-content {
     position: relative;

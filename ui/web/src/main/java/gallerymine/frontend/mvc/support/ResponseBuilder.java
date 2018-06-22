@@ -152,4 +152,10 @@ public class ResponseBuilder {
         return this;
     }
 
+    public ResponseBuilder putIfNotNull(String key, String value) {
+        if (value != null) {
+            map.put(key, value);
+        }
+        return this;
+    }
 }

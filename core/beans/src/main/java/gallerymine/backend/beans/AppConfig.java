@@ -72,14 +72,33 @@ public class AppConfig {
         return relativizePath(filePath, importRootFolder);
     }
 
+
+    public String relativizePathToGallery(Path filePath) throws FileNotFoundException {
+        return relativizePath(filePath, Paths.get(galleryRootFolder));
+    }
+
+    public String relativizePathToSource(Path filePath) throws FileNotFoundException {
+        return relativizePath(filePath, Paths.get(sourcesRootFolder));
+    }
+
+    public String relativizePathToThumb(Path filePath) throws FileNotFoundException {
+        return relativizePath(filePath, Paths.get(thumbsRootFolder));
+    }
+
+    public String relativizePathToImport(Path filePath) throws FileNotFoundException {
+        return relativizePath(filePath, Paths.get(importRootFolder));
+    }
+
     public String relativizePath(String fileName, String rootFolder) throws FileNotFoundException {
+        return relativizePath(Paths.get(fileName), Paths.get(rootFolder));
+    }
+
+    public String relativizePath(Path file, Path rootFolder) throws FileNotFoundException {
         checkFolders();
-        Path root = Paths.get(rootFolder);
-        if (root == null || !root.toFile().exists()) {
+        if (rootFolder == null || !rootFolder.toFile().exists()) {
             throw new FileNotFoundException("Root folder not found: "+rootFolder);
         }
-        Path file = Paths.get(fileName);
-        Path relative = root.relativize(file);
+        Path relative = rootFolder.relativize(file);
         String relativePath = relative.toString();
         if (!relativePath.startsWith("/")) {
             relativePath = "/"+relativePath;

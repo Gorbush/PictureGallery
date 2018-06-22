@@ -24,14 +24,14 @@ var Processes = {
 
     runImport : function () {
         AjaxHelper.runGET("importing/import", function (response) {
-            alert("Import started in folder");
+            alert("Import started in folder "+response.importFolder);
         });
     },
 
     restartProcess: function (element) {
         var rowid = $(element).attr("rowid");
         AjaxHelper.runGET("/processes/restart/"+rowid, function (response) {
-            alert("Import started in folder");
+            alert("Import restarted in folder  "+response.importFolder);
         });
     }
 };

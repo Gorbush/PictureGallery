@@ -22,6 +22,7 @@ import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportRequestPoolManager;
+import gallerymine.backend.services.ImportService;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.importer.ImportRequest;
 import org.slf4j.Logger;
@@ -68,6 +69,9 @@ public class ImportRequestsController {
 	@Autowired
     private ImportUtils importUtils;
 
+	@Autowired
+	private ImportService importService;
+
 	public ImportRequestsController() {
 	}
 
@@ -88,7 +92,7 @@ public class ImportRequestsController {
     @ResponseBody
     public Object importFolder(@RequestParam(value = "enforce", defaultValue = "false", required = false) boolean enforce) {
 	    try {
-            ImportRequest request = importUtils.prepareImportFolder(enforce);
+            ImportRequest request = importService.prepareImportFolder(enforce);
 
             return responseOk()
                     .put("id", request.getId())
