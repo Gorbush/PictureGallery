@@ -14,6 +14,7 @@ ul.jstree-contextmenu {
 }
 #indexRequestsTreeHeader {
     border: 1px solid red;
+    height: 16px;
 }
 #indexRequestTreeHeaderRightColumns  {
     border: 1px solid green;

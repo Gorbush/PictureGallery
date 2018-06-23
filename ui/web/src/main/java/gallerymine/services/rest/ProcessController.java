@@ -183,9 +183,10 @@ public class ProcessController {
     @ResponseBody
 	public Object  find(@PathVariable String id) {
         Process process = processRepository.findOne(id);
-		return responseOk()
-				.result(process)
-				.op("find")
+        ProcessDetails processDetails = processService.populateDetails(process);
+        return responseOk()
+				.result(processDetails)
+				.op("get")
 				.putId(id)
 				.build();
 	}

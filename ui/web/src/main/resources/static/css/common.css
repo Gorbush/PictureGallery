@@ -98,7 +98,8 @@ div.log-content {
     background: white;
     vertical-align: middle;
     padding: 5px;
-    font-family: sans-serif;
+    font-family: monospace;
+    font-size: smaller;
     white-space: pre;
 }
 .log-content {

@@ -18,7 +18,10 @@ var AjaxHelper = {
         }
     },
 
-    runGET: function (url, callBackSuccess, callbackError) {
+    runGET: function (url, callBackSuccess, callbackError, async) {
+        if(!async) {
+            async = false;
+        }
         $.ajax({
             type: "GET",
             url: url,
@@ -27,8 +30,8 @@ var AjaxHelper = {
             },
             error: callbackError ? callbackError : AjaxHelper.errorHandler,
             dataType: "json",
-            contentType: "application/json"
-            // async: false
+            contentType: "application/json",
+            async: async
         });
     },
 

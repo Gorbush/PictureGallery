@@ -63,16 +63,16 @@ public class ProcessService {
     public ProcessDetails populateDetails(Process process) {
         ProcessDetails details = new ProcessDetails();
         details.setProcess(process);
-
-        switch (process.getType()) {
-            case IMPORT: {
-                details.setDetail(importRepository.findByIndexProcessId(process.getId()));
-                break;
+        if (process != null) {
+            switch (process.getType()) {
+                case IMPORT: {
+                    details.setDetail(importRepository.findByIndexProcessId(process.getId()));
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
-            default: {
-                break;
-            }
-
         }
         return details;
     }

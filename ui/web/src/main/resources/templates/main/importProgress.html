@@ -10,7 +10,7 @@
 </head>
 <body>
     <section layout:fragment="pageButtons" class="container">
-        <button type="button" id="refresh" class="btn btn-info navbar-btn">Refresh</button>
+        <button type="button" id="btnRunRefresh" class="btn btn-info navbar-btn">Refresh</button>
         <button type="button" id="btnRunImport" class="btn btn-success navbar-btn">Run Import</button>
     </section>
 
@@ -27,25 +27,24 @@
         <div class="col-sm-10">
             <div id="importList" class="col-sm-4" >
                 <div id="importDetailsListData" >
-                    table with import: StartDate EndDate Status
                     <input type="hidden" id="processId" th:value="${process.id}"></input>
                     <input type="hidden" id="activeDetailId" th:value="${latestDetail?.id}"></input>
                     <table class="table table-bordered table-striped">
-                        <tr><td> Name </td><td th:text="${process.name}"></td> </tr>
+                        <tr><td> Name </td><td name="process.name" th:text="${process.name}"></td> </tr>
                         <tr><td> Status </td>
                             <td>
                                 <span th:text="${process.status}"></span>
                                 <span class="glyphicon glyphicon-warning-sign log-container" th:if="${process.errors.size() > 0}">
-                                    <div class="log-content" th:text="${process.errorsText()}"></div>
+                                    <div name="process.errors" data-format="pre" class="log-content" th:text="${process.errorsText()}"></div>
                                 </span>
                                 <span class="glyphicon glyphicon-info-sign log-container" th:if="${process.notes.size() > 0}">
-                                    <div class="log-content" th:text="${process.notesText()}"></div>
+                                    <div name="process.notes" data-format="pre" class="log-content" th:text="${process.notesText()}"></div>
                                 </span>
                             </td>
                         </tr>
                         <tr><td> Started </td><td th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
                         <tr><td> Finished </td><td th:text="${process.finished?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
-                        <tr><td> Folder </td><td th:text="${detail?.path}"></td> </tr>
+                        <tr><td> Folder </td><td name="details[0].path" th:text="${details[0]?.path}"></td> </tr>
                     </table>
                     <span class="section-header">Imports:</span>
                     <table class="table table-bordered table-striped">
@@ -80,7 +79,11 @@
     </section>
 
     <section layout:fragment="dialogs" class="container">
-
+        <div class="node_postblock" id="importProgressTreeColumns">
+            <div class="status">Status</div>
+            <div class="filesCount">Files</div>
+            <div class="foldersCount">Folders</div>
+        </div>
     </section>
 </body>
 </html>
