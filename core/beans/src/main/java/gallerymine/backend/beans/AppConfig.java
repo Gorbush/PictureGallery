@@ -31,7 +31,11 @@ public class AppConfig {
     @Value("${importExposedRootFolder}")
     public String importExposedRootFolder;
 
+    @Value("${dryRunImportMoves}")
     public boolean dryRunImportMoves = true;
+
+    @Value("${gallery.import.abandoned_timeout_ms}")
+    public long abandonedTimoutMs;
 
     Path importRootFolderPath;
 

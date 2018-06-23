@@ -1,5 +1,6 @@
 package gallerymine.model.importer;
 
+import com.google.common.collect.ImmutableSet;
 import lombok.Data;
 import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,6 +10,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
@@ -22,25 +25,42 @@ import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 public class ImportRequest {
 
     public enum ImportStatus {
-        PREREARING(false),
-        START(false),
-        AWAITING(false),
-        ENUMERATING(false),
-        ENUMERATED(false),
-        FILES_PROCESSING(false),
-        RESTART(false),
-        SUB(false),
-        FAILED(true),
-        DONE(true);
+        INIT(false, true),
+        START(false, false),
+        AWAITING(false, true),
+
+        ENUMERATING(false, true),
+        ENUMERATED(false, true),
+        FILES_PROCESSING(false, true),
+        SUB(false, true),
+
+        RESTART(false, false),
+        FAILED(true, false),
+        ABANDONED(true, false),
+        DONE(true, false);
 
         private boolean aFinal;
+        private boolean inProgress;
 
-        private ImportStatus(boolean aFinal) {
+        /** Status which might mean the import is abandoned */
+        static Collection<ImportStatus> inProgressStatuses =
+                ImmutableSet.of(INIT, AWAITING, ENUMERATING, ENUMERATED, FILES_PROCESSING, SUB);
+
+        ImportStatus(boolean aFinal, boolean inProgress) {
             this.aFinal = aFinal;
+            this.inProgress = inProgress;
         }
 
         public boolean isFinal() {
             return aFinal;
+        }
+
+        public boolean isInProgress() {
+            return inProgress;
+        }
+
+        public static Collection<ImportStatus> getInProgress() {
+            return inProgressStatuses;
         }
     }
 

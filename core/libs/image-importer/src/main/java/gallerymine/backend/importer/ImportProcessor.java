@@ -243,19 +243,19 @@ public class ImportProcessor implements Runnable {
 
                             if (!info.isFailed()) {
                                 if (!checkIfDuplicate(file, request, info)) {
-                                    Path targetFolder = importUtils.moveToApprove(file, request.getPath());
+                                    Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
                                     request.getStats().incMovedToApprove();
                                     info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 }
                             } else {
                                 filesIgnoredCount++;
                                 request.getStats().incFailed();
-                                Path targetFolder = importUtils.moveToFailed(file, request.getPath());
+                                Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 logUnknownFormats.error("ImportRequest Unknown format of file {}", file.toAbsolutePath().toString());
                             }
                         } else {
-                            Path targetFolder = importUtils.moveToFailed(file, request.getPath());
+                            Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(targetFolder.toFile().getAbsolutePath());
                             request.getStats().incFailed();
                         }
@@ -298,7 +298,7 @@ public class ImportProcessor implements Runnable {
         // TODO make better check for duplicates, disable for now as it is equal to similar
 //        boolean duplicatesFound = importUtils.findDuplicates(file.toFile().getName(), file.toFile().length());
 //        if (duplicatesFound) {
-//            importUtils.moveToDuplicates(file, request.getPath());
+//            importUtils.moveToDuplicates(file, request.getRootPath());
 //            return true;
 //        }
         boolean similarFound = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
@@ -440,7 +440,7 @@ public class ImportProcessor implements Runnable {
         }
         newRequest.setIndexProcessId(indexProcessId);
         newRequest.setError(null);
-        newRequest.setStatus(PREREARING);
+        newRequest.setStatus(INIT);
         newRequest.setPath(path);
 
         requestRepository.save(newRequest);

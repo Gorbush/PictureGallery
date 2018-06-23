@@ -1,9 +1,11 @@
 package gallerymine.backend.pool;
 
+import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.model.importer.ImportRequest;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class ImportRequestPoolManager {
     @Autowired
     private ImportRequestRepository requestRepository;
 
+    @Autowired
+    private AppConfig appConfig;
+
     private ThreadPoolTaskExecutor pool;
 
     public ImportRequestPoolManager() {
@@ -66,10 +71,6 @@ public class ImportRequestPoolManager {
             return null;
         }
 
-        request.setStatus(AWAITING);
-        log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-        requestRepository.save(request);
-
         return request;
     }
 
@@ -80,7 +81,12 @@ public class ImportRequestPoolManager {
         if (request == null) {
             return;
         }
+        log.info("ImportRequest request execution id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+
+        request.setStatus(AWAITING);
         log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        requestRepository.save(request);
+
         bean.setRequest(request);
         bean.setPool(this);
         pool.execute(bean);
@@ -108,12 +114,34 @@ public class ImportRequestPoolManager {
         int queued = pool.getThreadPoolExecutor().getQueue().size();
         logPools.info("ImportRequest check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB
-            Page<ImportRequest> foundRequests = requestRepository.findByStatus(START,
-                    new PageRequest(0, 5, new Sort(new Sort.Order(Sort.Direction.DESC, "updated"))));
+            Page<ImportRequest> foundRequests = requestRepository.findByStatus(START, new PageRequest(0, 5, new Sort(new Sort.Order(Sort.Direction.DESC, "updated"))));
             logPools.info("ImportRequest FOUND size={}", foundRequests.getNumber());
             for(ImportRequest request: foundRequests) {
                 executeRequest(request);
             }
+        }
+    }
+
+    @Scheduled(fixedDelay = 3*60*1000)
+    public void checkForAbandonedRequests() {
+        Thread.currentThread().setName("ImportRequest-AbandonedChecker");
+        Collection<ImportRequest> foundRequests = requestRepository.findByStatus(ImportRequest.ImportStatus.getInProgress());
+        if (!foundRequests.isEmpty()) {
+            logPools.info("ImportRequest Found potentially abandoned");
+            long tested = 0;
+            long marked = 0;
+            DateTime now = DateTime.now();
+            for (ImportRequest request : foundRequests) {
+                ImportRequest lastUpdated = requestRepository.findLastUpdated(request.getIndexProcessId(), new Sort(new Sort.Order(Sort.Direction.DESC, "updated")));
+                if (lastUpdated != null && now.getMillis() - appConfig.getAbandonedTimoutMs() > lastUpdated.getUpdated().getMillis() ) {
+                    request.setStatus(ABANDONED);
+                    logPools.info("ImportRequest Marked abandoned id:%d", request.getId());
+                    requestRepository.save(request);
+                }
+            }
+            logPools.info("ImportRequest potentially abandoned validation done tested:%d marked:%d", tested, marked);
+        } else {
+            logPools.info("ImportRequest No potentially abandoned found");
         }
     }
 

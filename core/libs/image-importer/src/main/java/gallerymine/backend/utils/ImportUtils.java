@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 public class ImportUtils {
@@ -149,6 +150,31 @@ public class ImportUtils {
         return importPath.getParent().resolve(FOLDER_FAILED);
     }
 
+    public void moveFileStructure(Path source, Path target, AtomicLong files, AtomicLong folders) throws IOException {
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(source)) {
+            for (Path srcFile : directoryStream) {
+                if (srcFile.toFile().isDirectory()) {
+                    folders.incrementAndGet();
+                    if (!appConfig.isDryRunImportMoves()) {
+                        FileUtils.moveDirectoryToDirectory(srcFile.toFile(), target.toFile(), true);
+                    } else {
+                        Path targetFolder = target.resolve(srcFile.getFileName());
+                        targetFolder.toFile().mkdirs();
+                        moveFileStructure(srcFile, targetFolder, files, folders);
+                    }
+                } else {
+                    files.incrementAndGet();
+                    if (!appConfig.isDryRunImportMoves()) {
+                        FileUtils.moveFileToDirectory(srcFile.toFile(), target.toFile(), true);
+                    } else {
+                        // Simply create symlynk
+                        Files.createSymbolicLink(target.resolve(srcFile.getFileName()), srcFile);
+                    }
+                }
+            }
+        }
+    }
+
     public String prepareImportFolder(boolean enforce, Process process) throws ImportFailedException {
         Path pathExposed = Paths.get(appConfig.getImportExposedRootFolder());
         Path pathToImport = appConfig.getImportRootFolderPath().resolve(DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
@@ -182,32 +208,21 @@ public class ImportUtils {
             process.setStatus(ProcessStatus.PREPARING);
             processRepository.save(process);
 
-            int files = 0;
-            int folders = 0;
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pathExposed)) {
-                for (Path srcFile : directoryStream) {
-                    if (!appConfig.isDryRunImportMoves()) {
-                        if (srcFile.toFile().isDirectory()) {
-                            folders++;
-                            FileUtils.moveDirectoryToDirectory(srcFile.toFile(), pathToImportSource.toFile(), true);
-                        } else {
-                            files++;
-                            FileUtils.moveFileToDirectory(srcFile.toFile(), pathToImportSource.toFile(), true);
-                        }
-                    } else {
-                        // Simply create symlynk
-                        Files.createSymbolicLink(pathToImportSource.resolve(srcFile.getFileName()), srcFile);
-                    }
-                }
+            AtomicLong files = new AtomicLong();
+            AtomicLong folders = new AtomicLong();
+
+            try {
+                moveFileStructure(pathExposed, pathToImportSource, files, folders);
+
                 process.setStatus(ProcessStatus.STARTING);
                 process.addNote("Prepared for import:");
-                if (files > 0) {
-                    process.addNote("  Files  : %5d", files);
+                if (files.get() > 0) {
+                    process.addNote("  Files  : %5d", files.get());
                 }
-                if (folders > 0) {
-                    process.addNote("  Folders: %5d", folders);
+                if (folders.get() > 0) {
+                    process.addNote("  Folders: %5d", folders.get());
                 }
-                if (files == 0 && folders == 0) {
+                if (files.get() == 0 && folders.get() == 0) {
                     process.addNote("  None");
                 }
                 processRepository.save(process);
@@ -215,13 +230,13 @@ public class ImportUtils {
                 process.setStatus(ProcessStatus.FAILED);
                 process.addError("Failed to move data into internal folder. Reason: %s", e.getMessage());
                 process.addNote("Prepared for import:");
-                if (files > 0) {
-                    process.addNote("  Files  : %5d", files);
+                if (files.get() > 0) {
+                    process.addNote("  Files  : %5d", files.get());
                 }
-                if (folders > 0) {
-                    process.addNote("  Folders: %5d", folders);
+                if (folders.get() > 0) {
+                    process.addNote("  Folders: %5d", folders.get());
                 }
-                if (files == 0 && folders == 0) {
+                if (files.get() == 0 && folders.get() == 0) {
                     process.addNote("  None");
                 }
                 processRepository.save(process);
@@ -261,7 +276,7 @@ public class ImportUtils {
         Path targetPath = Paths.get(importPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(calcSimilarsPath(targetPath));
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves()) {
+        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
             FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         }
         return targetPath;
@@ -272,7 +287,7 @@ public class ImportUtils {
         Path targetPath = Paths.get(importPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(calcDuplicatesPath(targetPath));
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves()) {
+        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
             FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         }
         return targetPath;
@@ -283,7 +298,7 @@ public class ImportUtils {
         Path targetPath = Paths.get(importPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(calcApprovePath(targetPath));
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves()) {
+        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
             FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         }
         return targetPath;
@@ -292,9 +307,10 @@ public class ImportUtils {
     public Path moveToFailed(Path file, String importPath) throws IOException {
         String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
         Path targetPath = Paths.get(importPath);
-        targetPath = appConfig.getImportRootFolderPath().resolve(calcFailedPath(targetPath));
+        targetPath = calcFailedPath(targetPath);
+        targetPath = appConfig.getImportRootFolderPath().resolve(targetPath);
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves()) {
+        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
             FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         }
         return targetPath;

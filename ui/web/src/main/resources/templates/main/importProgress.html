@@ -43,8 +43,9 @@
                                 </span>
                             </td>
                         </tr>
-                        <tr><td> Started </td><td th:text="${process.started}"></td> </tr>
-                        <tr><td> Finished </td><td th:text="${process.finished}"></td> </tr>
+                        <tr><td> Started </td><td th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
+                        <tr><td> Finished </td><td th:text="${process.finished?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
+                        <tr><td> Folder </td><td th:text="${detail?.path}"></td> </tr>
                     </table>
                     <span class="section-header">Imports:</span>
                     <table class="table table-bordered table-striped">
@@ -60,6 +61,15 @@
                 </div>
             </div>
             <div id="importDetailsTree" class="col-sm-8" >
+                <div id="indexRequestsTreeHeader" >
+                    <div id="indexRequestTreeHeaderRightColumns">
+                        <div class="node_postblock">
+                            <div class="status">Status</div>
+                            <div class="filesCount">Files</div>
+                            <div class="foldersCount">Folders</div>
+                        </div>
+                    </div>
+                </div>
                 <div id="indexRequestsTree" >
                 </div>
             </div>

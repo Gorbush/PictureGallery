@@ -19,6 +19,7 @@ package gallerymine.backend.beans.repository;
 import gallerymine.model.importer.ImportRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,4 +46,9 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
     ImportRequest findByIndexProcessId(@Param("indexProcessId") String processId);
 
     Collection<ImportRequest> findAllByIndexProcessIdAndParentIsNullOrderByCreatedAsc(@Param("indexProcessId") String processId);
+
+    Collection<ImportRequest> findByStatus(Collection<ImportRequest.ImportStatus> statuses);
+
+    @Query(value="{indexProcessId: ?0 }}", fields="{updated : 0}")
+    ImportRequest findLastUpdated(String requestId, Sort sort);
 }

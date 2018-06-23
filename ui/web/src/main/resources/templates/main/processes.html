@@ -59,7 +59,7 @@
 
                     <!--<td th:text="${process.id}">1</td>-->
                     <td class="nowrap">
-                        <span th:text="${detailed.process.status}">1</span>&nbsp;
+                        <span th:text="${detailed.process.status}" >1</span>&nbsp;
                         <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.process.errors.size() > 0}">
                             <div class="log-content" th:text="${detailed.process.errorsText()}"></div>
                         </span>
@@ -69,11 +69,11 @@
                     </td>
                     <td th:text="${detailed.process.type}">1</td>
                     <td th:text="${detailed.process.name}">1</td>
-                    <td th:text="${detailed.process.started}">1</td>
-                    <td th:text="${detailed.process.finished}">1</td>
+                    <td th:text="${detailed.process.started.toString('YYYY-MM-dd HH:mm:ss')}">1</td>
+                    <td th:text="${detailed.process.finished?.toString('YYYY-MM-dd HH:mm:ss')}">1</td>
 
                     <td class="nowrap">
-                        <span th:text="${detailed.lastDetail?.status}">1</span>&nbsp;
+                        <span th:text="${detailed.lastDetail?.status}" data-toggle="tooltip" th:attr="title=${detailed.lastDetail?.updated?.toString('YYYY-MM-dd HH:mm:ss')}">1</span>&nbsp;
                         <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.lastDetail?.error != null}">
                             <div class="log-content" th:text="${detailed.lastDetail.error}"></div>
                         </span>

@@ -8,6 +8,7 @@ public enum ProcessStatus {
     RUNNING(false),
     TEARDOWN(false),
     FINISHED(true),
+    ABANDONED(true),
     FAILED(true);
 
     boolean finalStatus = false;

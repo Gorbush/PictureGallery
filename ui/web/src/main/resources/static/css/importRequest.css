@@ -8,8 +8,17 @@ ul.jstree-contextmenu {
     border: 1px solid red;
 }
 #indexRequestsTree .jstree-anchor{
-    padding-right: 30px;
+    right: 0px;
     width: 100%;
+    padding-right: 25px;
+}
+#indexRequestsTreeHeader {
+    border: 1px solid red;
+}
+#indexRequestTreeHeaderRightColumns  {
+    border: 1px solid green;
+    float:right;
+    font-size: x-small;
 }
 div.node_postblock {
     float:right;

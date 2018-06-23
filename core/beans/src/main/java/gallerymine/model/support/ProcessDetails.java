@@ -1,5 +1,6 @@
 package gallerymine.model.support;
 
+import gallerymine.model.importer.ImportRequest;
 import lombok.Data;
 import gallerymine.model.Process;
 
@@ -10,13 +11,13 @@ import java.util.Collection;
 public class ProcessDetails {
 
     Process process;
-    Collection details;
+    Collection<ImportRequest> details;
 
-    public Object getLastDetail() {
+    public ImportRequest getLastDetail() {
         return (details != null && details.size() > 0 )? details.iterator().next() : null;
     }
 
-    public void setDetail(Object detail) {
+    public void setDetail(ImportRequest detail) {
         details = new ArrayList();
         details.add(detail);
     }
