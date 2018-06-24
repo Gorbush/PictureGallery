@@ -58,6 +58,12 @@ var ImportRequestsTree = {
         for(nodexIndex in nodesList) {
             var node = nodesList[nodexIndex];
             node.text = (node.path === "") ? "Gallery Root" : node.path;
+            if (node.rootPath && node.text.startsWith(node.rootPath)) {
+                node.text = node.text.substr(node.rootPath.length);
+            }
+            if (node.text.startsWith("/")) {
+                node.text = node.text.substr(1);
+            }
             node.icon = "NODE_STATUS_" + node.status;
             node.data = node;
             node.state = {
@@ -139,6 +145,7 @@ $(document).ready(function() {
     });
 
     $("#btnRunRefresh").on('click', function () {
+        ImportRequestsTree.tree.jstree(true).refresh();
         var id = ImportRequestsTree.getActiveProcessId();
         AjaxHelper.runGET("/processes/"+id,
             function (response) {

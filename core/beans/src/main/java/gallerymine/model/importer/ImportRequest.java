@@ -138,8 +138,14 @@ public class ImportRequest {
     private String rootId;
 
     /** Import process current folder */
-    @Indexed(unique = true)
+    @Indexed
     private String path;
+
+    @Indexed
+    private String name;
+
+    @Indexed
+    private String nameL;
 
     /** Import process root folder */
     private String rootPath;
@@ -217,4 +223,10 @@ public class ImportRequest {
                 .append(subStats)
                 .append(stats);
     }
+
+    public void setName(String name) {
+        this.name = name;
+        nameL = name == null ? null : name.toLowerCase().replaceAll("^[_$/\\\\]*", "");
+    }
+
 }

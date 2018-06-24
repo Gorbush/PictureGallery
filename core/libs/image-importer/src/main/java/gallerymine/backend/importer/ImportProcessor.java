@@ -99,6 +99,7 @@ public class ImportProcessor implements Runnable {
 
         Path importFolder = importUtils.makeNewImportStamp(importStamp);
         request.setPath(importFolder.toFile().getAbsolutePath());
+        request.setName(importFolder.toFile().getName());
         log.info("  import folder %s", importFolder.toFile().getAbsolutePath());
 
         boolean result = importFolder.toFile().mkdirs();
@@ -442,6 +443,7 @@ public class ImportProcessor implements Runnable {
         newRequest.setError(null);
         newRequest.setStatus(INIT);
         newRequest.setPath(path);
+        newRequest.setName(Paths.get(path).toFile().getName());
 
         requestRepository.save(newRequest);
         newRequest.setStatus(START);

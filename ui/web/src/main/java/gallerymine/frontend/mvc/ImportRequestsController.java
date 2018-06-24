@@ -109,7 +109,7 @@ public class ImportRequestsController {
     public Object listByParent(@PathVariable("parentId") Optional<String> parentId) {
         Page<ImportRequest> page = requestRepository.findByParent(
                 parentId.orElse(null),
-                new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
+                new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
 
         return responseOk().put("response", page).build();
     }
