@@ -9,8 +9,15 @@ var ImportRequestsTree = {
         ImportRequestsTree.tree = $('#indexRequestsTree');
         ImportRequestsTree.treeColumnsTemplate = $("#importProgressTreeColumns");
         ImportRequestsTree.autoRefreshCheck = $("#autoRefreshCheck");
-
         ImportRequestsTree.autoRefreshCheck.on('click', ImportRequestsTree.checkAutoRefresh);
+        ImportRequestsTree.progress = {
+            filesDiv: $("#filesProgress"),
+            folderDiv: $("#foldersProgress")
+        };
+        ImportRequestsTree.progress.files = initProgressBar(ImportRequestsTree.progress.filesDiv);
+        ImportRequestsTree.progress.folders = initProgressBar(ImportRequestsTree.progress.folderDiv);
+        ImportRequestsTree.progress.folders.setProgress(0,0,"");
+        ImportRequestsTree.progress.files.setProgress(0,0,"");
 
         ImportRequestsTree.tree.jstree({
             'core': {
@@ -150,12 +157,19 @@ var ImportRequestsTree = {
     disableAutoRefresh: function () {
         ImportRequestsTree.autoRefreshCheck.prop('checked', false);
     },
+    updateProgress: function (stats) {
+        ImportRequestsTree.progress.folders.setProgress(stats.folders, stats.foldersDone,
+            stats.foldersDone + " of " + stats.folders);
+        ImportRequestsTree.progress.files.setProgress(stats.files, 0,stats.files+" files");
+    },
     refresh: function() {
         ImportRequestsTree.tree.jstree(true).refresh();
         var id = ImportRequestsTree.getActiveProcessId();
         AjaxHelper.runGET("/processes/"+id,
             function (response) {
                 FormHelper.populate($("#importDetailsListData"), response.result);
+                var stats = response.result.lastDetail.totalStats;
+                ImportRequestsTree.updateProgress(stats);
             }
         );
     }

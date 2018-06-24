@@ -7,6 +7,7 @@
     <link rel="stylesheet" type="text/css" href="/css/importRequest.css" id="css"> </link>
 
     <script type="application/javascript" src="/js/importRequest.js" ></script>
+    <script type="application/javascript" src="/js/progressBar.js" ></script>
 </head>
 <body>
     <section layout:fragment="pageButtons" class="container">
@@ -45,7 +46,12 @@
                         </tr>
                         <tr><td> Started </td><td name="process.started" class="date" th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
                         <tr><td> Finished </td><td name="process.finished" class="date" th:text="${process.finished?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
-                        <tr><td> Folder </td><td name="details[0].path" th:text="${details[0]?.path}"></td> </tr>
+                        <tr><td> Folder </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
+                        <tr><td> Progress: </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
+                        <tr><td class="text-right"> Folders:</td><td><div id="filesProgress"></div></td></tr>
+                        <tr><td class="text-right"> Files:</td><td><div id="foldersProgress"></div></td></tr>
+                        <tr><td class="text-right"> Sample:</td><td><progress id="allProgress" class="progressbar" max="10" value="3"></progress></td></tr>
+                        <tr><td class="text-right"> Sample:</td><td><progress id="allProgressA"  class="progressbar" ></progress></td></tr>
                     </table>
                     <span class="section-header">Imports:</span>
                     <table class="table table-bordered table-striped">
