@@ -21,6 +21,7 @@ var ImportRequestsTree = {
 
         ImportRequestsTree.tree.jstree({
             'core': {
+
                 'data' : {
                     "url" : function (node, cb, par2) {
                         var id = node.id;
@@ -31,6 +32,10 @@ var ImportRequestsTree = {
                     },
                     "postprocessor": function (node, data, par2) {
                         return ImportRequestsTree.preprocessAsNodes(data.response.content);
+                    },
+                    "renderer" : function (node, obj, settings, jstree, document) {
+                        var row = populateTemplate("#importTreeRow", obj);
+                        moveChildren(row[0], node.childNodes[1]);
                     }
                 }
             },
@@ -82,25 +87,25 @@ var ImportRequestsTree = {
             if (node.parent === null || node.parent === node.rootId) {
                 node.parent = '#';
             }
-            node.text += '<div class="node_postblock">';
-            node.text += '  <div class="status" data-toggle="tooltip" ';
+            var rowText = '<div class="node_postblock">';
+            rowText += '  <div class="status" data-toggle="tooltip" ';
             if (node.updated) {
                 var tooltip = formatDate(node.updated);
-                node.text += ' tooltip="'+tooltip+'"';
+                rowText += ' tooltip="'+tooltip+'"';
             }
-            node.text += '>' +node.status+'</div>';
-            node.text += '  <div class="filesCount">';
+            rowText += '>' +node.status+'</div>';
+            rowText += '  <div class="filesCount">';
             if (node.filesCount != null) {
                 if (node.filesIgnoredCount != null && node.filesIgnoredCount > 0) {
-                    node.text += '(' + node.filesIgnoredCount + ')';
+                    rowText += '(' + node.filesIgnoredCount + ')';
                 }
-                node.text += ' ' + node.filesCount;
+                rowText += ' ' + node.filesCount;
             }
-            node.text += '  </div>';
-            node.text += '  <div class="foldersCount">';
+            rowText += '  </div>';
+            rowText += '  <div class="foldersCount">';
             if (node.foldersCount != null) {
                 if (node.foldersCount > 0) {
-                    node.text += node.foldersCount;
+                    rowText += node.foldersCount;
                     node.children = true;
                 } else {
                     node.children = false;
@@ -108,8 +113,10 @@ var ImportRequestsTree = {
             } else {
                 node.children = true;
             }
-            node.text += '  </div>';
-            node.text += '</div>';
+            rowText += '  </div>';
+            rowText += '</div>';
+
+            node.text += rowText;
         }
 
         return nodesList;

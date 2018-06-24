@@ -2480,11 +2480,15 @@
 				}
 			}
 
-			if(this.settings.core.force_text) {
-				node.childNodes[1].appendChild(d.createTextNode(obj.text));
-			}
-			else {
-				node.childNodes[1].innerHTML += obj.text;
+			if (this.settings.core.data.renderer) {
+                this.settings.core.data.renderer(node, obj, this.settings, this, d);
+			} else {
+                if(this.settings.core.force_text) {
+                    node.childNodes[1].appendChild(d.createTextNode(obj.text));
+                }
+                else {
+                    node.childNodes[1].innerHTML += obj.text;
+                }
 			}
 
 

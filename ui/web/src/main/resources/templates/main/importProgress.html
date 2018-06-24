@@ -86,10 +86,13 @@
     </section>
 
     <section layout:fragment="dialogs" class="container">
-        <div class="node_postblock" id="importProgressTreeColumns">
-            <div class="status">Status</div>
-            <div class="filesCount">Files</div>
-            <div class="foldersCount">Folders</div>
+        <div id="importTreeRow">
+            <span name="data.name">NodeName</span>
+            <div class="node_postblock" id="importProgressTreeColumns">
+                <div name="data.status" class="status">Status</div>
+                <div name="data.totalStats.files" class="filesCount">Files</div>
+                <div name="data.totalStats.folders" class="foldersCount">Folders</div>
+            </div>
         </div>
     </section>
 </body>

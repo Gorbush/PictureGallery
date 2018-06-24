@@ -122,6 +122,25 @@ var LogContainer = {
     }
 };
 
+function moveChildren(source, target) {
+    var sourceNodes = source.childNodes;
+    var nodesList = [];
+    sourceNodes.forEach(function(child) {
+        nodesList.push(child);
+    });
+    nodesList.forEach(function(child) {
+        target.appendChild(child);
+    });
+}
+function populateTemplate(template, dataObject) {
+    var template = $(template);
+    var filledTemplate = template.clone();
+    filledTemplate.removeAttr("id");
+    FormHelper.populate(filledTemplate, dataObject);
+
+    return filledTemplate;
+}
+
 $(document).ready(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
