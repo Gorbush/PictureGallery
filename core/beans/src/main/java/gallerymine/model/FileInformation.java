@@ -12,10 +12,7 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.lang.Process;
-import java.util.Collection;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Created by sergii_puliaiev on 6/11/17.
@@ -41,6 +38,9 @@ public class FileInformation implements Comparable<FileInformation> {
     private SortedSet<Timestamp> timestamps = new TreeSet<>();
     @Indexed
     private long size;
+
+    /** Kind of information populated into record */
+    private Set<String> populatedBy = new HashSet<>();
 
     private String error;
     @Indexed

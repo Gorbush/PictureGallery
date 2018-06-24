@@ -15,10 +15,7 @@ import com.drew.metadata.photoshop.PsdHeaderDirectory;
 import com.drew.metadata.png.PngDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
 import gallerymine.backend.beans.AppConfig;
-import gallerymine.model.FileInformation;
-import gallerymine.model.GeoPoint;
 import gallerymine.model.PictureInformation;
-import gallerymine.model.Source;
 import gallerymine.model.support.ImageInformation;
 import gallerymine.model.support.TimestampKind;
 import org.apache.commons.lang3.StringUtils;
@@ -32,17 +29,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -55,6 +47,8 @@ public class ImageFormatAnalyser {
     private static Logger log = LoggerFactory.getLogger(ImageFormatAnalyser.class);
 //    private static Logger logUnknownDirectory = LogManager.getLogger("unknownDirectory");
     private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageFormatAnalyser.class);
+
+    public static final String KIND_PICTURE = "Picture";
 
     /** format IMG_20160812_163115.jpg */
     private Pattern parser1 = Pattern.compile("([1,2][0-9][0-9][0-9][0-1][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
@@ -105,6 +99,8 @@ public class ImageFormatAnalyser {
                     source.setGeoLocation(null);
                 }
             }
+
+            source.getPopulatedBy().add(KIND_PICTURE);
         } catch (Exception e){
             source.setFilled(true);
             source.setExists(true);

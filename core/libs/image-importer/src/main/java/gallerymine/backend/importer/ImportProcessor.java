@@ -343,6 +343,7 @@ public class ImportProcessor implements Runnable {
 
         if (child != null) {
             log.info("ImportRequest Adding child substats from id={}", child.getId());
+            request.getStats().incFoldersDone();
             request.getSubStats().append(child.getTotalStats());
         }
 

@@ -34,6 +34,8 @@ public class GenericFileAnalyser {
     //    private static Logger logUnknownDirectory = LogManager.getLogger("unknownDirectory");
     private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageFormatAnalyser.class);
 
+    public static final String KIND_FILE = "File";
+
     private static List<StampMatcher> matchers = new ArrayList<>();
     static {{
         /** format IMG_20160812_163115.jpg */
@@ -93,6 +95,7 @@ public class GenericFileAnalyser {
 
             info.updateTimestamp();
 
+            info.getPopulatedBy().add(KIND_FILE);
         } catch (Exception e){
             info.setFilled(true);
             info.setExists(true);
