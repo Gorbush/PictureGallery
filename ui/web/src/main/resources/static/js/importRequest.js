@@ -7,7 +7,7 @@ var ImportRequestsTree = {
 
     init: function () {
         ImportRequestsTree.tree = $('#indexRequestsTree');
-        ImportRequestsTree.treeColumnsTemplate = $("#importProgressTreeColumns");
+        ImportRequestsTree.treeColumnsTemplate = $("#importTreeRow");
         ImportRequestsTree.autoRefreshCheck = $("#autoRefreshCheck");
         ImportRequestsTree.autoRefreshCheck.on('click', ImportRequestsTree.checkAutoRefresh);
         ImportRequestsTree.progress = {
@@ -19,9 +19,18 @@ var ImportRequestsTree = {
         ImportRequestsTree.progress.folders.setProgress(0,0,"");
         ImportRequestsTree.progress.files.setProgress(0,0,"");
 
+        ImportRequestsTree.header = $("#indexRequestTreeHeaderRightColumns");
+        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate);
+        moveChildren(row, ImportRequestsTree.header);
+
+        ImportRequestsTree.headerTotals = $("#indexRequestTreeHeaderTotalColumns");
+        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, {
+
+        });
+        moveChildren(row, ImportRequestsTree.headerTotals);
+
         ImportRequestsTree.tree.jstree({
             'core': {
-
                 'data' : {
                     "url" : function (node, cb, par2) {
                         var id = node.id;
@@ -34,7 +43,7 @@ var ImportRequestsTree = {
                         return ImportRequestsTree.preprocessAsNodes(data.response.content);
                     },
                     "renderer" : function (node, obj, settings, jstree, document) {
-                        var row = populateTemplate("#importTreeRow", obj);
+                        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, obj.data);
                         moveChildren(row[0], node.childNodes[1]);
                     }
                 }
@@ -174,6 +183,13 @@ var ImportRequestsTree = {
         var id = ImportRequestsTree.getActiveProcessId();
         AjaxHelper.runGET("/processes/"+id,
             function (response) {
+                ImportRequestsTree.headerTotals = $("#indexRequestTreeHeaderTotalColumns");
+                var data = response.result.lastDetail;
+                data.name = "";
+                var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, data);
+                ImportRequestsTree.headerTotals.empty();
+                moveChildren(row, ImportRequestsTree.headerTotals);
+
                 FormHelper.populate($("#importDetailsListData"), response.result);
                 var stats = response.result.lastDetail.totalStats;
                 ImportRequestsTree.updateProgress(stats);

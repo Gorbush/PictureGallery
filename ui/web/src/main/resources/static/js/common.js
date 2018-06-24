@@ -123,6 +123,14 @@ var LogContainer = {
 };
 
 function moveChildren(source, target) {
+    if (!source.childNodes && source.length) {
+        // dereference jQuery node
+        source = source[0];
+    }
+    if (!target.childNodes && target.length) {
+        // dereference jQuery node
+        target = target[0];
+    }
     var sourceNodes = source.childNodes;
     var nodesList = [];
     sourceNodes.forEach(function(child) {
@@ -133,10 +141,12 @@ function moveChildren(source, target) {
     });
 }
 function populateTemplate(template, dataObject) {
-    var template = $(template);
+    template = $(template);
     var filledTemplate = template.clone();
     filledTemplate.removeAttr("id");
-    FormHelper.populate(filledTemplate, dataObject);
+    if (dataObject) {
+        FormHelper.populate(filledTemplate, dataObject);
+    }
 
     return filledTemplate;
 }

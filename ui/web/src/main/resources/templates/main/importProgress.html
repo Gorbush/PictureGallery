@@ -50,8 +50,8 @@
                         <tr><td> Progress: </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
                         <tr><td class="text-right"> Folders:</td><td><div id="filesProgress"></div></td></tr>
                         <tr><td class="text-right"> Files:</td><td><div id="foldersProgress"></div></td></tr>
-                        <tr><td class="text-right"> Sample:</td><td><progress id="allProgress" class="progressbar" max="10" value="3"></progress></td></tr>
-                        <tr><td class="text-right"> Sample:</td><td><progress id="allProgressA"  class="progressbar" ></progress></td></tr>
+                        <!-- tr><td class="text-right"> Sample:</td><td><progress id="allProgress" class="progressbar" max="10" value="3"></progress></td></tr>
+                        <tr><td class="text-right"> Sample:</td><td><progress id="allProgressA"  class="progressbar" ></progress></td></tr -->
                     </table>
                     <span class="section-header">Imports:</span>
                     <table class="table table-bordered table-striped">
@@ -67,14 +67,11 @@
                 </div>
             </div>
             <div id="importDetailsTree" class="col-sm-8" >
-                <div id="indexRequestsTreeHeader" >
-                    <div id="indexRequestTreeHeaderRightColumns">
-                        <div class="node_postblock">
-                            <div class="status">Status</div>
-                            <div class="filesCount">Files</div>
-                            <div class="foldersCount">Folders</div>
-                        </div>
-                    </div>
+                <div class="indexRequestsTreeHeader" >
+                    <div id="indexRequestTreeHeaderRightColumns"></div>
+                </div>
+                <div class="indexRequestsTreeHeader" >
+                    <div id="indexRequestTreeHeaderTotalColumns"></div>
                 </div>
                 <div id="indexRequestsTree" >
                 </div>
@@ -87,11 +84,12 @@
 
     <section layout:fragment="dialogs" class="container">
         <div id="importTreeRow">
-            <span name="data.name">NodeName</span>
-            <div class="node_postblock" id="importProgressTreeColumns">
-                <div name="data.status" class="status">Status</div>
-                <div name="data.totalStats.files" class="filesCount">Files</div>
-                <div name="data.totalStats.folders" class="foldersCount">Folders</div>
+            <span name="name"></span>
+            <div class="node_postblock">
+                <div name="status" class="status">Status</div>
+                <div name="totalStats.files" class="counts">Files</div>
+                <div name="totalStats.folders" class="counts">Folders</div>
+                <div name="totalStats.foldersDone" class="counts">Folders Done</div>
             </div>
         </div>
     </section>

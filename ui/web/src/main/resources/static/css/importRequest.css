@@ -12,7 +12,7 @@ ul.jstree-contextmenu {
     width: 100%;
     padding-right: 25px;
 }
-#indexRequestsTreeHeader {
+.indexRequestsTreeHeader {
     border: 1px solid red;
     height: 16px;
 }
@@ -24,21 +24,16 @@ ul.jstree-contextmenu {
 div.node_postblock {
     float:right;
     /*border:1px solid red;*/
-    width: 210px;
+    width: 305px;
 }
 div.node_postblock div.status {
     float: left;
     width: 100px;
     text-align: left;
 }
-div.node_postblock div.filesCount {
+div.node_postblock div.counts {
     float: left;
-    width: 50px;
-    text-align: right;
-}
-div.node_postblock div.foldersCount {
-    float: left;
-    width: 50px;
+    width: 65px;
     text-align: right;
 }
 li.jstree-node i.NODE_STATUS_FOUND {
