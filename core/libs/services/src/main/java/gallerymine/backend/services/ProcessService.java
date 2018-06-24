@@ -17,11 +17,14 @@
 package gallerymine.backend.services;
 
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.model.Process;
 import gallerymine.model.QProcess;
 import gallerymine.model.support.ProcessDetails;
+import gallerymine.model.support.ProcessStatus;
+import gallerymine.model.support.ProcessType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -38,9 +41,15 @@ public class ProcessService {
     @Autowired
     private ImportRequestRepository importRepository;
 
-    public List<Process> getTop() {
+    public List<Process> getTop(ProcessStatus status, ProcessType type) {
         QProcess processExample = new QProcess("proc");
-        Predicate predicate = processExample.finished.isNull();
+        BooleanExpression predicate = processExample.finished.isNull();
+        if (status != null) {
+            predicate = predicate.and(processExample.status.eq(status));
+        }
+        if (type != null) {
+            predicate = predicate.and(processExample.type.eq(type));
+        }
         Iterable<Process> processes = processRepository.findAll(predicate,
                 new Sort(new Sort.Order(Sort.Direction.DESC, "started")));
 

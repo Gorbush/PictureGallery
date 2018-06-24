@@ -166,11 +166,11 @@ public class ProcessController {
                 .build();
     }
 
-    @GetMapping("/top")
+    @GetMapping("/top/{type}")
     @ResponseBody
-    public Object getTop() {
+    public Object getTop(@PathVariable ProcessType type) {
 
-        List<Process> processes = processService.getTop();
+        List<Process> processes = processService.getTop(null, type);
         List<ProcessDetails> running = processService.populateDetails(processes);
 
         return responseOk()

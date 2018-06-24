@@ -9,6 +9,9 @@ import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessStatus;
+import gallerymine.model.support.ProcessType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +20,8 @@ import java.util.Map;
 
 @Service
 public class ImportService {
+
+    private static Logger log = LoggerFactory.getLogger(ImportService.class);
 
     @Autowired
     private ImportProcessor importProcessor;
@@ -59,6 +64,7 @@ public class ImportService {
         try {
             process.setName("Processing of Import");
             process.setStatus(ProcessStatus.PREPARING);
+            process.setType(ProcessType.IMPORT);
             String importInternalPath = importUtils.prepareImportFolder(enforce, process);
 
             importRequest = registerNewImportFolderRequest(importInternalPath, null, process.getId());
@@ -75,6 +81,38 @@ public class ImportService {
         }
 
         return importRequest;
+    }
+
+    public void checkIfApproveNeeded(ImportRequest rootImportRequest) {
+        Process process = processRepository.findOne(rootImportRequest.getIndexProcessId());
+        if (process != null) {
+            log.info("ImportRequest updating process of id={} process={}", rootImportRequest.getId(), rootImportRequest.getIndexProcessId());
+            if (rootImportRequest.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
+                process.addNote("Import finished");
+                process.setStatus(ProcessStatus.FINISHED);
+            } else {
+                process.addError("Import failed");
+                process.setStatus(ProcessStatus.FAILED);
+            }
+            processRepository.save(process);
+            log.info("ImportRequest Process finished id={} status={}", process.getId(), process.getStatus());
+
+            long toApprove = rootImportRequest.getStats().getMovedToApprove().get();
+            if (toApprove > 0) {
+                log.info("ImportRequest Approve is needed for {} images", toApprove);
+                Process processOfApprove = new Process();
+                processOfApprove.setName("Processing of Approval");
+                processOfApprove.setStatus(ProcessStatus.PREPARING);
+                processOfApprove.setType(ProcessType.APPROVAL);
+                processOfApprove.setParentProcessId(process.getId());
+                processOfApprove.addNote("%d images for approval", toApprove);
+
+                processRepository.save(processOfApprove);
+            }
+
+        } else {
+            log.info("ImportRequest Process not found id={} importRequest={}", rootImportRequest.getIndexProcessId(), rootImportRequest.getId());
+        }
     }
 
 }

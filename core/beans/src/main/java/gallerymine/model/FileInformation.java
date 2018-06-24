@@ -1,5 +1,6 @@
 package gallerymine.model;
 
+import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.Timestamp;
 import lombok.Data;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,6 +40,9 @@ public class FileInformation implements Comparable<FileInformation> {
     @Indexed
     private long size;
 
+    @Indexed
+    private InfoStatus status = InfoStatus.ANALYSING;
+
     /** Kind of information populated into record */
     private Set<String> populatedBy = new HashSet<>();
 
@@ -49,7 +53,7 @@ public class FileInformation implements Comparable<FileInformation> {
     private DateTime timestamp;
 
     @Indexed
-    private String indexProcessId;
+    private Set<String> indexProcessIds = new HashSet<>();
 
     @CreatedDate
     private DateTime indexed;
@@ -127,5 +131,9 @@ public class FileInformation implements Comparable<FileInformation> {
 
     public boolean isFailed() {
         return StringUtils.isNotBlank(error);
+    }
+
+    public void addIndexProcessId(String indexProcessId) {
+        indexProcessIds.add(indexProcessId);
     }
 }

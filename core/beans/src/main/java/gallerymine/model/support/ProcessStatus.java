@@ -3,10 +3,14 @@ package gallerymine.model.support;
 public enum ProcessStatus {
     PREPARING(false),
     RESTARTING(false),
+
     STARTING(false),
     STARTED(false),
+
     RUNNING(false),
+
     TEARDOWN(false),
+
     FINISHED(true),
     ABANDONED(true),
     FAILED(true);

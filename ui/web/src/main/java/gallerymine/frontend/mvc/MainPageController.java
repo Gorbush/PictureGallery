@@ -8,6 +8,8 @@ import gallerymine.model.Customer;
 import gallerymine.model.FileInformation;
 import gallerymine.model.Process;
 import gallerymine.model.support.ProcessDetails;
+import gallerymine.model.support.ProcessStatus;
+import gallerymine.model.support.ProcessType;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -26,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/")
@@ -93,9 +97,8 @@ public class MainPageController {
     }
 
     @GetMapping("/processes?top")
-    public ModelAndView listTopActiveProcesses(Principal principal) {
-
-        List<Process> processes = processService.getTop();
+    public ModelAndView listTopActiveProcesses(Principal principal, @RequestAttribute("type") Optional<ProcessType> type) {
+        List<Process> processes = processService.getTop(null, type.orElse(null));
         List<ProcessDetails> running = processService.populateDetails(processes);
 
         ModelAndView model = new ModelAndView("main/processes", "processes", running);

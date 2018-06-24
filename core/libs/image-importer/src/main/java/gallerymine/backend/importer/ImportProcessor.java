@@ -16,6 +16,7 @@ import gallerymine.model.ImportSource;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.ThumbRequest;
+import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import org.apache.commons.lang3.StringUtils;
@@ -233,7 +234,7 @@ public class ImportProcessor implements Runnable {
 
                         ImportSource info = new ImportSource();
                         info.setImportRequestId(request.getId());
-                        info.setIndexProcessId(request.getIndexProcessId());
+                        info.addIndexProcessId(request.getIndexProcessId());
                         info.setImportRequestRootId(request.getRootId());
                         fileAnalyzer.gatherFileInformation(file, importRootFolder, info);
 
@@ -247,18 +248,21 @@ public class ImportProcessor implements Runnable {
                                     Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
                                     request.getStats().incMovedToApprove();
                                     info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                                    info.setStatus(InfoStatus.APPROVING);
                                 }
                             } else {
                                 filesIgnoredCount++;
                                 request.getStats().incFailed();
                                 Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                                info.setStatus(InfoStatus.FAILED);
                                 logUnknownFormats.error("ImportRequest Unknown format of file {}", file.toAbsolutePath().toString());
                             }
                         } else {
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(targetFolder.toFile().getAbsolutePath());
                             request.getStats().incFailed();
+                            info.setStatus(InfoStatus.FAILED);
                         }
                         importSourceRepository.save(info);
                     }
@@ -300,12 +304,14 @@ public class ImportProcessor implements Runnable {
 //        boolean duplicatesFound = importUtils.findDuplicates(file.toFile().getName(), file.toFile().length());
 //        if (duplicatesFound) {
 //            importUtils.moveToDuplicates(file, request.getRootPath());
+//            info.setStatus(InfoStatus.DUPLICATE);
 //            return true;
 //        }
         boolean similarFound = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
         if (similarFound) {
             Path targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
             info.setRootPath(targetFolder.toFile().getAbsolutePath());
+            info.setStatus(InfoStatus.SIMILAR);
             return true;
         }
         return false;
@@ -361,21 +367,7 @@ public class ImportProcessor implements Runnable {
         if (request.getStatus().isFinal() &&
                 StringUtils.isNotBlank(request.getIndexProcessId()) && // has process
                 StringUtils.isBlank(request.getParent())) {            // this is the top import request
-            Process process = processRepository.findOne(request.getIndexProcessId());
-            if (process != null) {
-                log.info("ImportRequest updating process of id={} process={}", requestId, request.getIndexProcessId());
-                if (request.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
-                    process.addNote("Import finished");
-                    process.setStatus(ProcessStatus.FINISHED);
-                } else {
-                    process.addError("Import failed");
-                    process.setStatus(ProcessStatus.FAILED);
-                }
-                processRepository.save(process);
-                log.info("ImportRequest Process finished id={} status={}", process.getId(), process.getStatus());
-            } else {
-                log.info("ImportRequest Process not found id={} importRequest={}", request.getIndexProcessId(), request.getId());
-            }
+            importService.checkIfApproveNeeded(request);
         }
 
         if (allDone && StringUtils.isNotBlank(request.getParent())) {

@@ -2,6 +2,7 @@ package gallerymine.backend.helpers.analyzer;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.model.FileInformation;
+import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.Timestamp;
 import gallerymine.model.support.TimestampKind;
 import org.slf4j.Logger;
@@ -86,6 +87,7 @@ public class GenericFileAnalyser {
             info.setFilePath(appConfig.relativizePath(file, fullImportPath));
             info.setFileName(file.toFile().getName());
             info.setSize(file.toFile().length());
+            info.setStatus(InfoStatus.ANALYSING);
 
             info.setFilled(true);
             info.setExists(true);
