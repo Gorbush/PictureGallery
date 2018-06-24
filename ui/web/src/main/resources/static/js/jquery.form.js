@@ -316,24 +316,7 @@ function fixContent(fieldName, fieldValue, fieldClass, tagName, formatting) {
         fieldName = "";
     }
     if (fieldName.toLowerCase().endsWith("date") || fieldName.toLowerCase().endsWith("time") || fieldClass.indexOf("date") >= 0) {
-        if (/^\d+$/.test(fieldValue)) {
-            // means this is number only - treat it as milliseconds epoc
-            fieldValue = new Date(fieldValue);
-            fieldValue = serverDate(fieldValue);
-            fieldValue = formatDate(fieldValue);
-        }
-        if (typeof fieldValue.millis != "undefined" && fieldValue.millis != null) {
-            // means this is number only - treat it as milliseconds epoc
-            fieldValue = new Date(fieldValue.millis);
-            fieldValue = serverDate(fieldValue);
-            fieldValue = formatDate(fieldValue);
-        }
-        // fix format from "2014-10-03T21:45:09.007+0000" to "2014-10-03 21:45:09"
-        fieldValue = fieldValue.replace('T', ' ');
-        var i = fieldValue.indexOf(".");
-        if (i != -1) {
-            fieldValue = fieldValue.substring(0, i);
-        }
+        fieldValue = formatDate(fieldValue);
     }
     if (fieldValue.length && (formatting == "pre" || tagName == "PRE")) {
         var newVal = "";

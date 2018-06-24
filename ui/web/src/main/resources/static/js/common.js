@@ -29,7 +29,7 @@ function formatDate(value) {
         value = serverDate(value);
         value = formatDateObject(value);
     }
-    if (typeof value == "Date") {
+    if (typeof value == "Date" || value.getFullYear) {
         value = formatDateObject(value);
     }
     // fix format from "2014-10-03T21:45:09.007+0000" to "2014-10-03 21:45:09"
