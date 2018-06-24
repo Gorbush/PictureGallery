@@ -1,5 +1,6 @@
 package gallerymine.frontend.mvc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gallerymine.backend.beans.repository.FileRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.services.ProcessService;
@@ -38,6 +39,9 @@ public class MainPageController {
 
     @Autowired
     ProcessService processService;
+
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
 
     @GetMapping
     public ModelAndView list(Principal principal) {
@@ -79,7 +83,12 @@ public class MainPageController {
         ModelAndView model = new ModelAndView("main/importProgress", "process", process);
         model.addObject("details", details==null ? null : details.getDetails());
         model.addObject("latestDetail", (details==null || details.getLastDetail() == null) ? null : details.getLastDetail());
-
+        try {
+            model.addObject("latestDetailJSON", (details == null || details.getLastDetail() == null) ? null :
+                    jacksonObjectMapper.writeValueAsString(details.getLastDetail()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return model;
     }
 

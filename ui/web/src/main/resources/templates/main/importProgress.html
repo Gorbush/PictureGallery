@@ -8,6 +8,17 @@
 
     <script type="application/javascript" src="/js/importRequest.js" ></script>
     <script type="application/javascript" src="/js/progressBar.js" ></script>
+
+    <script type="application/javascript" th:inline="javascript">
+
+        $(document).ready(function () {
+            var latestDetailStr = /*[[${latestDetailJSON}]]*/ {};
+            var latestDetail = JSON.parse(latestDetailStr);
+
+            ImportRequestsTree.updateTotals(latestDetail);
+        });
+
+    </script>
 </head>
 <body>
     <section layout:fragment="pageButtons" class="container">

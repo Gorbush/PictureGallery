@@ -20,14 +20,10 @@ var ImportRequestsTree = {
         ImportRequestsTree.progress.files.setProgress(0,0,"");
 
         ImportRequestsTree.header = $("#indexRequestTreeHeaderRightColumns");
-        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate);
-        moveChildren(row, ImportRequestsTree.header);
+        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, null, ImportRequestsTree.header);
 
         ImportRequestsTree.headerTotals = $("#indexRequestTreeHeaderTotalColumns");
-        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, {
-
-        });
-        moveChildren(row, ImportRequestsTree.headerTotals);
+        populateTemplate(ImportRequestsTree.treeColumnsTemplate, {}, ImportRequestsTree.headerTotals);
 
         ImportRequestsTree.tree.jstree({
             'core': {
@@ -183,18 +179,18 @@ var ImportRequestsTree = {
         var id = ImportRequestsTree.getActiveProcessId();
         AjaxHelper.runGET("/processes/"+id,
             function (response) {
-                ImportRequestsTree.headerTotals = $("#indexRequestTreeHeaderTotalColumns");
-                var data = response.result.lastDetail;
-                data.name = "";
-                var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, data);
-                ImportRequestsTree.headerTotals.empty();
-                moveChildren(row, ImportRequestsTree.headerTotals);
-
+                ImportRequestsTree.updateTotals(response.result.lastDetail);
                 FormHelper.populate($("#importDetailsListData"), response.result);
-                var stats = response.result.lastDetail.totalStats;
-                ImportRequestsTree.updateProgress(stats);
             }
         );
+    },
+
+    updateTotals: function (data) {
+        ImportRequestsTree.headerTotals.empty();
+        data.name = "";
+        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, data, ImportRequestsTree.headerTotals);
+
+        ImportRequestsTree.updateProgress(data.totalStats);
     }
 
 };

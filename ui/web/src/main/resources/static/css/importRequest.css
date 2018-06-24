@@ -5,7 +5,7 @@ ul.jstree-contextmenu {
 #indexRequestsTree {
     /*height: 200px;*/
     /*width: 200px;*/
-    border: 1px solid red;
+    /*border: 1px solid red;*/
 }
 #indexRequestsTree .jstree-anchor{
     right: 0px;
@@ -13,13 +13,21 @@ ul.jstree-contextmenu {
     padding-right: 25px;
 }
 .indexRequestsTreeHeader {
-    border: 1px solid red;
+    /*border: 1px solid red;*/
     height: 16px;
+    padding-right: 1px;
 }
 #indexRequestTreeHeaderRightColumns  {
-    border: 1px solid green;
+    /*border: 1px solid green;*/
     float:right;
     font-size: x-small;
+    height: 16px;
+}
+#indexRequestTreeHeaderTotalColumns  {
+    /*border: 1px solid green;*/
+    float:right;
+    /*font-size: x-small;*/
+    height: 20px;
 }
 div.node_postblock {
     float:right;

@@ -140,7 +140,7 @@ function moveChildren(source, target) {
         target.appendChild(child);
     });
 }
-function populateTemplate(template, dataObject) {
+function populateTemplate(template, dataObject, target) {
     template = $(template);
     var filledTemplate = template.clone();
     filledTemplate.removeAttr("id");
@@ -148,6 +148,9 @@ function populateTemplate(template, dataObject) {
         FormHelper.populate(filledTemplate, dataObject);
     }
 
+    if (target) {
+        moveChildren(filledTemplate, target);
+    }
     return filledTemplate;
 }
 
