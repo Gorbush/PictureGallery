@@ -346,7 +346,7 @@ public class ImportProcessor implements Runnable {
             log.error("ImportRequest Request not found, failed to check subs for id={}", requestId);
             return;
         }
-
+        ImportRequest.ImportStatus currentStatus = request.getStatus();
         if (child != null) {
             log.info("ImportRequest Adding child substats from id={}", child.getId());
             request.getStats().incFoldersDone();
@@ -363,7 +363,8 @@ public class ImportProcessor implements Runnable {
             request.setStatus(SUB);
         }
         requestRepository.save(request);
-        log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("ImportRequest status changed id={} oldStatus={} status={} path={}",
+                request.getId(), currentStatus, request.getStatus(), request.getPath());
         if (request.getStatus().isFinal() &&
                 StringUtils.isNotBlank(request.getIndexProcessId()) && // has process
                 StringUtils.isBlank(request.getParent())) {            // this is the top import request

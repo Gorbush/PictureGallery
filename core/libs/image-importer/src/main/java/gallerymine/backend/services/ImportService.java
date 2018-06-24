@@ -86,7 +86,9 @@ public class ImportService {
     public void checkIfApproveNeeded(ImportRequest rootImportRequest) {
         Process process = processRepository.findOne(rootImportRequest.getIndexProcessId());
         if (process != null) {
-            log.info("ImportRequest updating process of id={} process={}", rootImportRequest.getId(), rootImportRequest.getIndexProcessId());
+            ProcessStatus oldStatus = process.getStatus();
+            log.info("ImportRequest updating process of id={} process={} oldStatus={} ",
+                    rootImportRequest.getId(), rootImportRequest.getIndexProcessId(), oldStatus);
             if (rootImportRequest.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
                 process.addNote("Import finished");
                 process.setStatus(ProcessStatus.FINISHED);
@@ -94,8 +96,8 @@ public class ImportService {
                 process.addError("Import failed");
                 process.setStatus(ProcessStatus.FAILED);
             }
-            processRepository.save(process);
-            log.info("ImportRequest Process finished id={} status={}", process.getId(), process.getStatus());
+            log.info("ImportRequest Process finished of id={} process={} oldStatus={} status={}",
+                    rootImportRequest.getId(), rootImportRequest.getIndexProcessId(), oldStatus, process.getStatus());
 
             long toApprove = rootImportRequest.getStats().getMovedToApprove().get();
             if (toApprove > 0) {
@@ -108,7 +110,10 @@ public class ImportService {
                 processOfApprove.addNote("%d images for approval", toApprove);
 
                 processRepository.save(processOfApprove);
+
+                process.addNote("Approve process initiated %s", processOfApprove.getId());
             }
+            processRepository.save(process);
 
         } else {
             log.info("ImportRequest Process not found id={} importRequest={}", rootImportRequest.getIndexProcessId(), rootImportRequest.getId());
