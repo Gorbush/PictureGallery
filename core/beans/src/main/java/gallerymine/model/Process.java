@@ -70,4 +70,8 @@ public class Process {
     public String errorsText() {
         return errors.stream().collect(Collectors.joining("\n"));
     }
+
+    public boolean isFinished() {
+        return status.isFinalStatus();
+    }
 }

@@ -33,13 +33,14 @@
                         <tr><td> Name </td><td name="process.name" th:text="${process.name}"></td> </tr>
                         <tr><td> Status </td>
                             <td>
-                                <span th:text="${process.status}"></span>
+                                <span name="process.status" th:text="${process.status}"></span>
                                 <span class="glyphicon glyphicon-warning-sign log-container" th:if="${process.errors.size() > 0}">
                                     <div name="process.errors" data-format="pre" class="log-content" th:text="${process.errorsText()}"></div>
                                 </span>
                                 <span class="glyphicon glyphicon-info-sign log-container" th:if="${process.notes.size() > 0}">
                                     <div name="process.notes" data-format="pre" class="log-content" th:text="${process.notesText()}"></div>
                                 </span>
+                                <span class="autoRefresh"><input type="checkbox" id="autoRefreshCheck" >Auto-refresh</input></span>
                             </td>
                         </tr>
                         <tr><td> Started </td><td th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>

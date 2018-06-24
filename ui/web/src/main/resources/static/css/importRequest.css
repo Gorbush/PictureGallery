@@ -77,3 +77,6 @@ li.jstree-node i.NODE_STATUS_DONE {
     background-image: url(../images/check-16.png);
     background-position: 1px 4px;
 }
+.autoRefresh {
+    float: right;
+}

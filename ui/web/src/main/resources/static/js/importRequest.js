@@ -8,6 +8,9 @@ var ImportRequestsTree = {
     init: function () {
         ImportRequestsTree.tree = $('#indexRequestsTree');
         ImportRequestsTree.treeColumnsTemplate = $("#importProgressTreeColumns");
+        ImportRequestsTree.autoRefreshCheck = $("#autoRefreshCheck");
+
+        ImportRequestsTree.autoRefreshCheck.on('click', ImportRequestsTree.checkAutoRefresh);
 
         ImportRequestsTree.tree.jstree({
             'core': {
@@ -116,7 +119,47 @@ var ImportRequestsTree = {
     getActiveProcessId: function () {
         var id = $("#processId").val();
         return id;
+    },
+    getProcessStatus: function () {
+        var status = $("[name='process.status']").text();
+        return status;
+    },
+    isProgressFinished: function () {
+        var status = ImportRequestsTree.getProcessStatus();
+        return status == "FINISHED" || status == "ABANDONED" || status == "FAILED";
+    },
+    isAutoRefresh: function () {
+        return ImportRequestsTree.autoRefreshCheck.prop('checked');
+    },
+    checkAutoRefresh: function () {
+        var isFinished = ImportRequestsTree.isProgressFinished();
+        if (isFinished) {
+            ImportRequestsTree.disableAutoRefresh();
+        } else {
+            ImportRequestsTree.autoRefreshCheck.prop('checked', true);
+            setTimeout(function () {
+                if (ImportRequestsTree.isAutoRefresh()) {
+                    ImportRequestsTree.refresh();
+                    ImportRequestsTree.checkAutoRefresh();
+                } else {
+                    ImportRequestsTree.disableAutoRefresh();
+                }
+            } ,5000);
+        }
+    },
+    disableAutoRefresh: function () {
+        ImportRequestsTree.autoRefreshCheck.prop('checked', false);
+    },
+    refresh: function() {
+        ImportRequestsTree.tree.jstree(true).refresh();
+        var id = ImportRequestsTree.getActiveProcessId();
+        AjaxHelper.runGET("/processes/"+id,
+            function (response) {
+                FormHelper.populate($("#importDetailsListData"), response.result);
+            }
+        );
     }
+
 };
 $(document).ready(function() {
     LogContainer.init();
@@ -145,14 +188,7 @@ $(document).ready(function() {
     });
 
     $("#btnRunRefresh").on('click', function () {
-        ImportRequestsTree.tree.jstree(true).refresh();
-        var id = ImportRequestsTree.getActiveProcessId();
-        AjaxHelper.runGET("/processes/"+id,
-            function (response) {
-                FormHelper.populate($("#importDetailsListData"), response.result);
-                // $("#importDetailsListData").populate(response);
-            }
-        );
+        ImportRequestsTree.refresh();
     });
 });
 
