@@ -71,7 +71,7 @@ var ImportRequestsTree = {
             }
         }).bind('create_node.jstree', function (e, data) {
             console.log('hi', data);
-        });
+        }).on("select_node.jstree", ImportRequestsTree.onNodeClick);
     },
 
     preprocessAsNodes: function (nodesList) {
@@ -191,6 +191,10 @@ var ImportRequestsTree = {
         var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, data, ImportRequestsTree.headerTotals);
 
         ImportRequestsTree.updateProgress(data.totalStats);
+    },
+
+    onNodeClick: function (e, data) {
+        
     }
 
 };

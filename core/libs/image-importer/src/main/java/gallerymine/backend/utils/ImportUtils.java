@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -260,13 +261,15 @@ public class ImportUtils {
     }
 
     public boolean findSimilar(String fileName, Long fileSize) {
-        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
+//        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
+        Collection<ImportSource> foundImports = Collections.emptyList();
         Collection<Picture> foundPictures = pictureRepository.findByFileNameAndSize(fileName, fileSize);
         return !foundPictures.isEmpty() || !foundImports.isEmpty();
     }
 
     public boolean findDuplicates(String fileName, Long fileSize) {
-        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
+//        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
+        Collection<ImportSource> foundImports = Collections.emptyList();
         Collection<Picture> foundPictures = pictureRepository.findByFileNameAndSize(fileName, fileSize);
         return !foundPictures.isEmpty() || !foundImports.isEmpty();
     }

@@ -36,55 +36,61 @@
     </section>
 
     <section layout:fragment="content" class="container">
-        <div class="col-sm-10">
-            <div id="importList" class="col-sm-4" >
-                <div id="importDetailsListData" >
-                    <input type="hidden" id="processId" th:value="${process.id}"></input>
-                    <input type="hidden" id="activeDetailId" th:value="${latestDetail?.id}"></input>
-                    <table class="table table-bordered table-striped">
-                        <tr><td> Name </td><td name="process.name" th:text="${process.name}"></td> </tr>
-                        <tr><td> Status </td>
-                            <td>
-                                <span name="process.status" th:text="${process.status}"></span>
-                                <span class="glyphicon glyphicon-warning-sign log-container" th:if="${process.errors.size() > 0}">
-                                    <div name="process.errors" data-format="pre" class="log-content" th:text="${process.errorsText()}"></div>
-                                </span>
-                                <span class="glyphicon glyphicon-info-sign log-container" th:if="${process.notes.size() > 0}">
-                                    <div name="process.notes" data-format="pre" class="log-content" th:text="${process.notesText()}"></div>
-                                </span>
-                                <span class="autoRefresh"><input type="checkbox" id="autoRefreshCheck" >Auto-refresh</input></span>
-                            </td>
-                        </tr>
-                        <tr><td> Started </td><td name="process.started" class="date" th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
-                        <tr><td> Finished </td><td name="process.finished" class="date" th:text="${process.finished?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
-                        <tr><td> Folder </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
-                        <tr><td> Progress: </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
-                        <tr><td class="text-right"> Folders:</td><td><div id="filesProgress"></div></td></tr>
-                        <tr><td class="text-right"> Files:</td><td><div id="foldersProgress"></div></td></tr>
-                        <!-- tr><td class="text-right"> Sample:</td><td><progress id="allProgress" class="progressbar" max="10" value="3"></progress></td></tr>
-                        <tr><td class="text-right"> Sample:</td><td><progress id="allProgressA"  class="progressbar" ></progress></td></tr -->
-                    </table>
-                    <span class="section-header">Imports:</span>
-                    <table class="table table-bordered table-striped">
-                        <tr th:each="detail : ${details}">
-                            <td> Details status </td><td>
-                                <span name="detail.status" th:text="${detail.status}">1</span>&nbsp;
-                                <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.error != null}">
-                                        <div name="detail.error" class="log-content" th:text="${detail.error}"></div>
-                                </span>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
+        <div id="importList" class="col-sm-4" >
+            <div id="importDetailsListData" >
+                <input type="hidden" id="processId" th:value="${process.id}"></input>
+                <input type="hidden" id="activeDetailId" th:value="${latestDetail?.id}"></input>
+                <table class="table table-bordered table-striped">
+                    <tr><td> Name </td><td name="process.name" th:text="${process.name}"></td> </tr>
+                    <tr><td> Status </td>
+                        <td>
+                            <span name="process.status" th:text="${process.status}"></span>
+                            <span class="glyphicon glyphicon-warning-sign log-container" th:if="${process.errors.size() > 0}">
+                                <div name="process.errors" data-format="pre" class="log-content" th:text="${process.errorsText()}"></div>
+                            </span>
+                            <span class="glyphicon glyphicon-info-sign log-container" th:if="${process.notes.size() > 0}">
+                                <div name="process.notes" data-format="pre" class="log-content" th:text="${process.notesText()}"></div>
+                            </span>
+                            <span class="autoRefresh"><input type="checkbox" id="autoRefreshCheck" >Auto-refresh</input></span>
+                        </td>
+                    </tr>
+                    <tr><td> Started </td><td name="process.started" class="date" th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
+                    <tr><td> Finished </td><td name="process.finished" class="date" th:text="${process.finished?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
+                    <tr><td> Folder </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
+                    <tr><td> Progress: </td><td name="lastDetail.path" th:text="${details[0]?.path}"></td> </tr>
+                    <tr><td class="text-right"> Folders:</td><td><div id="filesProgress"></div></td></tr>
+                    <tr><td class="text-right"> Files:</td><td><div id="foldersProgress"></div></td></tr>
+                    <!-- tr><td class="text-right"> Sample:</td><td><progress id="allProgress" class="progressbar" max="10" value="3"></progress></td></tr>
+                    <tr><td class="text-right"> Sample:</td><td><progress id="allProgressA"  class="progressbar" ></progress></td></tr -->
+                </table>
+                <span class="section-header">Imports:</span>
+                <table class="table table-bordered table-striped">
+                    <tr th:each="detail : ${details}">
+                        <td> Details status </td><td>
+                            <span name="detail.status" th:text="${detail.status}">1</span>&nbsp;
+                            <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.error != null}">
+                                    <div name="detail.error" class="log-content" th:text="${detail.error}"></div>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
             </div>
-            <div id="importDetailsTree" class="col-sm-8" >
-                <div class="indexRequestsTreeHeader" >
-                    <div id="indexRequestTreeHeaderRightColumns"></div>
+        </div>
+        <div id="importDetailsBrowser" class="col-sm-8" >
+            <div class="indexRequestsTreeHeader" >
+                <div id="indexRequestTreeHeaderRightColumns"></div>
+            </div>
+            <div class="indexRequestsTreeHeader" >
+                <div id="indexRequestTreeHeaderTotalColumns"></div>
+            </div>
+            <div id="importDetailsBrowsingArea">
+                <div id="indexRequestsTreeScroller" >
+                    <div id="indexRequestsTree" >
+                    </div>
                 </div>
-                <div class="indexRequestsTreeHeader" >
-                    <div id="indexRequestTreeHeaderTotalColumns"></div>
-                </div>
-                <div id="indexRequestsTree" >
+                <div id="importImagesScroller" >
+                    <div id="importImagesList" >
+                    </div>
                 </div>
             </div>
         </div>

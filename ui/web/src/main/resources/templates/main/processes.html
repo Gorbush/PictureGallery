@@ -69,7 +69,7 @@
                     </td>
                     <td th:text="${detailed.process.type}">1</td>
                     <td th:text="${detailed.process.name}">1</td>
-                    <td th:text="${detailed.process.started.toString('YYYY-MM-dd HH:mm:ss')}">1</td>
+                    <td th:text="${detailed.process.started?.toString('YYYY-MM-dd HH:mm:ss')}">1</td>
                     <td th:text="${detailed.process.finished?.toString('YYYY-MM-dd HH:mm:ss')}">1</td>
 
                     <td class="nowrap">

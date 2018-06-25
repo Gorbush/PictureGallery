@@ -7,6 +7,49 @@ ul.jstree-contextmenu {
     /*width: 200px;*/
     /*border: 1px solid red;*/
 }
+#importDetailsBrowser {
+    /*border: 1px solid red;*/
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+}
+#importDetailsBrowsingArea {
+    /*border: 1px solid blue;*/
+    position: absolute;
+    top: 35px;
+    bottom: 0;
+    left: 15px;
+    right: 15px;
+}
+#indexRequestsTreeScroller {
+    position: relative;
+    /*border: 1px solid green;*/
+    overflow: auto;
+    height: 50%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+#importImagesScroller {
+    border: 1px solid yellow;
+    overflow: auto;
+    position: relative;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+}
+#importImagesList {
+    border: 1px solid cyan;
+    position: relative;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 50%;
+}
 #indexRequestsTree .jstree-anchor{
     right: 0px;
     width: 100%;
