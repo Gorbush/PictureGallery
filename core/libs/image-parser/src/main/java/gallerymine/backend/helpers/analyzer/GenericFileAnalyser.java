@@ -39,10 +39,15 @@ public class GenericFileAnalyser {
 
     private static List<StampMatcher> matchers = new ArrayList<>();
     static {{
-        /** format IMG_20160812_163115.jpg */
-        matchers.add(new StampMatcher("([1,2][0-9][0-9][0-9][0-1][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])", "yyyyMMdd'_'HHmmss"));
-        /** format IMG_06012017_182643.png */
-        matchers.add(new StampMatcher("([0-2][0-9][0-3][0-9][1,2][0-9][0-9][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])", "ddMMyyyy'_'HHmmss"));
+        /** format IMG_20160812_163115.jpg           Year 1900-2099     month 00-12 Day 00-31  00-23    00-59     00-59   */
+        matchers.add(new StampMatcher("([1,2][0,9][0-9][0-9][0,1][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])",
+                "yyyyMMdd'_'HHmmss"));
+        /** format IMG_06012017_182643.png         month 00-12 Day 00-31  Year 1900-2099      00-23     00-59     00-59   */
+        matchers.add(new StampMatcher("([0,1][0-9][0-3][0,9][1,2][0,9][0-9][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])",
+                "ddMMyyyy'_'HHmmss"));
+        /** format 2018-06-21_11-32-40_234.heic     Year 1900-2099       month 00-12 Day 00-31 00-23      00-59      00-59  */
+        matchers.add(new StampMatcher("([0-2][0,9][0-9][0-9]-[0,1][0-9]-[0-9][0-9]_[0-2][0-9]-[0-5][0-9]-[0-5][0-9]_[0-9][0-9][0-9])",
+                "yyyy-MM-dd'_'HH-mm-ss'_'SSS"));
     }}
 
     private final AppConfig appConfig;

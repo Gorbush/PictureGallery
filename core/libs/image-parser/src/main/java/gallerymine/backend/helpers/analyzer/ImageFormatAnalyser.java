@@ -50,11 +50,6 @@ public class ImageFormatAnalyser {
 
     public static final String KIND_PICTURE = "Picture";
 
-    /** format IMG_20160812_163115.jpg */
-    private Pattern parser1 = Pattern.compile("([1,2][0-9][0-9][0-9][0-1][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
-    /** format IMG_06012017_182643.png */
-    private Pattern parser2 = Pattern.compile("([0-1][0-9][0-3][0-9][1,2][0-9][0-9][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9])");
-
     public static Collection<String> allowedExtensions = new HashSet<String>(){{
         add("jpg");
         add("jpeg");
@@ -64,6 +59,7 @@ public class ImageFormatAnalyser {
         add("psd");
         add("bmp");
         add("gif");
+        add("heic");
 //        add("pdf");
 //        add("svg");
     }};
