@@ -101,6 +101,7 @@ div.log-content {
     font-family: monospace;
     font-size: smaller;
     white-space: pre;
+    z-index: 4000;
 }
 .log-content {
     position: relative;

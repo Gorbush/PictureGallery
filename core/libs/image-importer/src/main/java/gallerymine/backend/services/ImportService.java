@@ -96,10 +96,11 @@ public class ImportService {
                 process.addError("Import failed");
                 process.setStatus(ProcessStatus.FAILED);
             }
+            addImportStats(process, rootImportRequest);
             log.info("ImportRequest Process finished of id={} process={} oldStatus={} status={}",
                     rootImportRequest.getId(), rootImportRequest.getIndexProcessId(), oldStatus, process.getStatus());
 
-            long toApprove = rootImportRequest.getStats().getMovedToApprove().get();
+            long toApprove = rootImportRequest.getTotalStats().getMovedToApprove().get();
             if (toApprove > 0) {
                 log.info("ImportRequest Approve is needed for {} images", toApprove);
                 Process processOfApprove = new Process();
@@ -117,6 +118,21 @@ public class ImportService {
 
         } else {
             log.info("ImportRequest Process not found id={} importRequest={}", rootImportRequest.getIndexProcessId(), rootImportRequest.getId());
+        }
+    }
+
+    private void addImportStats(Process process, ImportRequest rootImportRequest) {
+        try {
+            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats();
+            process.addNote("Import statistics:");
+            process.addNote(" Folders %d of %d", stats.getFoldersDone().get(), stats.getFolders().get());
+            process.addNote(" Files in total %7d", stats.getFiles().get());
+            process.addNote("   Approve      %7d", stats.getMovedToApprove().get());
+            process.addNote("   Failed       %7d", stats.getFailed().get());
+            process.addNote("   Similar      %7d", stats.getSimilar().get());
+            process.addNote("   Duplicates   %7d", stats.getDuplicates().get());
+        } catch (Exception e) {
+            log.error("Failed to add Statistics", e);
         }
     }
 
