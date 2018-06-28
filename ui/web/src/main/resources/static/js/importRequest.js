@@ -135,6 +135,9 @@ var ImportRequestsTree = {
         var id = $("#activeDetailId").val();
         return id;
     },
+    setActiveImportId: function (val) {
+        $("#activeDetailId").val(val);
+    },
     getActiveProcessId: function () {
         var id = $("#processId").val();
         return id;
@@ -193,8 +196,18 @@ var ImportRequestsTree = {
         ImportRequestsTree.updateProgress(data.totalStats);
     },
 
-    onNodeClick: function (e, data) {
-        
+    onNodeClick: function (e, context) {
+        var data = context.node.data;
+        var importRequestId = data.id;
+        console.log("Selected node "+importRequestId);
+        ImportRequestsTree.setActiveImportId(importRequestId);
+        SourceList.refreshSources(1);
+    },
+
+    criteriaContributor: function(sourceList, criteria) {
+        criteria.requestId = ImportRequestsTree.getActiveImportId();
+        criteria.path = "";
+        return criteria;
     }
 
 };
@@ -202,6 +215,8 @@ $(document).ready(function() {
     LogContainer.init();
 
     ImportRequestsTree.init();
+
+    SourceList.init("/sources/uni", "IMPORT", ImportRequestsTree.criteriaContributor);
 
     $("#ReIndexButton").on('click', function () {
         alert('Call Reindex!!');

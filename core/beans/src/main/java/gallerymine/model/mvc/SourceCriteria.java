@@ -1,5 +1,6 @@
 package gallerymine.model.mvc;
 
+import gallerymine.model.support.PictureKind;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.domain.PageRequest;
@@ -9,12 +10,16 @@ import org.springframework.data.domain.PageRequest;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class SourceCriteria extends FileCriteria{
+public class SourceCriteria extends FileCriteria {
 
     private String placePath;
     private Double latitude;
     private Double longitude;
     private String distance;
+    private PictureKind kind;
+    private String requestId;
+    private String requestRootId;
+    private String processId;
 
     private PageRequest pager = null;
 

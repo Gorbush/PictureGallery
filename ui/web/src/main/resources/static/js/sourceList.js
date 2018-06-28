@@ -8,6 +8,12 @@ var SourceList = {
     breadcrumb: null,
     gallery: null,
     sourcesRootDiv: null,
+    sourceDataProvider: "/sources/find",
+    kind: "GALLERY",
+
+    refreshSources: function (page) {
+        refreshSources(page);
+    },
 
     clean: function () {
         SourceList.sourcesRootDiv.empty();
@@ -22,8 +28,10 @@ var SourceList = {
 
         SourceList.pagerBar.updateTo(data.list.number, data.list.totalPages, data.list.size, data.list.totalElements);
 
-        if (SourceList.gallery.isAwaitingElement() ) {
-            SourceList.gallery.changeSlideToAwaiting();
+        if (SourceList.gallery) {
+            if (SourceList.gallery.isAwaitingElement() ) {
+                SourceList.gallery.changeSlideToAwaiting();
+            }
         }
     },
     get: function (index) {
@@ -63,28 +71,43 @@ var SourceList = {
         }
     },
 
-    init : function () {
-        SourceList.sourcesRootDiv = $("div#sources");
-        SourceList.responseData = null;
-        SourceList.pagerBar = Pager.create($("#sourcesNav"), pagerChangeHandler);
-        SourceList.breadcrumb = $("#breadcrumblist");
-
-        SourceList.treeFolderPath = TreePath.create($('#folderTree'), clickFoldersTreeNode, prepareCriteriaPath);
-        SourceList.treeDates = TreeDates.create($('#datesTree'), clickDatesTreeNode, prepareCriteriaCurrent);
-        SourceList.gallery = new Gallery({
-            pager: SourceList.pagerBar,
-            elements: {
-                slideshow: '#slideshow',
-                currentImage: '#slideshow .current .image',
-                currentCaption: '#slideshow .current .caption',
-                thumbnailAnchor: 'a.source_anch',
-                galleryParent: "#sources",
-                galleryElement: "#sources .sourceBlock",
-                previousAnchor: '#slideshow .previous a',
-                nextAnchor: '#slideshow .next a',
-                closeAnchor: '#slideshow .close a'
+    init : function (sourceDataProvider, kind, criteriaContributor) {
+        try {
+            SourceList.sourceDataProvider = sourceDataProvider;
+            if (kind) {
+                SourceList.kind = kind;
             }
-        });
+            if (criteriaContributor) {
+                SourceList.criteriaContributor = criteriaContributor;
+            }
+            SourceList.sourcesRootDiv = $("div#sources");
+            SourceList.responseData = null;
+            SourceList.pagerBar = Pager.create($("#sourcesNav"), pagerChangeHandler);
+            SourceList.breadcrumb = $("#breadcrumblist");
+
+            if (typeof TreePath != "undefined") {
+                SourceList.treeFolderPath = TreePath.create($('#folderTree'), clickFoldersTreeNode, prepareCriteriaPath);
+                SourceList.treeDates = TreeDates.create($('#datesTree'), clickDatesTreeNode, prepareCriteriaCurrent);
+            }
+            if (typeof Gallery != "undefined") {
+                SourceList.gallery = new Gallery({
+                    pager: SourceList.pagerBar,
+                    elements: {
+                        slideshow: '#slideshow',
+                        currentImage: '#slideshow .current .image',
+                        currentCaption: '#slideshow .current .caption',
+                        thumbnailAnchor: 'a.source_anch',
+                        galleryParent: "#sources",
+                        galleryElement: "#sources .sourceBlock",
+                        previousAnchor: '#slideshow .previous a',
+                        nextAnchor: '#slideshow .next a',
+                        closeAnchor: '#slideshow .close a'
+                    }
+                });
+            }
+        } catch (e) {
+            console.log("Failed to init SourceList ");
+        }
     }
 };
 
@@ -97,10 +120,10 @@ $(document).ready(function () {
         todayHighlight: true
     });
 
-    SourceList.init();
-
     $("#refresh").on('click', function () {
-        SourceList.treeFolderPath.refresh();
+        if (SourceList.treeFolderPath) {
+            SourceList.treeFolderPath.refresh();
+        }
     });
 });
 
@@ -123,35 +146,43 @@ function prepareCriteria(path) {
         }
     }
 
-    var sourcePath = "*";
-    if (validValue(path)) {
-        sourcePath = path;
-    } else {
-        if (SourceList.treeFolderPath) {
-            var pathNode = SourceList.treeFolderPath.getCurrent();
-            if (validValue(pathNode)) {
-                sourcePath = pathNode.id;
-            }
-        }
-    }
-
-    return {
-        path: sourcePath,
+    var criteria = {
+        path: "*",
+        kind: SourceList.kind,
         fromDate: starting,
         toDate: ending,
         fileName: null,
         timestamp: null,
         placePath: null,
-        page: 0,
+        page: 1,
         size: 1000
     };
+
+    if (validValue(path)) {
+        criteria.path = path;
+    } else {
+        if (SourceList.treeFolderPath) {
+            var pathNode = SourceList.treeFolderPath.getCurrent();
+            if (validValue(pathNode)) {
+                criteria.path = pathNode.id;
+            }
+        }
+    }
+
+    if (SourceList.criteriaContributor) {
+        criteria = SourceList.criteriaContributor(this, criteria);
+    }
+
+    return criteria;
 }
 function clickFoldersTreeNode(e, data, tree) {
-    refreshSources(0);
-    SourceList.treeDates.refresh();
+    refreshSources(1);
+    if (SourceList.treeDates) {
+        SourceList.treeDates.refresh();
+    }
 }
 function clickDatesTreeNode(e, data, tree) {
-    refreshSources(0);
+    refreshSources(1);
 }
 function refreshSources(page) {
     SourceProperties.hide();
@@ -162,7 +193,9 @@ function refreshSources(page) {
     BLOCK_WIDTH =350;
     var pageSize = Math.trunc(container.innerWidth() / BLOCK_WIDTH ) *
         (Math.trunc(container.innerHeight() / BLOCK_HEIGHT));
-
+    if (pageSize < 1) {
+        pageSize = 1;
+    }
     var criteria = prepareCriteria();
 
     SourceList.currentPath = criteria.path;
@@ -171,12 +204,16 @@ function refreshSources(page) {
 
     criteria.page = page;
     criteria.size = pageSize;
-
+    console.log("Reload sources path="+criteria.path+" requestId="+criteria.requestId);
     $.ajax({
         type: "POST",
-        url: "/sources/find",
+        url: SourceList.sourceDataProvider,
         data: JSON.stringify(criteria, null, 2),
         success: function (response) {
+            console.log("Reload success for path="+response.criteria.path+" requestId="+response.criteria.requestId);
+            var list = response.list;
+            console.log(" stats: page="+list.number+" of "+list.totalPages+ " ("+list.size+") " +
+                    " total="+list.totalElements);
             if (response.status != "200") {
                 alert("Find failed " + response.message);
             } else {
@@ -184,6 +221,7 @@ function refreshSources(page) {
             }
         },
         error: function (xhr, ajaxOptions, thrownError) {
+            console.log("Reload failed for path="+response.criteria.path+" requestId="+response.criteria.requestId);
             alert("ReIndex call failed " + thrownError);
         },
         dataType: "json",

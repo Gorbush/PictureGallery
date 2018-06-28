@@ -53,6 +53,12 @@ public class FileInformation implements Comparable<FileInformation> {
     private DateTime timestamp;
 
     @Indexed
+    String importRequestRootId;
+
+    @Indexed
+    String importRequestId;
+
+    @Indexed
     private Set<String> indexProcessIds = new HashSet<>();
 
     @CreatedDate

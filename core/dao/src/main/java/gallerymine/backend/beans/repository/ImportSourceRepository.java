@@ -30,7 +30,7 @@ import java.util.Collection;
 
 //@RepositoryRestResource(collectionResourceRel = "source", path = "source")
 @Repository
-public interface ImportSourceRepository extends MongoRepository<ImportSource, String> {
+public interface ImportSourceRepository extends MongoRepository<ImportSource, String>, ImportSourceRepositoryCustom {
 
     Collection<ImportSource> findByFilePath(@Param("filePath") String filePath);
 

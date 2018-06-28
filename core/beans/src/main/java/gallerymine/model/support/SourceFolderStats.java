@@ -17,6 +17,7 @@ public class SourceFolderStats {
 
     long filesNotExisting;
     long filesDuplicates;
+    long filesSimilar;
     long filesExistingNotMatched;
     long filesExistingMatched;
     long filesMatched;
@@ -36,6 +37,10 @@ public class SourceFolderStats {
 
     public void incFilesDuplicates() {
         filesDuplicates++;
+    }
+
+    public void incFilesSimilar() {
+        filesSimilar++;
     }
 
     public void incFilesExistingNotMatched() {

@@ -14,12 +14,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(callSuper = true)
 public class ImportSource extends PictureInformation {
 
-    @Indexed
-    String importRequestId;
-
-    @Indexed
-    String importRequestRootId;
-
     SourceKind kind = SourceKind.UNSET;
 
 }

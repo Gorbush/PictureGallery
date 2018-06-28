@@ -9,6 +9,11 @@
     <script type="application/javascript" src="/js/importRequest.js" ></script>
     <script type="application/javascript" src="/js/progressBar.js" ></script>
 
+    <script type="application/javascript" src="/js/sourceBlock.js"></script>
+    <script type="application/javascript" src="/js/pager.js"></script>
+    <script type="application/javascript" src="/js/sourceList.js"></script>
+    <script type="application/javascript" src="/js/sourceProperties.js"></script>
+
     <script type="application/javascript" th:inline="javascript">
 
         $(document).ready(function () {
@@ -90,6 +95,15 @@
                 </div>
                 <div id="importImagesScroller" >
                     <div id="importImagesList" >
+                        <div id="sources" class="SourceBlockContainer">
+                        </div>
+                        <div id="sourceProperties" class="SourcePropsContainer">
+                            <div id="sourcePropHeader" class="blockHeader">
+                                <div class="title">Title</div>
+                                <div class="icon">Ic</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -107,6 +121,35 @@
                 <div name="totalStats.files" class="counts">Files</div>
                 <div name="totalStats.folders" class="counts">Folders</div>
                 <div name="totalStats.foldersDone" class="counts">Folders Done</div>
+            </div>
+        </div>
+        <div id="templates">
+            <div class="sourceBlock">
+                <div class="sourceBlockBody">
+                    <div class="matchingProperties">
+                        <div class="filePath"></div>
+                        <div class="folderStats">
+                            <span class="message"></span>
+                            <span class="data">
+                                Files <span class="badge files"></span>
+                                Matched  <span class="badge matched"></span>
+                                Matchable <span class="badge matchable"></span>
+                                Dups <span class="badge duplicates"></span>
+                            </span>
+                        </div>
+                        <div class="fileName"></div>
+                        <div class="fileSize"></div>
+                        <div class="timeStamp"></div>
+                    </div>
+                    <div class="source_image" title="SimpleHint">
+                        <a href="#" class="source_anch"><img class="img-thumbnail" /></a>
+                    </div>
+                    <div class="decisionBlock">
+                        <span class="decisionButton btn_LATER glyphicon glyphicon-time" value="later"></span>
+                        <span class="decisionButton btn_APPROVE glyphicon glyphicon-star" value="approve"></span>
+                        <span class="decisionButton btn_DUPLICATE glyphicon glyphicon-remove" value="duplicate"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

@@ -17,9 +17,11 @@
 package gallerymine.frontend.mvc;
 
 import gallerymine.backend.beans.AppConfig;
+import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.helpers.matchers.SourceFilesMatcher;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ActionRequest;
 import gallerymine.model.Source;
 import gallerymine.model.mvc.FolderStats;
@@ -62,6 +64,9 @@ public class SourcesController {
 	@Autowired
     private SourceFilesMatcher sourceFilesMatcher;
 
+	@Autowired
+    private ImportSourceRepository uniSourceRepository;
+
 	public SourcesController() {
 	}
 
@@ -70,6 +75,23 @@ public class SourcesController {
 	public Object list(@RequestBody SourceCriteria criteria) {
 
 		Page<Source> sources = sourceRepository.fetchCustom(criteria);
+
+        return responseOk()
+            .put("list", sources)
+            .put("op", "find")
+            .put("criteria", criteria)
+		    .build();
+	}
+
+    @PostMapping("uni")
+    @ResponseBody
+	public Object uniList(@RequestBody SourceCriteria criteria) {
+        PictureKind kind = criteria.getKind();
+        if (kind == null) {
+            kind = PictureKind.GALLERY;
+        }
+
+        Page<PictureInformation> sources = uniSourceRepository.fetchCustom(criteria, kind.getEntityClass());
 
         return responseOk()
             .put("list", sources)

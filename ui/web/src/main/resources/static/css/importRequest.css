@@ -1,14 +1,27 @@
 ul.jstree-contextmenu {
     z-index: 9999;
 }
+div#pageContentScroller {
+    overflow: hidden;
+}
+#importList {
+    overflow: auto;
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+}
+#importDetailsListData {
 
+}
 #indexRequestsTree {
     /*height: 200px;*/
     /*width: 200px;*/
     /*border: 1px solid red;*/
 }
 #importDetailsBrowser {
-    /*border: 1px solid red;*/
+    border: 1px solid red;
     position: relative;
     top: 0;
     left: 0;
@@ -16,16 +29,16 @@ ul.jstree-contextmenu {
     height: 100%;
 }
 #importDetailsBrowsingArea {
-    /*border: 1px solid blue;*/
+    border: 1px solid blue;
     position: absolute;
-    top: 35px;
+    top: 32px;
     bottom: 0;
-    left: 15px;
+    left: 0;
     right: 15px;
 }
 #indexRequestsTreeScroller {
     position: relative;
-    /*border: 1px solid green;*/
+    border: 1px solid green;
     overflow: auto;
     height: 50%;
     width: 100%;

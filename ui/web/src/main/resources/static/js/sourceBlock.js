@@ -168,7 +168,9 @@ var SourceBlock = {
 
                 var block = this;
                 this.matchingImageDiv.on("click", function(event) {
-                    self.gallery.startSlideshow(block.matchingImage);
+                    if (self.gallery) {
+                        self.gallery.startSlideshow(block.matchingImage);
+                    }
                     return false;
                 });
 
