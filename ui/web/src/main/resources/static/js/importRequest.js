@@ -201,7 +201,7 @@ var ImportRequestsTree = {
         var importRequestId = data.id;
         console.log("Selected node "+importRequestId);
         ImportRequestsTree.setActiveImportId(importRequestId);
-        SourceList.refreshSources(1);
+        SourceList.refreshSources(0);
     },
 
     criteriaContributor: function(sourceList, criteria) {

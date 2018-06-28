@@ -17,14 +17,9 @@ public class SourceCriteria extends FileCriteria {
     private Double longitude;
     private String distance;
     private PictureKind kind;
-    private String requestId;
-    private String requestRootId;
-    private String processId;
-
-    private PageRequest pager = null;
 
     public SourceCriteria(){
-        pager = new PageRequest(0,5);
+        super();
     }
 
 }

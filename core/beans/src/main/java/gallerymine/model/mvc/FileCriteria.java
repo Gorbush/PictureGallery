@@ -17,6 +17,9 @@ public class FileCriteria {
     private DateTime timestamp;
     private String sortByField;
     private Boolean sortDescending;
+    private String requestId;
+    private String requestRootId;
+    private String processId;
 
     private PageRequest pager = null;
 

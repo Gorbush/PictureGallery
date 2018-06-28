@@ -154,7 +154,7 @@ function prepareCriteria(path) {
         fileName: null,
         timestamp: null,
         placePath: null,
-        page: 1,
+        page: 0,
         size: 1000
     };
 
@@ -176,13 +176,13 @@ function prepareCriteria(path) {
     return criteria;
 }
 function clickFoldersTreeNode(e, data, tree) {
-    refreshSources(1);
+    refreshSources(0);
     if (SourceList.treeDates) {
         SourceList.treeDates.refresh();
     }
 }
 function clickDatesTreeNode(e, data, tree) {
-    refreshSources(1);
+    refreshSources(0);
 }
 function refreshSources(page) {
     SourceProperties.hide();
@@ -212,7 +212,7 @@ function refreshSources(page) {
         success: function (response) {
             console.log("Reload success for path="+response.criteria.path+" requestId="+response.criteria.requestId);
             var list = response.list;
-            console.log(" stats: page="+list.number+" of "+list.totalPages+ " ("+list.size+") " +
+            console.log(" stats: page=("+list.number+" of "+list.totalPages+ ") elements=("+list.numberOfElements +" of " +list.size+") " +
                     " total="+list.totalElements);
             if (response.status != "200") {
                 alert("Find failed " + response.message);
