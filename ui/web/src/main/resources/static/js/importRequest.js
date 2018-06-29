@@ -25,6 +25,10 @@ var ImportRequestsTree = {
         ImportRequestsTree.headerTotals = $("#indexRequestTreeHeaderTotalColumns");
         populateTemplate(ImportRequestsTree.treeColumnsTemplate, {}, ImportRequestsTree.headerTotals);
 
+        ImportRequestsTree.viewSwitcher = initViewSwitcher("#sourceViewSwitcher");
+        SourceList.init("/sources/uni", "IMPORT", ImportRequestsTree.criteriaContributor, ImportRequestsTree.viewSwitcher);
+        ImportRequestsTree.viewSwitcher.setSourceList(SourceList);
+
         ImportRequestsTree.tree.jstree({
             'core': {
                 'data' : {
@@ -215,8 +219,6 @@ $(document).ready(function() {
     LogContainer.init();
 
     ImportRequestsTree.init();
-
-    SourceList.init("/sources/uni", "IMPORT", ImportRequestsTree.criteriaContributor);
 
     $("#ReIndexButton").on('click', function () {
         alert('Call Reindex!!');

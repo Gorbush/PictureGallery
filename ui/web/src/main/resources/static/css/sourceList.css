@@ -21,6 +21,7 @@
 #sourcesNav {
     float: right;
     height: 50px;
+    width: 100px;
 }
 #sourcesNav .pagination{
     height: 50px;
@@ -134,10 +135,15 @@ div.sourceBlock {
     height: 100px;
     position: relative;
 }
-div#sources  div.sourceBlock {
+div.SourceBlockContainer  div.sourceBlock {
     width: 350px;
     float: left;
 }
+div.SourceBlockContainer.compact  div.sourceBlock {
+    width: 105px;
+    float: left;
+}
+
 .source-block-unsaved {
     background-color: #dcdcdc;
 }
@@ -179,7 +185,24 @@ div.sourceBlock div.matchingProperties {
     right:  0;
     top: 0;
     height: 100px;
+    width: 300px;
     padding-left: 105px;
+
+    font-size: x-small;
+}
+.SourceBlockContainer.compact div.sourceBlock div.matchingProperties{
+    position: absolute;
+    left: 105px;
+    top: 40px;
+    height: 100px;
+    width: 300px;
+    z-index: 300;
+
+    padding-left: 0;
+    background-color: white;
+    border: 1px solid green;
+    font-size: x-small;
+    display: none;
 }
 div.sourceBlock div.filePath {
 
@@ -249,4 +272,26 @@ div.decisionBlock .decisionButton.decision_selected {
     top: 0;
     height: 100%;
     right: 0;
+}
+
+/** View Switcher classes */
+.viewSwitcher {
+    border: 1px solid magenta;
+    width: 50px;
+    height: 25px;
+    text-align: center;
+}
+.viewSwitcher .viewButton {
+    border: 0px solid black;
+    margin: 3px;
+}
+.viewSwitcher .viewButton.selected {
+    border: 3px solid red;
+    margin: 0px;
+}
+.viewSwitcher .viewButton.disabled {
+    border: 2px solid gray;
+    margin: 0px;
+    background-color: grey;
+    color: #1b6d85;
 }

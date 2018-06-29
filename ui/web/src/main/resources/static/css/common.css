@@ -46,8 +46,9 @@ div#pageMainButtons {
 }
 div#pageMainButtonsContent {
     width: 100%;
-    height: 100%;
-    position: absolute;
+    /*top: 0;*/
+    /*bottom: 0;*/
+    /*position: absolute;*/
     vertical-align: middle;
 }
 div#pageContent {

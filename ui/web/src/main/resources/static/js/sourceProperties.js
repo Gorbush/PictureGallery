@@ -1,19 +1,24 @@
 var SourceProperties = {
     ROOT_BLOCK: null,
+    initialized: false,
 
     init: function (rootBlock) {
         this.ROOT_BLOCK = $(rootBlock);
         $("#sourcePropHeader .icon", this.ROOT_BLOCK).click(function (e1, e2, e3) {
             SourceProperties.hide();
         });
-
+        this.initialized = true;
     },
 
     show : function () {
-        this.ROOT_BLOCK.show();
+        if (this.ROOT_BLOCK) {
+            this.ROOT_BLOCK.show();
+        }
     },
     hide : function () {
-        this.ROOT_BLOCK.hide();
+        if (this.ROOT_BLOCK) {
+            this.ROOT_BLOCK.hide();
+        }
     }
 };
 

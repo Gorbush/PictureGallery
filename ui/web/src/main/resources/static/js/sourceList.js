@@ -4,17 +4,36 @@ var SourceList = {
     currentPath: null,
     currentRangeStart: null,
     currentRangeEnd: null,
-    pagerBar: null,
-    breadcrumb: null,
-    gallery: null,
     sourcesRootDiv: null,
     sourceDataProvider: "/sources/find",
     kind: "GALLERY",
 
+    /** Linkable components */
+    pagerBar: null,
+    breadcrumb: null,
+    gallery: null,
+    viewSwitcher: null,
+
+    currentView: null,
+    VIEW_COMPACT: "compact",
+    VIEW_LARGE: "large",
+    CLASS_COMPACT: "compact",
+
     refreshSources: function (page) {
         refreshSources(page);
     },
-
+    setView: function (viewName) {
+        if (SourceList.currentView === viewName) {
+            return;
+        }
+        SourceList.currentView = viewName;
+        if (SourceList.VIEW_COMPACT === viewName) {
+            SourceList.sourcesRootDiv.addClass(SourceList.CLASS_COMPACT);
+        } else {
+            SourceList.sourcesRootDiv.removeClass(SourceList.CLASS_COMPACT);
+        }
+        SourceList.refreshSources();
+    },
     clean: function () {
         SourceList.sourcesRootDiv.empty();
         SourceList.responseData = null;
@@ -71,9 +90,13 @@ var SourceList = {
         }
     },
 
-    init : function (sourceDataProvider, kind, criteriaContributor) {
+    init : function (sourceDataProvider, kind, criteriaContributor, viewSwitcher) {
         try {
             SourceList.sourceDataProvider = sourceDataProvider;
+            SourceList.viewSwitcher = viewSwitcher;
+            if (SourceList.viewSwitcher) {
+                SourceList.viewSwitcher.setView(SourceList.viewSwitcher.COMPACT);
+            }
             if (kind) {
                 SourceList.kind = kind;
             }
@@ -105,6 +128,18 @@ var SourceList = {
                     }
                 });
             }
+
+            $("body").on({
+                mouseenter: function () {
+                    var stamp = $(".matchingProperties", this);
+                    stamp.show();
+                },
+                mouseleave: function () {
+                    var stamp = $(".matchingProperties", this);
+                    stamp.hide();
+                }
+            },"div.SourceBlockContainer.compact div.sourceBlock");
+
         } catch (e) {
             console.log("Failed to init SourceList ");
         }
@@ -202,6 +237,9 @@ function refreshSources(page) {
     SourceList.currentRangeStart = criteria.fromDate;
     SourceList.currentRangeEnd = criteria.toDate;
 
+    if (!validValue(page)) {
+        page = 0;
+    }
     criteria.page = page;
     criteria.size = pageSize;
     console.log("Reload sources path="+criteria.path+" requestId="+criteria.requestId);

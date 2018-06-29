@@ -137,3 +137,6 @@ li.jstree-node i.NODE_STATUS_DONE {
 .autoRefresh {
     float: right;
 }
+#sourceViewSwitcher {
+    margin-top: 12px;
+}

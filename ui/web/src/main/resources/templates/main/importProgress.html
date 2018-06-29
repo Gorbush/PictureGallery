@@ -13,6 +13,7 @@
     <script type="application/javascript" src="/js/pager.js"></script>
     <script type="application/javascript" src="/js/sourceList.js"></script>
     <script type="application/javascript" src="/js/sourceProperties.js"></script>
+    <script type="application/javascript" src="/js/viewSwitcher.js" ></script>
 
     <script type="application/javascript" th:inline="javascript">
 
@@ -32,6 +33,10 @@
     </section>
 
     <section layout:fragment="pageNavigation" class="container">
+        <div id="sourceViewSwitcher">
+            <span class="glyphicon glyphicon-sd-video view-compact viewButton"></span>
+            <span class="glyphicon glyphicon-hd-video view-large viewButton"></span>
+        </div>
     </section>
 
 	<section layout:fragment="pageButtonsRight" class="container">
