@@ -119,6 +119,11 @@ public class ImportRequest {
             setUpdated(DateTime.now());
             return this;
         }
+        public ImportStats incFolders(long count) {
+            folders.addAndGet(count);
+            setUpdated(DateTime.now());
+            return this;
+        }
         public ImportStats incFoldersDone() {
             foldersDone.incrementAndGet();
             setUpdated(DateTime.now());

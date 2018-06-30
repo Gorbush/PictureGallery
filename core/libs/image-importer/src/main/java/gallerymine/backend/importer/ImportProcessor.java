@@ -206,7 +206,7 @@ public class ImportProcessor implements Runnable {
                     foldersCount++;
                 }
                 request.setFoldersCount(foldersCount);
-                request.getStats().incFolders();
+                request.getStats().incFolders(foldersCount);
                 requestRepository.save(request);
                 log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             } catch (IOException e) {
@@ -271,7 +271,7 @@ public class ImportProcessor implements Runnable {
                 request.setFilesCount(filesCount);
                 request.setFilesIgnoredCount(filesIgnoredCount);
                 request.setAllFilesProcessed(true);
-                request.setStatus(ENUMERATED);
+                request.setStatus(SUB);
                 requestRepository.save(request);
             } catch (IOException e) {
                 request.setFilesCount(-1);
@@ -322,56 +322,52 @@ public class ImportProcessor implements Runnable {
             log.error("ImportRequest Failed to check subs for request id={}", requestId);
             return;
         }
-        Collection<ImportRequest> subrequests = requestRepository.findByParent(requestId);
-
-        boolean allDone = true;
-        boolean someErrors = false;
-
-        for (ImportRequest subRequest: subrequests) {
-            if (FAILED.equals(subRequest.getStatus())) {
-                someErrors = true;
-            }
-            if (!subRequest.getStatus().isFinal()) {
-                allDone = false;
-            }
-            if (someErrors && !allDone) {
-                // we already noticed that we have some unfinished work and some failed tasks
-                // no need to check everything
-                break;
-            }
-        }
 
         ImportRequest request = requestRepository.findOne(requestId);
         if (request == null) {
             log.error("ImportRequest Request not found, failed to check subs for id={}", requestId);
             return;
         }
-        ImportRequest.ImportStatus currentStatus = request.getStatus();
+
         if (child != null) {
-            log.info("ImportRequest Adding child substats from id={}", child.getId());
-            request.getStats().incFoldersDone();
-            request.getSubStats().append(child.getTotalStats());
+            if (child.getStatus().isFinal()) {
+                log.info("ImportRequest Adding child substats from id={}", child.getId());
+                request.getStats().incFoldersDone();
+                request.getSubStats().append(child.getTotalStats());
+                requestRepository.save(request);
+            } else {
+                log.error("ImportRequest Adding child substats from id={} to parent={} while child is not FINISHED", child.getId(), requestId);
+            }
         }
 
-        if (allDone) {
-            if (someErrors) {
-                request.setStatus(FAILED);
-            } else {
-                request.setStatus(DONE);
-            }
-        } else {
-            request.setStatus(SUB);
+        boolean allSubTasksDone = request.getStats().getFolders().get() == request.getStats().getFoldersDone().get();
+
+        if (!allSubTasksDone)  {
+            log.debug("ImportRequest id={} Not all subtasks are done", requestId);
+            return;
         }
+
+        boolean isAllFilesProcessed = request.getAllFilesProcessed();
+
+        if (!isAllFilesProcessed)  {
+            log.debug("ImportRequest id={} Not all files are processed", requestId);
+            return;
+        }
+
+        ImportRequest.ImportStatus currentStatus = request.getStatus();
+
+        boolean someErrors = request.getTotalStats().getFailed().get() > 0;
+
+        if (someErrors) {
+            request.setStatus(FAILED);
+        } else {
+            request.setStatus(DONE);
+        }
+
         requestRepository.save(request);
         log.info("ImportRequest status changed id={} oldStatus={} status={} path={}",
                 request.getId(), currentStatus, request.getStatus(), request.getPath());
-        if (request.getStatus().isFinal() &&
-                StringUtils.isNotBlank(request.getIndexProcessId()) && // has process
-                StringUtils.isBlank(request.getParent())) {            // this is the top import request
-            importService.checkIfApproveNeeded(request);
-        }
-
-        if (allDone && StringUtils.isNotBlank(request.getParent())) {
+        if (StringUtils.isNotBlank(request.getParent())) {
             log.info("ImportRequest processing parent of id={} parent={}", requestId, request.getParent());
             checkSubsAndDone(request.getParent(), request);
         }
@@ -379,6 +375,12 @@ public class ImportProcessor implements Runnable {
         if (request.getStatus().isFinal()) {
             importService.finishRequestProcessing(request);
             log.info("ImportRequest finished id={} status={}", requestId, request.getStatus());
+        }
+
+        if (request.getStatus().isFinal() &&
+                StringUtils.isNotBlank(request.getIndexProcessId()) && // has process
+                StringUtils.isBlank(request.getParent())) {            // this is the top import request
+            importService.checkIfApproveNeeded(request);
         }
     }
 

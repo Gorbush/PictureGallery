@@ -8,7 +8,10 @@ var SourceList = {
     sourceDataProvider: "/sources/find",
     kind: "GALLERY",
 
-    /** Linkable components */
+    BLOCK_HEIGHT: 100,
+    BLOCK_WIDTH : 350,
+
+/** Linkable components */
     pagerBar: null,
     breadcrumb: null,
     gallery: null,
@@ -32,7 +35,27 @@ var SourceList = {
         } else {
             SourceList.sourcesRootDiv.removeClass(SourceList.CLASS_COMPACT);
         }
+        SourceList.recalculateBlockSize();
         SourceList.refreshSources();
+    },
+    recalculateBlockSize: function () {
+        SourceList.BLOCK_WIDTH = 350;
+        SourceList.BLOCK_HEIGHT = 100;
+
+        var firstChild = SourceList.sourcesRootDiv.find(".sourceBlock:first");
+        var firstChildNode;
+        if (firstChild.length > 0) {
+            firstChildNode = firstChild.get(0);
+            SourceList.BLOCK_HEIGHT = firstChildNode.clientHeight;
+            SourceList.BLOCK_WIDTH = firstChildNode.clientWidth;
+        } else {
+            firstChild = SourceBlock.create({}, SourceList.sourcesRootDiv, false, null).hideDecisionButtons();
+            firstChild = firstChild.sourceBlockElement;
+            firstChildNode = firstChild.get(0);
+            SourceList.BLOCK_HEIGHT = firstChildNode.clientHeight;
+            SourceList.BLOCK_WIDTH = firstChildNode.clientWidth;
+            firstChild.remove();
+        }
     },
     clean: function () {
         SourceList.sourcesRootDiv.empty();
@@ -129,17 +152,6 @@ var SourceList = {
                 });
             }
 
-            $("body").on({
-                mouseenter: function () {
-                    var stamp = $(".matchingProperties", this);
-                    stamp.show();
-                },
-                mouseleave: function () {
-                    var stamp = $(".matchingProperties", this);
-                    stamp.hide();
-                }
-            },"div.SourceBlockContainer.compact div.sourceBlock");
-
         } catch (e) {
             console.log("Failed to init SourceList ");
         }
@@ -223,11 +235,8 @@ function refreshSources(page) {
     SourceProperties.hide();
     SourceList.pagerBar.updatePage(page);
 
-    var container = $("div#sources");
-    BLOCK_HEIGHT=100;
-    BLOCK_WIDTH =350;
-    var pageSize = Math.trunc(container.innerWidth() / BLOCK_WIDTH ) *
-        (Math.trunc(container.innerHeight() / BLOCK_HEIGHT));
+    var pageSize = Math.trunc(SourceList.sourcesRootDiv.innerWidth() / SourceList.BLOCK_WIDTH ) *
+        (Math.trunc(SourceList.sourcesRootDiv.innerHeight() / SourceList.BLOCK_HEIGHT));
     if (pageSize < 1) {
         pageSize = 1;
     }
@@ -259,8 +268,8 @@ function refreshSources(page) {
             }
         },
         error: function (xhr, ajaxOptions, thrownError) {
-            console.log("Reload failed for path="+response.criteria.path+" requestId="+response.criteria.requestId);
-            alert("ReIndex call failed " + thrownError);
+            console.log("Reload failed Message: "+ xhr.message);
+            alert("ReIndex call failed because of " + xhr.message);
         },
         dataType: "json",
         contentType: "application/json"

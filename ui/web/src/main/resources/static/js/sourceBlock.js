@@ -34,10 +34,6 @@ var ContextMenuFolderAction = {
             }
             return true;
         });
-        $(document).on("click", ".sourceBlock .matchingProperties", function (e1, e2, e3) {
-            SourceProperties.show();
-        });
-
     }
 };
 var DecisionButtonBlock = {
@@ -106,6 +102,36 @@ var SourceBlock = {
     FOLDER_FAIL_CLASS: "folderFail",
     FOLDER_NOT_EXISTS_CLASS: "folderNotExists",
 
+    globalInit: function () {
+        if (!window.sourceBlockInitialized) {
+            window.sourceBlockInitialized = true;
+            $("body").on({
+                mouseenter: function () {
+                    var stamp = $(".matchingProperties", this);
+                    stamp.show();
+                    var boundingRect = stamp.get(0).getBoundingClientRect();
+                    var view = stamp.get(0).ownerDocument.defaultView;
+                    if (boundingRect.width+boundingRect.x > view.innerWidth) {
+                        stamp.addClass("leftSide");
+                    } else {
+                        stamp.removeClass("leftSide");
+                    }
+                    if (boundingRect.height+boundingRect.y > view.innerHeight) {
+                        stamp.addClass("topSide");
+                    } else {
+                        stamp.removeClass("topSide");
+                    }
+                },
+                mouseleave: function () {
+                    var stamp = $(".matchingProperties", this);
+                    stamp.hide();
+                }
+            }, "div.SourceBlockContainer.compact div.sourceBlock");
+            $(document).on("click", ".sourceBlock .matchingProperties", function (e1, e2, e3) {
+                SourceProperties.show();
+            });
+        }
+    },
     get: function (element) {
         do {
             var controller = $(element).data("controller");
@@ -259,9 +285,11 @@ var SourceBlock = {
             },
             hideDecisionButtons: function () {
                 this.decisionButtons.hideDecisionButtons();
+                return this;
             },
             showDecisionButtons: function () {
                 this.decisionButtons.showDecisionButtons();
+                return this;
             }
 
         };
@@ -274,4 +302,5 @@ var SourceBlock = {
 
 $(document).ready(function () {
     ContextMenuFolderAction.init();
+    SourceBlock.globalInit();
 });

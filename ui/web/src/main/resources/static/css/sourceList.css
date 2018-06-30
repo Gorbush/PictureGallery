@@ -204,6 +204,12 @@ div.sourceBlock div.matchingProperties {
     font-size: x-small;
     display: none;
 }
+.SourceBlockContainer.compact div.sourceBlock div.matchingProperties.leftSide {
+    left: -305px;
+}
+.SourceBlockContainer.compact div.sourceBlock div.matchingProperties.topSide {
+    top: 0px;
+}
 div.sourceBlock div.filePath {
 
 }
