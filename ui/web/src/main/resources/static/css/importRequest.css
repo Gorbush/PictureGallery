@@ -4,6 +4,9 @@ ul.jstree-contextmenu {
 div#pageContentScroller {
     overflow: hidden;
 }
+.paginatorContainer .pagination {
+    margin: 9px;
+}
 #importList {
     overflow: auto;
     position: relative;
@@ -86,7 +89,7 @@ div#pageContentScroller {
 div.node_postblock {
     float:right;
     /*border:1px solid red;*/
-    width: 305px;
+    width: auto;
 }
 div.node_postblock div.status {
     float: left;
@@ -139,4 +142,5 @@ li.jstree-node i.NODE_STATUS_DONE {
 }
 #sourceViewSwitcher {
     margin-top: 12px;
+    float: left;
 }

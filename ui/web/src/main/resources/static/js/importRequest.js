@@ -26,7 +26,15 @@ var ImportRequestsTree = {
         populateTemplate(ImportRequestsTree.treeColumnsTemplate, {}, ImportRequestsTree.headerTotals);
 
         ImportRequestsTree.viewSwitcher = initViewSwitcher("#sourceViewSwitcher");
-        SourceList.init("/sources/uni", "IMPORT", ImportRequestsTree.criteriaContributor, ImportRequestsTree.viewSwitcher);
+        SourceList.init({
+                sourceDataProvider: "/sources/uni",
+                breadcrumb: "#breadcrumblist",
+                pagerBar: "#sourcesNav",
+                sourcesRootDiv: "div#sources",
+                criteriaContributor: ImportRequestsTree.criteriaContributor,
+                viewSwitcher: ImportRequestsTree.viewSwitcher,
+                kind: "IMPORT"
+            });
         ImportRequestsTree.viewSwitcher.setSourceList(SourceList);
 
         ImportRequestsTree.tree.jstree({

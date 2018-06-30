@@ -37,6 +37,7 @@
             <span class="glyphicon glyphicon-sd-video view-compact viewButton"></span>
             <span class="glyphicon glyphicon-hd-video view-large viewButton"></span>
         </div>
+        <div th:replace="support/pager" ></div>
     </section>
 
 	<section layout:fragment="pageButtonsRight" class="container">
@@ -124,8 +125,9 @@
             <div class="node_postblock">
                 <div name="status" class="status">Status</div>
                 <div name="totalStats.files" class="counts">Files</div>
+                <div name="totalStats.failed" class="counts">/Failed</div>
                 <div name="totalStats.folders" class="counts">Folders</div>
-                <div name="totalStats.foldersDone" class="counts">Folders Done</div>
+                <div name="totalStats.foldersDone" class="counts">/Done</div>
             </div>
         </div>
         <div id="templates">

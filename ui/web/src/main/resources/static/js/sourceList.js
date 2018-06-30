@@ -22,6 +22,8 @@ var SourceList = {
     VIEW_LARGE: "large",
     CLASS_COMPACT: "compact",
 
+    initialized: false,
+
     refreshSources: function (page) {
         refreshSources(page);
     },
@@ -113,23 +115,32 @@ var SourceList = {
         }
     },
 
-    init : function (sourceDataProvider, kind, criteriaContributor, viewSwitcher) {
+    init : function (optionsProvided) {
         try {
-            SourceList.sourceDataProvider = sourceDataProvider;
-            SourceList.viewSwitcher = viewSwitcher;
+            var options = {
+                sourceDataProvider: "/sources/uni",
+                breadcrumb: "#breadcrumblist",
+                kind: "GALLERY",
+                pagerBar: "#sourcesNav",
+                sourcesRootDiv: "div#sources",
+                criteriaContributor: null,
+                viewSwitcher: "IMPORT"
+            };
+            options = $.extend(options, optionsProvided);
+            SourceList.sourceDataProvider = options.sourceDataProvider;
+
+            SourceList.viewSwitcher = options.viewSwitcher;
             if (SourceList.viewSwitcher) {
                 SourceList.viewSwitcher.setView(SourceList.viewSwitcher.COMPACT);
             }
-            if (kind) {
-                SourceList.kind = kind;
-            }
-            if (criteriaContributor) {
-                SourceList.criteriaContributor = criteriaContributor;
-            }
-            SourceList.sourcesRootDiv = $("div#sources");
+
+            SourceList.kind = options.kind;
+            SourceList.criteriaContributor = options.criteriaContributor;
+            SourceList.sourcesRootDiv = $(options.sourcesRootDiv);
+            SourceList.pagerBar = Pager.create($(options.pagerBar), pagerChangeHandler);
+            SourceList.breadcrumb = $(options.breadcrumb);
+
             SourceList.responseData = null;
-            SourceList.pagerBar = Pager.create($("#sourcesNav"), pagerChangeHandler);
-            SourceList.breadcrumb = $("#breadcrumblist");
 
             if (typeof TreePath != "undefined") {
                 SourceList.treeFolderPath = TreePath.create($('#folderTree'), clickFoldersTreeNode, prepareCriteriaPath);
@@ -151,7 +162,7 @@ var SourceList = {
                     }
                 });
             }
-
+            SourceList.initialized = true;
         } catch (e) {
             console.log("Failed to init SourceList ");
         }
@@ -281,7 +292,7 @@ function populateSourcesList(data, node) {
     SourceList.populate(data);
 }
 function pagerChangeHandler(page, totalPages, size, total, pager) {
-    if (SourceList.currentPath) {
+    if (SourceList.initialized) {
         refreshSources(page);
     }
 }

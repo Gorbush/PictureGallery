@@ -16,7 +16,9 @@
     <script type="application/javascript" src="js/TreeDates.js"></script>
     <script type="application/javascript" >
         $(document).ready(function() {
-            SourceList.init("/sources/find");
+            SourceList.init({
+                sourceDataProvider: "/sources/find"
+            });
         });
     </script>
 
