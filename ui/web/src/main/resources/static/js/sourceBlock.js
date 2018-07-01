@@ -38,6 +38,7 @@ var ContextMenuFolderAction = {
 };
 var DecisionButtonBlock = {
     BUTTON_SELECTED: "decision_selected",
+    BUTTON_DONE: "decision_done",
     BUTTON_LATER: "later",
     BUTTON_APPROVE: "approve",
     BUTTON_DUPLICATE: "duplicate",
@@ -58,17 +59,21 @@ var DecisionButtonBlock = {
 
             create: function () {
                 this.buttons.on('click', function () {
-                    object.selectButton(this);
+                    object.selectButton(this, true);
                 });
-                this.buttonApprove.on("dblclick", function () {
-                    var parent = $(sourceBlock.sourceBlockElement).parent(".SourceBlockContainer");
-                    $(".decisionButton", parent).removeClass(DecisionButtonBlock.BUTTON_SELECTED);
-                    $(".decisionButton.btn_DUPLICATE", parent).addClass(DecisionButtonBlock.BUTTON_SELECTED);
-                    object.selectButton(this);
-                });
+                // this.buttonApprove.on("dblclick", function () {
+                //     var button = this;
+                //     var parent = $(sourceBlock.sourceBlockElement).parent(".SourceBlockContainer");
+                //     $(".decisionButton", parent).removeClass(DecisionButtonBlock.BUTTON_SELECTED);
+                //     $(".decisionButton.btn_DUPLICATE", parent).addClass(DecisionButtonBlock.BUTTON_SELECTED);
+                //     object.selectButton(button);
+                // });
             },
-            selectButton: function (button) {
+            resetButton: function () {
                 this.buttons.removeClass(DecisionButtonBlock.BUTTON_SELECTED);
+            },
+            selectButton: function (button, fireEvent) {
+                this.resetButton();
                 if (validValue(button) && !(button === "")) {
                     if (typeof button === 'string' || button instanceof String) {
                         button = $(".btn_"+button.toLocaleUpperCase(), this.decisionBlockDiv)
@@ -76,7 +81,22 @@ var DecisionButtonBlock = {
                         button = $(button);
                     }
                     button.addClass(DecisionButtonBlock.BUTTON_SELECTED);
+
+                    if (fireEvent) {
+                        var action = button.get(0).getAttribute("value");
+                        var itemId = this.sourceBlock.getId();
+                        var itemData = this.sourceBlock.getData();
+                        object.performAction(button, action, itemId, itemData);
+                    }
                 }
+            },
+            performAction: function (button, action, itemId, itemData) {
+               AjaxHelper.runGET("/sources/approve/"+itemData.grade+"/"+itemId+"/"+action, function (response){
+                   var block = SourceList.getBlockById(response.result.id);
+                   if (block) {
+                       block.markDecision(response.result.grade, response.result.status);
+                   }
+               });
             },
             getSelectedButton: function () {
                 var buttonSelected = $("."+DecisionButtonBlock.BUTTON_SELECTED,this.decisionBlockDiv);
@@ -84,6 +104,21 @@ var DecisionButtonBlock = {
                     return buttonSelected.attr("value").toUpperCase();
                 }
                 return null;
+            },
+            markDecision: function (grade, status) {
+                this.resetButton();
+                if (grade === "PICTURE" && status == "APPROVED") {
+                    this.decisionBlockDiv.addClass("decision_done");
+                    this.selectButton(this.buttonApprove);
+                }
+                if (grade === "IMPORT" && status == "APPROVED") {
+                    this.decisionBlockDiv.addClass("decision_done");
+                    this.selectButton(this.buttonApprove);
+                }
+                if (grade === "IMPORT" && status === "DUPLICATE") {
+                    this.decisionBlockDiv.addClass("decision_done");
+                    this.selectButton(this.buttonDuplicate);
+                }
             },
             hideDecisionButtons: function () {
                 this.decisionBlockDiv.hide();
@@ -201,8 +236,15 @@ var SourceBlock = {
                 });
 
             },
-
+            getId: function () {
+                return this.sourceBlockElement.attr("data:id");
+            },
+            getData: function () {
+                return this.dataObject;
+            },
             fill: function () {
+                SourceList.loadedIdToBlocks[this.dataObject.id] = this;
+                this.sourceBlockElement.attr("data:id", this.dataObject.id);
                 this.matchingImageDiv.attr("title", "id: "+this.dataObject.id);
                 if (this.dataObject.thumbPath != null && validValue(this.dataObject.thumbPath)) {
                     this.matchingImage.attr("src", "/thumbs/"+encodeURIComponent(this.dataObject.thumbPath).replace(/%2F/g, "/"));
@@ -239,6 +281,10 @@ var SourceBlock = {
 
             getDecision: function () {
                 return this.decisionButtons.getSelectedButton();
+            },
+
+            markDecision: function (grade, status) {
+                return this.decisionButtons.markDecision(grade, status);
             },
 
             failFolderStats: function (message) {

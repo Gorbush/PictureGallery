@@ -21,6 +21,7 @@ import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.helpers.matchers.SourceFilesMatcher;
+import gallerymine.backend.services.ImportService;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ActionRequest;
 import gallerymine.model.Source;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
+import static gallerymine.frontend.mvc.support.ResponseBuilder.responseErrorNotFound;
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
 
 /**
@@ -67,6 +69,9 @@ public class SourcesController {
 	@Autowired
     private ImportSourceRepository uniSourceRepository;
 
+	@Autowired
+	private ImportService importService;
+
 	public SourcesController() {
 	}
 
@@ -83,15 +88,48 @@ public class SourcesController {
 		    .build();
 	}
 
+    @GetMapping("approve/{kind}/{id}/{action}" )
+    @ResponseBody
+    public Object approveAction(@PathVariable("kind") PictureGrade kind, @PathVariable("id") String id, @PathVariable("action") String action) {
+        PictureInformation source = uniSourceRepository.fetchOne(id, kind.getEntityClass());
+
+        if (source == null) {
+            return responseErrorNotFound("Not found")
+                    .put("op", "approve")
+                    .put("id", id)
+                    .put("kind", kind)
+                    .put("action", action)
+                    .build();
+        }
+        Boolean done = false;
+        if ("approve".equals(action)) {
+            done = importService.actionApprove(source);
+        }
+        if ("duplicate".equals(action)) {
+            done = importService.actionMarkAsDuplicate(source);
+        }
+
+
+        return responseOk()
+                .result(source)
+                .put("op", "approve")
+                .put("id", id)
+                .put("kind", kind)
+                .put("action", action)
+                .put("done", done)
+                .build();
+
+    }
+
     @PostMapping("uni")
     @ResponseBody
 	public Object uniList(@RequestBody SourceCriteria criteria) {
-        PictureKind kind = criteria.getKind();
-        if (kind == null) {
-            kind = PictureKind.GALLERY;
+        PictureGrade grade = criteria.getGrade();
+        if (grade == null) {
+            grade = PictureGrade.GALLERY;
         }
 
-        Page<PictureInformation> sources = uniSourceRepository.fetchCustom(criteria, kind.getEntityClass());
+        Page<PictureInformation> sources = uniSourceRepository.fetchCustom(criteria, grade.getEntityClass());
 
         return responseOk()
             .put("list", sources)

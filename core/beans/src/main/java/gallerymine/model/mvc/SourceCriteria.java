@@ -1,9 +1,8 @@
 package gallerymine.model.mvc;
 
-import gallerymine.model.support.PictureKind;
+import gallerymine.model.support.PictureGrade;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.domain.PageRequest;
 
 /**
  * Created by sergii_puliaiev on 6/19/17.
@@ -16,7 +15,7 @@ public class SourceCriteria extends FileCriteria {
     private Double latitude;
     private Double longitude;
     private String distance;
-    private PictureKind kind;
+    private PictureGrade grade;
 
     public SourceCriteria(){
         super();

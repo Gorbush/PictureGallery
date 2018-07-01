@@ -6,7 +6,8 @@ var SourceList = {
     currentRangeEnd: null,
     sourcesRootDiv: null,
     sourceDataProvider: "/sources/find",
-    kind: "GALLERY",
+    grade: "GALLERY",
+    showDecisionBlock: false,
 
     BLOCK_HEIGHT: 100,
     BLOCK_WIDTH : 350,
@@ -23,6 +24,8 @@ var SourceList = {
     CLASS_COMPACT: "compact",
 
     initialized: false,
+
+    loadedIdToBlocks: {},
 
     refreshSources: function (page) {
         refreshSources(page);
@@ -51,7 +54,7 @@ var SourceList = {
             SourceList.BLOCK_HEIGHT = firstChildNode.clientHeight;
             SourceList.BLOCK_WIDTH = firstChildNode.clientWidth;
         } else {
-            firstChild = SourceBlock.create({}, SourceList.sourcesRootDiv, false, null).hideDecisionButtons();
+            firstChild = SourceBlock.create({}, SourceList.sourcesRootDiv, false, null);
             firstChild = firstChild.sourceBlockElement;
             firstChildNode = firstChild.get(0);
             SourceList.BLOCK_HEIGHT = firstChildNode.clientHeight;
@@ -60,6 +63,7 @@ var SourceList = {
         }
     },
     clean: function () {
+        SourceList.loadedIdToBlocks = {};
         SourceList.sourcesRootDiv.empty();
         SourceList.responseData = null;
     },
@@ -67,7 +71,12 @@ var SourceList = {
         SourceList.responseData = data;
         SourceList.fillBreadcrumb(data.criteria.path);
         $.each(data.list.content, function (indexSource, source) {
-            SourceBlock.create(source, SourceList.sourcesRootDiv, false, SourceList.gallery).hideDecisionButtons();
+            var block = SourceBlock.create(source, SourceList.sourcesRootDiv, false, SourceList.gallery);
+            if (!SourceList.showDecisionBlock) {
+                block.hideDecisionButtons();
+            } else {
+                block.markDecision(source.grade, source.status);
+            }
         });
 
         SourceList.pagerBar.updateTo(data.list.number, data.list.totalPages, data.list.size, data.list.totalElements);
@@ -87,6 +96,9 @@ var SourceList = {
             return SourceList.responseData.list.content[index];
         }
         return null;
+    },
+    getBlockById : function (id) {
+        return SourceList.loadedIdToBlocks[id];
     },
     getById: function (id) {
         if (SourceList.responseData &&
@@ -120,21 +132,23 @@ var SourceList = {
             var options = {
                 sourceDataProvider: "/sources/uni",
                 breadcrumb: "#breadcrumblist",
-                kind: "GALLERY",
+                grade: "GALLERY",
                 pagerBar: "#sourcesNav",
                 sourcesRootDiv: "div#sources",
                 criteriaContributor: null,
-                viewSwitcher: "IMPORT"
+                viewSwitcher: "IMPORT",
+                showDecisionBlock: false
             };
             options = $.extend(options, optionsProvided);
             SourceList.sourceDataProvider = options.sourceDataProvider;
 
             SourceList.viewSwitcher = options.viewSwitcher;
+            SourceList.showDecisionBlock = options.showDecisionBlock;
             if (SourceList.viewSwitcher) {
                 SourceList.viewSwitcher.setView(SourceList.viewSwitcher.COMPACT);
             }
 
-            SourceList.kind = options.kind;
+            SourceList.grade = options.grade;
             SourceList.criteriaContributor = options.criteriaContributor;
             SourceList.sourcesRootDiv = $(options.sourcesRootDiv);
             SourceList.pagerBar = Pager.create($(options.pagerBar), pagerChangeHandler);
@@ -206,7 +220,7 @@ function prepareCriteria(path) {
 
     var criteria = {
         path: "*",
-        kind: SourceList.kind,
+        grade: SourceList.grade,
         fromDate: starting,
         toDate: ending,
         fileName: null,

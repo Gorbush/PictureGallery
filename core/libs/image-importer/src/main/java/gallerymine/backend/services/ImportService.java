@@ -1,13 +1,17 @@
 package gallerymine.backend.services;
 
 import gallerymine.backend.beans.AppConfig;
+import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.utils.ImportUtils;
+import gallerymine.model.Picture;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
@@ -17,6 +21,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static gallerymine.model.support.InfoStatus.APPROVED;
+import static gallerymine.model.support.InfoStatus.DUPLICATE;
+import static gallerymine.model.support.PictureGrade.GALLERY;
 
 @Service
 public class ImportService {
@@ -37,6 +45,9 @@ public class ImportService {
 
     @Autowired
     private ProcessRepository processRepository;
+
+    @Autowired
+    private ImportSourceRepository uniSourceRepository;
 
     private Map<String, ImportRequest> requestsCache = new HashMap<>();
 
@@ -136,4 +147,40 @@ public class ImportService {
         }
     }
 
+    public Boolean actionApprove(PictureInformation source) {
+        log.info("ImportService approve for image id={} kind={}", source.getId());
+
+        PictureInformation target = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
+        if (target != null) {
+            log.info("  source id={} is already approved", source.getId());
+            return true;
+        }
+        log.info("  source id={} is getting approved", source.getId());
+
+        Picture picture = new Picture();
+        picture.copyFrom(source);
+        picture.setGrade(PictureGrade.GALLERY);
+        picture.addSource(source.getId(), source.getGrade());
+
+        uniSourceRepository.saveByGrade(picture);
+
+        source.setStatus(APPROVED);
+        source.setAssignedToPicture(true);
+        source.addSource(picture.getId(), picture.getGrade());
+        uniSourceRepository.saveByGrade(source);
+
+        log.info("  source id={} is approved", source.getId());
+        return true;
+    }
+
+    public Boolean actionMarkAsDuplicate(PictureInformation source) {
+        if (DUPLICATE.equals(source.getStatus())) {
+            log.info("  source id={} is already marked as Duplicate", source.getId());
+            return true;
+        }
+        source.setStatus(DUPLICATE);
+        uniSourceRepository.saveByGrade(source);
+        log.info("  source id={} marked as Duplicate", source.getId());
+        return true;
+    }
 }

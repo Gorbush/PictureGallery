@@ -91,6 +91,13 @@ public class ResponseBuilder {
         return builder;
     }
 
+    public static ResponseBuilder responseErrorNotFound(String message) {
+        ResponseBuilder builder = new ResponseBuilder();
+        builder.put("error", message);
+        builder.put("status", "404");
+        return builder;
+    }
+
     public static ResponseBuilder responseError(String message, Exception e) {
         ResponseBuilder builder = new ResponseBuilder();
         builder.put("message", message);

@@ -27,13 +27,14 @@ var ImportRequestsTree = {
 
         ImportRequestsTree.viewSwitcher = initViewSwitcher("#sourceViewSwitcher");
         SourceList.init({
+                showDecisionBlock: true,
                 sourceDataProvider: "/sources/uni",
                 breadcrumb: "#breadcrumblist",
                 pagerBar: "#sourcesNav",
                 sourcesRootDiv: "div#sources",
                 criteriaContributor: ImportRequestsTree.criteriaContributor,
                 viewSwitcher: ImportRequestsTree.viewSwitcher,
-                kind: "IMPORT"
+                grade: "IMPORT"
             });
         ImportRequestsTree.viewSwitcher.setSourceList(SourceList);
 

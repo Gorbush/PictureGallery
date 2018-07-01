@@ -103,9 +103,14 @@ public class FileInformation implements Comparable<FileInformation> {
             fileName;
     }
 
-    public void copyFrom(Source sourceToMatch) {
+    public <FI extends FileInformation> void copyFrom(FI sourceToMatch) {
+        id = sourceToMatch.getId();
+        storage = sourceToMatch.getStorage();
+
         filePath = sourceToMatch.getFilePath();
         fileName = sourceToMatch.getFileName();
+        rootPath = sourceToMatch.getRootPath();
+
         source = sourceToMatch.getSource();
         filled = sourceToMatch.isFilled();
         exists = sourceToMatch.isExists();
@@ -114,9 +119,24 @@ public class FileInformation implements Comparable<FileInformation> {
 
         size = sourceToMatch.getSize();
 
+        status = sourceToMatch.getStatus();
+
+        populatedBy = new HashSet<>();
+        populatedBy.addAll(sourceToMatch.getPopulatedBy());
+
         error = sourceToMatch.getError();
         thumbPath = sourceToMatch.getThumbPath();
         timestamp = sourceToMatch.getTimestamp();
+
+        importRequestRootId= sourceToMatch.getImportRequestRootId();
+
+        importRequestId = sourceToMatch.getImportRequestId();
+
+        indexProcessIds = new HashSet<>();
+        indexProcessIds.addAll(sourceToMatch.getIndexProcessIds());
+
+        indexed = sourceToMatch.getIndexed();
+        updated = sourceToMatch.getUpdated();
     }
 
     @Override

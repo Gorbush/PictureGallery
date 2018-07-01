@@ -48,6 +48,7 @@ var Pager = {
                 this.total = total;
 
                 this.elems.removeClass("active");
+                this.elems.show();
                 this.el3.find("a").text(totalPages-1);
                 this.el4.find("a").text(totalPages);
                 if (page === 0) {
@@ -75,9 +76,9 @@ var Pager = {
                     this.elMiddle2.hide();
                     this.elMiddle1.toggle(totalPages >= 6);
                 }
-                this.el2.toggle(totalPages > 1);
-                this.el3.toggle(totalPages > 2);
-                this.el4.toggle(totalPages > 3);
+                this.el2.toggle(totalPages > 2);
+                this.el3.toggle(totalPages > 3);
+                this.el4.toggle(totalPages > 1);
 
                 this.elFirst.toggleClass("disabled", page === 0);
                 this.elLast.toggleClass("disabled", page === totalPages-1);

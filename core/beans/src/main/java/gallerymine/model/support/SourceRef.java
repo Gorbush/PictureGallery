@@ -10,14 +10,14 @@ import org.apache.commons.lang3.StringUtils;
 public class SourceRef implements Comparable<SourceRef> {
 
     private String id;
-    private SourceKind kind;
+    private PictureGrade grade;
 
     public SourceRef(){
 
     }
 
-    public SourceRef(SourceKind kind, String sourceId) {
-        this.kind = kind;
+    public SourceRef(String sourceId, PictureGrade grade) {
+        this.grade = grade;
         this.id = sourceId;
     }
 

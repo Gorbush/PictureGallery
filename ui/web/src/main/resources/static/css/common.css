@@ -48,7 +48,7 @@ div#pageMainButtonsContent {
     width: 100%;
     /*top: 0;*/
     /*bottom: 0;*/
-    /*position: absolute;*/
+    position: absolute;
     vertical-align: middle;
 }
 div#pageContent {
@@ -138,4 +138,22 @@ div.ProgressBar div.ProgressText {
 /** Progres BAR component styles end */
 .progressbar {
     height: 10px;
+}
+div#pageCenterButtonsCenterer {
+    border: 1px solid blue;
+    top:0;
+    height: 0px;
+    width: 50%;
+    position:absolute;
+}
+div#pageCenterButtons {
+    border: 1px solid green;
+    width: auto;
+    /*position: absolute;*/
+    /*left: 50%;*/
+    top: 0;
+    bottom: 0;
+    height: 50px;
+    margin-left: -25%;
+    float: right;
 }

@@ -7,9 +7,9 @@ import gallerymine.backend.helpers.matchers.strategies.FindSourcesByFileSize;
 import gallerymine.backend.helpers.matchers.strategies.FindSourcesByTimestamp;
 import gallerymine.model.Picture;
 import gallerymine.model.Source;
+import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.SourceMatchReport;
 import gallerymine.model.support.SourceRef;
-import gallerymine.model.support.SourceKind;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -71,16 +71,16 @@ public class SourceFilesMatcher {
             report.setPictures(new HashSet<>());
             Picture picture = makePictureFromSource(sourceToMatch);
             report.getPictures().add(picture);
-            picture.getSources().addAll(convertToRefs(SourceKind.UNSET, report.getSources()));
+            picture.getSources().addAll(convertToRefs(PictureGrade.IMPORT, report.getSources()));
         }
 
         return report;
     }
 
-    private Collection<SourceRef> convertToRefs(SourceKind unset, Collection<Source> sources) {
+    private Collection<SourceRef> convertToRefs(PictureGrade grade, Collection<Source> sources) {
         Collection<SourceRef> refsSet = new HashSet<>();
         for(Source source : sources) {
-            refsSet.add(new SourceRef(unset, source.getId()));
+            refsSet.add(new SourceRef(source.getId(), grade));
         }
         return refsSet;
     }

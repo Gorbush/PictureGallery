@@ -18,6 +18,7 @@ package gallerymine.backend.beans.repository;
 
 import com.mongodb.client.model.geojson.Point;
 import gallerymine.model.ImportSource;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
@@ -30,20 +31,20 @@ import java.util.Collection;
 
 //@RepositoryRestResource(collectionResourceRel = "source", path = "source")
 @Repository
-public interface ImportSourceRepository extends MongoRepository<ImportSource, String>, ImportSourceRepositoryCustom {
+public interface ImportSourceRepository extends MongoRepository<PictureInformation, String>, ImportSourceRepositoryCustom {
 
-    Collection<ImportSource> findByFilePath(@Param("filePath") String filePath);
+    Collection<PictureInformation> findByFilePath(@Param("filePath") String filePath);
 
-    Page<ImportSource> findByFilePath(@Param("filePath") String filePath, Pageable pageable);
+    Page<PictureInformation> findByFilePath(@Param("filePath") String filePath, Pageable pageable);
 
-    ImportSource findByFilePathAndFileName(@Param("filePath") String filePath, @Param("fileName") String fileName);
+    PictureInformation findByFilePathAndFileName(@Param("filePath") String filePath, @Param("fileName") String fileName);
 
-    Collection<ImportSource> findByFileName(String fileName);
-    Collection<ImportSource> findByFileNameAndSize(String fileName, long size);
+    Collection<PictureInformation> findByFileName(String fileName);
+    Collection<PictureInformation> findByFileNameAndSize(String fileName, long size);
 
-    Collection<ImportSource> findBySize(long size);
+    Collection<PictureInformation> findBySize(long size);
 
-    Collection<ImportSource> findByTimestamp(DateTime timestamp);
+    Collection<PictureInformation> findByTimestamp(DateTime timestamp);
 
-    Page<ImportSource> findByGeoLocationNear(Point point, Pageable pageable);
+    Page<PictureInformation> findByGeoLocationNear(Point point, Pageable pageable);
 }

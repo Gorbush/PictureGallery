@@ -53,6 +53,7 @@
                             <li><a href="/indexRequest.html">Indexing</a></li>
                             <li><a href="/importRequest.html">Importing</a></li>
                             <li><a href="/sourceMatching.html">Matching</a></li>
+                            <li><a href="/monitoring?#spring">Monitoring</a></li>
                         </ul>
                         <ul class="nav navbar-nav navbar-right">
                             <li><span class="label label-default navbar-label" id="message-label"></span></li>
@@ -68,6 +69,11 @@
                     <nav aria-label="Page navigation" id="sourcesNav">
                         <section layout:fragment="pageNavigation" th:remove="tag">Fake navigation</section>
                     </nav>
+                    <div id="pageCenterButtonsCenterer">
+                        <div id="pageCenterButtons">
+                            <section layout:fragment="pageButtonsCenter" th:remove="tag">Fake buttons Center</section>
+                        </div>
+                    </div>
                     <section layout:fragment="pageButtonsRight" th:remove="tag">Fake buttons Right</section>
                 </div>
             </div>

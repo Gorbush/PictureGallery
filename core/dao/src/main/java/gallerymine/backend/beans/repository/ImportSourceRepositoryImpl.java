@@ -1,5 +1,7 @@
 package gallerymine.backend.beans.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gallerymine.backend.utils.RegExpHelper;
 import gallerymine.model.FileInformation;
 import gallerymine.model.ImportSource;
@@ -13,6 +15,8 @@ import gallerymine.model.support.SourceFolderStats;
 import gallerymine.model.support.SourceKind;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -44,8 +48,13 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 @Repository
 public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom {
 
+    private static Logger log = LoggerFactory.getLogger(ImportSourceRepositoryImpl.class);
+
     @Autowired
     MongoTemplate template = null;
+
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
 
     @Override
     public <T extends PictureInformation> Page<T> fetchCustom(SourceCriteria sourceCriteria, Class<T> clazz) {
@@ -69,6 +78,27 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
         sources.forEachRemaining( sourcesList::add );
 
         return new PageImpl<T>(sourcesList, sourceCriteria.getPager(), count);
+    }
+
+    @Override
+    public <T extends PictureInformation> T fetchOne(String id, Class<T> clazz) {
+        return template.findById(id, clazz);
+    }
+
+    @Override
+    public <T extends PictureInformation> T saveByGrade(T entity) {
+        String collection = entity.getGrade().getCollectionName();
+        if (StringUtils.isBlank(collection)) {
+            String entityJSON = entity.getId();
+            try {
+                entityJSON = jacksonObjectMapper.writeValueAsString(entity);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to serialize entity "+entityJSON, e);
+            }
+            throw new RuntimeException("Wrong entity grade! "+ entityJSON);
+        }
+        template.save(entity, collection);
+        return entity;
     }
 
     @Override

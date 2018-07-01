@@ -233,6 +233,7 @@ div.decisionBlock {
 div.decisionBlock .decisionButton{
     background-color: #1deded;
     padding: 3px;
+    cursor: pointer;
 }
 span.btn_LATER {
     /*background-size: 16px 16px;*/
@@ -254,6 +255,17 @@ span.btn_DUPLICATE {
 }
 div.decisionBlock .decisionButton.decision_selected {
     border: 1px solid red;
+    padding: 2px;
+}
+div.decisionBlock.decision_done .decisionButton {
+    border: 1px solid lightgrey;
+    padding: 2px;
+    background-color: lightgrey;
+}
+div.decisionBlock.decision_done .decisionButton.decision_selected {
+    border: 1px solid green;
+    padding: 2px;
+    background-color: #99edb5;
 }
 
 /** Block styling **/
