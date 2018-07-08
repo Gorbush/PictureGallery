@@ -11,6 +11,7 @@ import gallerymine.model.support.SourceFolderStats;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -20,6 +21,8 @@ import java.util.List;
 public interface ImportSourceRepositoryCustom {
     <T extends PictureInformation> Page<T> fetchCustom(SourceCriteria criteria, Class<T> clazz);
 
+    <T extends PictureInformation> Iterator<T> fetchCustomStream(SourceCriteria criteria, Class<T> clazz);
+
     <T extends PictureInformation> T fetchOne(String id, Class<T> clazz);
     <T extends PictureInformation> T saveByGrade(T entity);
 
@@ -27,6 +30,8 @@ public interface ImportSourceRepositoryCustom {
     List<DateStats> fetchDatesCustom(SourceCriteria criteria, Class<? extends FileInformation> clazz);
 
     SourceFolderStats getFolderStats(String rootFolder, String folderPath, Class<? extends FileInformation> clazz);
+
+    void updateAllRequestsToMatch(String processId);
 //    @Query(value="{'name': ?0}");
 //    Page<Foo> findByMethod(String name, Pageable pageable);
 }

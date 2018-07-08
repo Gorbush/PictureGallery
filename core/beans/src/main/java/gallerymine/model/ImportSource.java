@@ -1,6 +1,7 @@
 package gallerymine.model;
 
 import gallerymine.model.support.SourceKind;
+import gallerymine.model.support.SourceMatchReport;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,6 +18,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class ImportSource extends PictureInformation {
 
     SourceKind kind = SourceKind.UNSET;
+
+    SourceMatchReport matchReport;
 
     public <FI extends ImportSource> void copyFrom(FI sourceToMatch) {
         super.copyFrom(sourceToMatch);

@@ -74,8 +74,8 @@
 
                     <td class="nowrap">
                         <span th:text="${detailed.lastDetail?.status}" data-toggle="tooltip" th:attr="title=${detailed.lastDetail?.updated?.toString('YYYY-MM-dd HH:mm:ss')}">1</span>&nbsp;
-                        <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.lastDetail?.error != null}">
-                            <div class="log-content" th:text="${detailed.lastDetail.error}"></div>
+                        <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detailed.lastDetail?.errorsText() != null}">
+                            <div class="log-content" th:text="${detailed.lastDetail.errorsText()}"></div>
                         </span>
                     </td>
                     <td>

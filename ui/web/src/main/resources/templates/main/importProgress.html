@@ -84,8 +84,8 @@
                     <tr th:each="detail : ${details}">
                         <td> Details status </td><td>
                             <span name="detail.status" th:text="${detail.status}">1</span>&nbsp;
-                            <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.error != null}">
-                                    <div name="detail.error" class="log-content" th:text="${detail.error}"></div>
+                            <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.errorsText() != null}">
+                                    <div name="detail.error" class="log-content" th:text="${detail.errorsText() }"></div>
                             </span>
                         </td>
                     </tr>

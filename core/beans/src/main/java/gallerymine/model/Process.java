@@ -42,18 +42,20 @@ public class Process {
     private DateTime updated;
 
 
-    public void addError(String error, Object... params) {
+    public String addError(String error, Object... params) {
         if (params!= null && params.length > 0) {
             error = String.format(error, params);
         }
         errors.add(error);
+        return error;
     }
 
-    public void addNote(String note, Object... params) {
+    public String addNote(String note, Object... params) {
         if (params!= null && params.length > 0) {
             note = String.format(note, params);
         }
         notes.add(note);
+        return note;
     }
 
     public void setStatus(ProcessStatus status) {

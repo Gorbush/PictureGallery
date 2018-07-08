@@ -12,6 +12,7 @@ import gallerymine.model.support.SourceFolderStats;
 import gallerymine.model.support.SourceKind;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.base.AbstractInstant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,8 +31,11 @@ import java.lang.reflect.ParameterizedType;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.springframework.data.domain.Sort.Direction.ASC;
@@ -87,6 +91,9 @@ public class FileRepositoryImpl<RequestCriteria extends FileCriteria, Informatio
                 criteria.add(Criteria.where("fileName").is(fileCriteria.getFileName()));
             }
         }
+        if (fileCriteria.getFileSize() != null) {
+            criteria.add(Criteria.where("size").is(fileCriteria.getFileSize()));
+        }
         if (isNotBlank(fileCriteria.getPath())) {
             if (RegExpHelper.isMask(fileCriteria.getPath())) {
                 criteria.add(Criteria.where("filePath").regex(RegExpHelper.convertToRegExp(fileCriteria.getPath())));
@@ -97,19 +104,24 @@ public class FileRepositoryImpl<RequestCriteria extends FileCriteria, Informatio
         if (fileCriteria.getTimestamp() != null) {
             criteria.add(Criteria.where("timestamp").is(fileCriteria.getTimestamp().toDate()));
         } else {
-            DateTime starting = fileCriteria.getFromDate();
-            DateTime ending = fileCriteria.getToDate();
-            if (ending != null && ending.getHourOfDay() == 0 && ending.getMinuteOfHour() == 0) {
-                ending = ending.withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59);
-            }
-            if (starting != null && ending != null) {
-                criteria.add(Criteria.where("timestamp").gte(starting.toDate()).lte(ending.toDate()));
+            if (fileCriteria.getTimestamps() != null) {
+                List<Date> dates = fileCriteria.getTimestamps().stream().map(AbstractInstant::toDate).collect(Collectors.toList());
+                criteria.add(Criteria.where("timestamps.stamp").in(dates));
             } else {
-                if (starting != null) {
-                    criteria.add(Criteria.where("timestamp").gte(starting.toDate()));
+                DateTime starting = fileCriteria.getFromDate();
+                DateTime ending = fileCriteria.getToDate();
+                if (ending != null && ending.getHourOfDay() == 0 && ending.getMinuteOfHour() == 0) {
+                    ending = ending.withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59);
                 }
-                if (ending != null) {
-                    criteria.add(Criteria.where("timestamp").lte(ending.toDate()));
+                if (starting != null && ending != null) {
+                    criteria.add(Criteria.where("timestamp").gte(starting.toDate()).lte(ending.toDate()));
+                } else {
+                    if (starting != null) {
+                        criteria.add(Criteria.where("timestamp").gte(starting.toDate()));
+                    }
+                    if (ending != null) {
+                        criteria.add(Criteria.where("timestamp").lte(ending.toDate()));
+                    }
                 }
             }
         }

@@ -20,7 +20,7 @@ import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
-import gallerymine.backend.helpers.matchers.SourceFilesMatcher;
+import gallerymine.backend.matchers.SourceFilesMatcher;
 import gallerymine.backend.services.ImportService;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ActionRequest;
@@ -188,9 +188,7 @@ public class SourcesController {
         ResponseBuilder responseBuilder = responseOk()
                 .put("sourceId", sourceId)
                 .put("source", source);
-        if (matchReport.getPictures().size() == 1 && matchReport.getPictures().iterator().next().getId() == null){
-            responseBuilder.addMessage("New picture created");
-        } else {
+        if (matchReport.getPictures().size() == 1){
             responseBuilder.addMessage("Pictures found");
         }
         responseBuilder.put("report", matchReport);
@@ -256,37 +254,6 @@ public class SourcesController {
 
             i++;
         }
-        return responseBuilder.build();
-    }
-
-    @PostMapping(value = {"match/{rule}"} )
-    @ResponseBody
-    public Object matchSourcesFolder(@PathVariable("rule") FolderMatchRule rule, @RequestBody String folderPath) {
-        Collection<Source> sources = sourceRepository.findByFilePath(folderPath);
-
-        SourceFolderMatchReport folderMatchReport = new SourceFolderMatchReport();
-        ResponseBuilder responseBuilder = responseOk();
-
-        for (Source source : sources) {
-            SourceMatchReport matchReport = sourceFilesMatcher.matchSourceTo(source);
-            if (matchReport == null) {
-                return responseError("Failed to match")
-                        .put("rule", rule)
-                        .put("folderPath", folderPath)
-                        .build();
-            }
-            if (matchReport.getPictures().size() == 1 && matchReport.getPictures().iterator().next().getId() == null){
-                responseBuilder.addMessage("New picture created");
-            } else {
-                responseBuilder.addMessage("Pictures found");
-            }
-
-        }
-        responseBuilder
-                .put("rule", rule)
-                .put("report", folderMatchReport)
-                .put("folderPath", folderPath);
-
         return responseBuilder.build();
     }
 

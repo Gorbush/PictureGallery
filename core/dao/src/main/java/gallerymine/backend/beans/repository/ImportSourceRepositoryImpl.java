@@ -6,6 +6,7 @@ import gallerymine.backend.utils.RegExpHelper;
 import gallerymine.model.FileInformation;
 import gallerymine.model.ImportSource;
 import gallerymine.model.PictureInformation;
+import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.PageHierarchyImpl;
 import gallerymine.model.mvc.SourceCriteria;
@@ -29,6 +30,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.nio.file.Path;
@@ -37,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static gallerymine.model.importer.ImportRequest.ImportStatus.ANALYSIS_COMPLETE;
+import static gallerymine.model.importer.ImportRequest.ImportStatus.TO_MATCH;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
@@ -58,9 +62,7 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
 
     @Override
     public <T extends PictureInformation> Page<T> fetchCustom(SourceCriteria sourceCriteria, Class<T> clazz) {
-
         Criteria criteria = applyCustomCriteria(sourceCriteria, clazz);
-
         Query query = criteria != null ? Query.query(criteria) : new Query();
         query.skip(sourceCriteria.getOffset())
              .limit(sourceCriteria.getSize());
@@ -73,11 +75,24 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
         long count = template.count(query, clazz);
 
         Iterator<T> sources = template.stream(query, clazz);
-
         List<T> sourcesList = new ArrayList<>();
         sources.forEachRemaining( sourcesList::add );
 
         return new PageImpl<T>(sourcesList, sourceCriteria.getPager(), count);
+    }
+
+    @Override
+    public <T extends PictureInformation> Iterator<T> fetchCustomStream(SourceCriteria sourceCriteria, Class<T> clazz) {
+        Criteria criteria = applyCustomCriteria(sourceCriteria, clazz);
+        Query query = criteria != null ? Query.query(criteria) : new Query();
+        query.skip(sourceCriteria.getOffset())
+             .limit(sourceCriteria.getSize());
+        if (StringUtils.isNotBlank(sourceCriteria.getSortByField())) {
+            Sort.Direction direction = (sourceCriteria.getSortDescending()!=null && sourceCriteria.getSortDescending()) ?
+                    Sort.Direction.DESC : ASC;
+            query.with(new Sort(direction, sourceCriteria.getSortByField()));
+        }
+        return template.stream(query, clazz);
     }
 
     @Override
@@ -246,6 +261,14 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
                     .maxDistance(dist.getNormalizedValue()));
         }
 
+        if (sourceCriteria.getPopulatedBy() != null) {
+            criteria.add(Criteria.where("populatedBy").all(sourceCriteria.getPopulatedBy()));
+        }
+
+        if (sourceCriteria.getPopulatedNotBy() != null) {
+            criteria.add(Criteria.where("populatedBy").all(sourceCriteria.getPopulatedNotBy()).not());
+        }
+
         if (criteria.size() > 0) {
             return new Criteria().andOperator(criteria.toArray(new Criteria[0]));
         } else {
@@ -295,5 +318,21 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
         });
 
         return stats;
+    }
+
+    @Override
+    public void updateAllRequestsToMatch(String processId) {
+        Query query = new Query();
+        query.addCriteria(
+                Criteria.where("status").is(ANALYSIS_COMPLETE)
+                        .andOperator(Criteria.where("indexProcessId").is(processId))
+        );
+
+        Update update = new Update();
+        update.set("status", TO_MATCH);
+
+        //update age to 11
+        update.set("age", 11);
+        template.updateMulti(query, update, ImportRequest.class);
     }
 }

@@ -37,6 +37,8 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
 
     Page<ImportRequest> findByStatus(@Param("status") ImportRequest.ImportStatus status, Pageable pageable);
 
+    Page<ImportRequest> findByStatusIn(@Param("status") Collection<ImportRequest.ImportStatus> statuses, Pageable pageable);
+
     Page<ImportRequest> findByParent(String parent, Pageable pageable);
 
     Collection<ImportRequest> findByParent(String parent);

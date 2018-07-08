@@ -4,6 +4,9 @@ import lombok.Data;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * Created by sergii_puliaiev on 6/19/17.
  */
@@ -14,12 +17,16 @@ public class FileCriteria {
     private DateTime toDate;
     private String path;
     private String fileName;
+    private Long fileSize;
     private DateTime timestamp;
+    private List<DateTime> timestamps;
     private String sortByField;
     private Boolean sortDescending;
     private String requestId;
     private String requestRootId;
     private String processId;
+    private Set<String> populatedBy;
+    private Set<String> populatedNotBy;
 
     private PageRequest pager = null;
 

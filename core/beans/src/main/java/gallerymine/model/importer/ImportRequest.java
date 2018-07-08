@@ -10,9 +10,11 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -25,14 +27,29 @@ import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 public class ImportRequest {
 
     public enum ImportStatus {
+        /* Name (isFinal, isInProgress) */
+
         INIT(false, true),
         START(false, false),
         AWAITING(false, true),
 
+        /** File analysing statuses start */
+        TO_ENUMERATE(false, false),
+        ENUMERATING_AWAIT(false, true),
         ENUMERATING(false, true),
-        ENUMERATED(false, true),
+        ENUMERATED(true, true),
         FILES_PROCESSING(false, true),
         SUB(false, true),
+        ANALYSIS_COMPLETE(false, false),
+        /** File analysing statuses end */
+
+        /** Repository matching statuses start */
+        TO_MATCH(false, false),
+        MATCHING_AWAIT(false, true),
+        MATCHING(false, true),
+        MATCHED(true, true),
+        MATCHING_COMPLETE(false, false),
+        /** Repository matching statuses end */
 
         RESTART(false, false),
         FAILED(true, false),
@@ -161,7 +178,8 @@ public class ImportRequest {
 
     private Boolean allFilesProcessed = false;
     private Boolean allFoldersProcessed = false;
-    private String error;
+    private List<String> errors = new ArrayList<>();
+    private List<String> notes = new ArrayList<>();
     private Integer filesCount;
     private Integer filesIgnoredCount;
     private Integer foldersCount;
@@ -190,6 +208,7 @@ public class ImportRequest {
 
     public boolean isProcessable() {
         return status != null && (
+                        TO_ENUMERATE.equals(status) ||
                         AWAITING.equals(status) ||
                         START.equals(status) ||
                         FAILED.equals(status) ||
@@ -201,16 +220,28 @@ public class ImportRequest {
         return DONE.equals(status) || FAILED.equals(status);
     }
 
-    public ImportRequest addError(String s, Object... params) {
-        if (params != null && params.length > 0) {
-            s = String.format(s, params);
+    public String addError(String error, Object... params) {
+        if (params!= null && params.length > 0) {
+            error = String.format(error, params);
         }
-        if (error == null) {
-            error = s;
-        } else {
-            error += "\n"+s;
+        errors.add(error);
+        return error;
+    }
+
+    public String addNote(String note, Object... params) {
+        if (params!= null && params.length > 0) {
+            note = String.format(note, params);
         }
-        return this;
+        notes.add(note);
+        return note;
+    }
+
+    public String notesText() {
+        return notes.stream().collect(Collectors.joining("\n"));
+    }
+
+    public String errorsText() {
+        return errors.stream().collect(Collectors.joining("\n"));
     }
 
     public ImportRequest markFailed() {

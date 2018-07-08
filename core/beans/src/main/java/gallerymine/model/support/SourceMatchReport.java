@@ -1,13 +1,13 @@
 package gallerymine.model.support;
 
 import gallerymine.model.Picture;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 import lombok.Data;
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Source match report to other sources and approved pictures
@@ -15,10 +15,8 @@ import java.util.TreeSet;
  */
 @Data
 public class SourceMatchReport {
-
-    Source matchingSource;
-    Collection<Source> sources = new TreeSet<>();
-    Collection<Picture> pictures = new TreeSet<>();
+    
+    Map<String, List<PictureInformation>> pictures = new HashedMap<>();
 
     public static class SourceComparator implements Comparator<Source> {
 
@@ -33,6 +31,10 @@ public class SourceMatchReport {
             }
             return result;
         }
+    }
+
+    public Collection<PictureInformation> getKind(String kind) {
+        return pictures.computeIfAbsent(kind, k -> new ArrayList<>());
     }
 
 }

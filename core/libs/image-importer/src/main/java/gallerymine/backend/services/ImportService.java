@@ -17,11 +17,14 @@ import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static gallerymine.model.importer.ImportRequest.ImportStatus.ANALYSIS_COMPLETE;
 import static gallerymine.model.support.InfoStatus.APPROVED;
 import static gallerymine.model.support.InfoStatus.DUPLICATE;
 import static gallerymine.model.support.PictureGrade.GALLERY;
@@ -94,8 +97,8 @@ public class ImportService {
         return importRequest;
     }
 
-    public void checkIfApproveNeeded(ImportRequest rootImportRequest) {
-        Process process = processRepository.findOne(rootImportRequest.getIndexProcessId());
+    public void checkIfApproveNeeded(ImportRequest rootImportRequest, Process process) {
+//        Process process = processRepository.findOne(rootImportRequest.getIndexProcessId());
         if (process != null) {
             ProcessStatus oldStatus = process.getStatus();
             log.info("ImportRequest updating process of id={} process={} oldStatus={} ",
@@ -112,9 +115,10 @@ public class ImportService {
                     rootImportRequest.getId(), rootImportRequest.getIndexProcessId(), oldStatus, process.getStatus());
 
             long toApprove = rootImportRequest.getTotalStats().getMovedToApprove().get();
+            Process processOfApprove = null;
             if (toApprove > 0) {
                 log.info("ImportRequest Approve is needed for {} images", toApprove);
-                Process processOfApprove = new Process();
+                processOfApprove = new Process();
                 processOfApprove.setName("Processing of Approval");
                 processOfApprove.setStatus(ProcessStatus.PREPARING);
                 processOfApprove.setType(ProcessType.APPROVAL);
@@ -124,9 +128,18 @@ public class ImportService {
                 processRepository.save(processOfApprove);
 
                 process.addNote("Approve process initiated %s", processOfApprove.getId());
+            } else {
+                process.addNote("Approve process not required");
             }
             processRepository.save(process);
 
+            // update all Import Requests to required status
+            if (toApprove > 0) {
+                // update ImportRequests to TO_MATCH with processOfApprove
+                uniSourceRepository.updateAllRequestsToMatch(process.getId());
+            } else {
+                // update ImportRequests to MATCHING_COMPLETE
+            }
         } else {
             log.info("ImportRequest Process not found id={} importRequest={}", rootImportRequest.getIndexProcessId(), rootImportRequest.getId());
         }
