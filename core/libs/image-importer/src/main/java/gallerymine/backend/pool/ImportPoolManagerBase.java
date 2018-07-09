@@ -3,9 +3,12 @@ package gallerymine.backend.pool;
 import com.google.common.collect.Sets;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
+import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.importer.ImportProcessorBase;
+import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.support.ProcessType;
 import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -42,6 +45,9 @@ public abstract class ImportPoolManagerBase {
     protected ImportRequestRepository requestRepository;
 
     @Autowired
+    protected ProcessRepository processRepository;
+
+    @Autowired
     protected AppConfig appConfig;
 
     private String beanName;
@@ -49,6 +55,7 @@ public abstract class ImportPoolManagerBase {
     private Class<? extends ImportProcessorBase> processorClass;
 
     protected ThreadPoolTaskExecutor pool;
+    protected ProcessType processType;
 
     @Data
     @Getter
@@ -81,10 +88,12 @@ public abstract class ImportPoolManagerBase {
         }
     }
 
-    public ImportPoolManagerBase(StatusHolder statusHolder, String name, Class<? extends ImportProcessorBase> processorClass) {
+    public ImportPoolManagerBase(StatusHolder statusHolder, String name, Class<? extends ImportProcessorBase> processorClass,
+                                 ProcessType processType) {
         this.beanName = name;
         this.statusHolder = statusHolder;
         this.processorClass = processorClass;
+        this.processType = processType;
 
         pool = new ThreadPoolTaskExecutor();
         pool.setCorePoolSize(10);
@@ -152,7 +161,7 @@ public abstract class ImportPoolManagerBase {
 
     @Scheduled(fixedDelay = 60*1000)
     public void checkForAwaitingRequests() {
-        Thread.currentThread().setName(beanName+"Runner");
+        Thread.currentThread().setName(beanName+"-Runner");
         int queued = pool.getThreadPoolExecutor().getQueue().size();
         logPools.info(beanName+" check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB
@@ -170,6 +179,10 @@ public abstract class ImportPoolManagerBase {
     @Scheduled(fixedDelay = 3*60*1000)
     public void checkForAbandonedRequests() {
         Thread.currentThread().setName(beanName+"-AbandonedChecker");
+        if (statusHolder.abandoned == null || statusHolder.abandoned.size() < 1) {
+            logPools.debug(beanName+" Skipped as no statuses marked as abandonable specified");
+            return;
+        }
         Collection<ImportRequest> foundRequests = requestRepository.findByStatus(statusHolder.abandoned);
         if (!foundRequests.isEmpty()) {
             logPools.info(beanName+" Found potentially abandoned");
@@ -177,7 +190,11 @@ public abstract class ImportPoolManagerBase {
             long marked = 0;
             DateTime now = DateTime.now();
             for (ImportRequest request : foundRequests) {
-                ImportRequest lastUpdated = requestRepository.findLastUpdated(request.getIndexProcessId(), new Sort(new Sort.Order(Sort.Direction.DESC, "updated")));
+                Process process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
+                if (process == null) {
+                    throw new IllegalArgumentException(beanName+" Process for import request not found requestId={}"+request.getId());
+                }
+                ImportRequest lastUpdated = requestRepository.findLastUpdated(process.getId(), new Sort(new Sort.Order(Sort.Direction.DESC, "updated")));
                 if (lastUpdated != null && now.getMillis() - appConfig.getAbandonedTimoutMs() > lastUpdated.getUpdated().getMillis() ) {
                     request.setStatus(ABANDONED);
                     logPools.info(beanName+" Marked abandoned id:%d", request.getId());

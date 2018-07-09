@@ -89,9 +89,7 @@ public abstract class ImportProcessorBase implements Runnable {
         Process process = null;
         try {
             log.info(this.getClass().getSimpleName()+" processing started for {}", request.getPath());
-            if (StringUtils.isNotBlank(request.getIndexProcessId())) {
-                process = processRepository.findOne(request.getIndexProcessId());
-            }
+            process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
             if (process == null) {
                 process = new Process();
                 process.setName("Pictures Folder Import ? "+this.getClass().getSimpleName());
@@ -209,16 +207,46 @@ public abstract class ImportProcessorBase implements Runnable {
             checkSubsAndDone(request.getParent(), request);
         }
 
-        if (request.getStatus().isFinal()) {
-            importService.finishRequestProcessing(request);
-            log.info(this.getClass().getSimpleName()+" finished id={} status={}", requestId, request.getStatus());
-        }
+        importService.finishRequestProcessing(request);
 
-        if (request.getStatus().isFinal() &&
-                StringUtils.isNotBlank(request.getIndexProcessId()) && // has process
-                StringUtils.isBlank(request.getParent())) {            // this is the top import request
-            Process process = processRepository.findOne(request.getIndexProcessId());
+        log.info(this.getClass().getSimpleName()+" finished id={} status={}", requestId, request.getStatus());
+
+        if (!request.getIndexProcessIds().isEmpty() &&  // has process
+            StringUtils.isBlank(request.getParent())) { // this is the top import request
+            Process process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
+            finishProcess(request, process);
             onRootImportFinished(request, process);
+        }
+    }
+
+    protected void finishProcess(ImportRequest rootImportRequest, Process process) {
+        ProcessStatus oldStatus = process.getStatus();
+        log.info(this.getClass().getSimpleName()+" updating process of id={} process={} oldStatus={} rootImportStatus={}",
+                rootImportRequest.getId(), process.getId(), oldStatus, rootImportRequest.getStatus());
+        if (rootImportRequest.getStatus().isInProgress()) {
+            process.addError("Import failed");
+            process.setStatus(ProcessStatus.FAILED);
+        } else {
+            process.addNote("Import finished");
+            process.setStatus(ProcessStatus.FINISHED);
+        }
+        addImportStats(process, rootImportRequest);
+        log.info(this.getClass().getSimpleName()+" Process finished of id={} process={} oldStatus={} status={}",
+                rootImportRequest.getId(), process.getId(), oldStatus, process.getStatus());
+    }
+
+    private void addImportStats(Process process, ImportRequest rootImportRequest) {
+        try {
+            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats();
+            process.addNote("Import statistics:");
+            process.addNote(" Folders %d of %d", stats.getFoldersDone().get(), stats.getFolders().get());
+            process.addNote(" Files in total %7d", stats.getFiles().get());
+            process.addNote("   Approve      %7d", stats.getMovedToApprove().get());
+            process.addNote("   Failed       %7d", stats.getFailed().get());
+            process.addNote("   Similar      %7d", stats.getSimilar().get());
+            process.addNote("   Duplicates   %7d", stats.getDuplicates().get());
+        } catch (Exception e) {
+            log.error("Failed to add Statistics", e);
         }
     }
 

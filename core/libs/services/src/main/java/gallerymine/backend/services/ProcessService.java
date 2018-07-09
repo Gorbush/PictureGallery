@@ -16,7 +16,6 @@
 
 package gallerymine.backend.services;
 
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
@@ -75,7 +74,7 @@ public class ProcessService {
         if (process != null) {
             switch (process.getType()) {
                 case IMPORT: {
-                    details.setDetail(importRepository.findByIndexProcessId(process.getId()));
+                    details.setDetail(importRepository.findByIndexProcessIdsContains(process.getId()));
                     break;
                 }
                 default: {
@@ -92,7 +91,7 @@ public class ProcessService {
 
         switch (process.getType()) {
             case IMPORT: {
-                details.setDetails(importRepository.findAllByIndexProcessIdAndParentIsNullOrderByCreatedAsc(process.getId()));
+                details.setDetails(importRepository.findAllByIndexProcessIdsIsContainingAndParentIsNullOrderByCreatedAsc(process.getId()));
                 break;
             }
             default: {

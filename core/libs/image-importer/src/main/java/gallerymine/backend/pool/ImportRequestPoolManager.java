@@ -1,7 +1,7 @@
 package gallerymine.backend.pool;
 
-import gallerymine.backend.importer.ImportApproveProcessor;
 import gallerymine.backend.importer.ImportProcessor;
+import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,6 +16,6 @@ public class ImportRequestPoolManager extends ImportPoolManagerBase {
     private static Logger log = LoggerFactory.getLogger(ImportRequestPoolManager.class);
 
     public ImportRequestPoolManager() {
-        super(ImportProcessor.STATUSES, "ImportRequest", ImportProcessor.class);
+        super(ImportProcessor.STATUSES, "ImportRequest", ImportProcessor.class, ProcessType.IMPORT);
     }
 }

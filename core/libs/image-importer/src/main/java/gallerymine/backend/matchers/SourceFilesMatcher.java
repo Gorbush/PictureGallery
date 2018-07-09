@@ -58,7 +58,7 @@ public class SourceFilesMatcher {
             sourceIds.add(sourceToMatch.getId());
         }
 
-        matchers.forEach(matcher -> {
+        getMatchers().forEach(matcher -> {
             matcher.find(sourceToMatch).forEach(
                     source -> {
                         if (!sourceIds.contains(source.getId())) {

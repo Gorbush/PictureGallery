@@ -10,9 +10,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -37,19 +35,24 @@ public class ImportRequest {
         TO_ENUMERATE(false, false),
         ENUMERATING_AWAIT(false, true),
         ENUMERATING(false, true),
-        ENUMERATED(true, true),
-        FILES_PROCESSING(false, true),
-        SUB(false, true),
-        ANALYSIS_COMPLETE(false, false),
+        ENUMERATED(true, false),
+        ENUMERATION_COMPLETE(true, false),
         /** File analysing statuses end */
 
         /** Repository matching statuses start */
         TO_MATCH(false, false),
         MATCHING_AWAIT(false, true),
         MATCHING(false, true),
-        MATCHED(true, true),
-        MATCHING_COMPLETE(false, false),
+        MATCHED(true, false),
+        MATCHING_COMPLETE(true, false),
         /** Repository matching statuses end */
+
+        /** User approval statuses start */
+        TO_APPROVE(false, false),
+        APPROVING_AWAIT(false, true),
+        APPROVED(true, true),
+        APPROVAL_COMPLETE(false, false),
+        /** User approval statuses end */
 
         RESTART(false, false),
         FAILED(true, false),
@@ -61,7 +64,7 @@ public class ImportRequest {
 
         /** Status which might mean the import is abandoned */
         static Collection<ImportStatus> inProgressStatuses =
-                ImmutableSet.of(INIT, AWAITING, ENUMERATING, ENUMERATED, FILES_PROCESSING, SUB);
+                ImmutableSet.of(INIT, AWAITING, ENUMERATING, ENUMERATED);
 
         ImportStatus(boolean aFinal, boolean inProgress) {
             this.aFinal = aFinal;
@@ -185,7 +188,7 @@ public class ImportRequest {
     private Integer foldersCount;
 
     @Indexed
-    private String indexProcessId;
+    private Set<String> indexProcessIds = new HashSet<>();
 
     private ImportStats stats = new ImportStats();
     private ImportStats subStats = new ImportStats();
@@ -263,6 +266,10 @@ public class ImportRequest {
     public void setName(String name) {
         this.name = name;
         nameL = name == null ? null : name.toLowerCase().replaceAll("^[_$/\\\\]*", "");
+    }
+
+    public void addIndexProcessId(String indexProcessId) {
+        indexProcessIds.add(indexProcessId);
     }
 
 }

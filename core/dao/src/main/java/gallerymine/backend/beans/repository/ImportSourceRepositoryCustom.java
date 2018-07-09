@@ -1,9 +1,8 @@
 package gallerymine.backend.beans.repository;
 
 import gallerymine.model.FileInformation;
-import gallerymine.model.ImportSource;
 import gallerymine.model.PictureInformation;
-import gallerymine.model.Source;
+import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.DateStats;
@@ -31,7 +30,7 @@ public interface ImportSourceRepositoryCustom {
 
     SourceFolderStats getFolderStats(String rootFolder, String folderPath, Class<? extends FileInformation> clazz);
 
-    void updateAllRequestsToMatch(String processId);
+    void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId, ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus);
 //    @Query(value="{'name': ?0}");
 //    Page<Foo> findByMethod(String name, Pageable pageable);
 }

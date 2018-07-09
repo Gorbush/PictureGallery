@@ -168,10 +168,10 @@ div.sourceBlock div.sourceBlockBody {
 }
 div.sourceBlock div.source_image {
     position: absolute;
-    left: 0;
-    bottom: 0;
-    height: 100px;
-    width: 100px;
+    left: 5px;
+    top: 5px;
+    height: 95px;
+    width: 95px;
     background-size: 100px 100px;
     background-repeat: no-repeat;
     vertical-align: middle;

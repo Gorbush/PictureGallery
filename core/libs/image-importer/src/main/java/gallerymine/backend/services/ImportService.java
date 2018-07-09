@@ -5,6 +5,8 @@ import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.importer.ImportProcessor;
+import gallerymine.backend.pool.ImportApproveRequestPoolManager;
+import gallerymine.backend.pool.ImportMatchingRequestPoolManager;
 import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.Picture;
@@ -17,14 +19,12 @@ import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static gallerymine.model.importer.ImportRequest.ImportStatus.ANALYSIS_COMPLETE;
+import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 import static gallerymine.model.support.InfoStatus.APPROVED;
 import static gallerymine.model.support.InfoStatus.DUPLICATE;
 import static gallerymine.model.support.PictureGrade.GALLERY;
@@ -44,7 +44,13 @@ public class ImportService {
     private AppConfig appConfig;
 
     @Autowired
-    private ImportRequestPoolManager requestPool;
+    private ImportRequestPoolManager requestImportPool;
+
+    @Autowired
+    private ImportApproveRequestPoolManager requestApprovePool;
+
+    @Autowired
+    private ImportMatchingRequestPoolManager requestMatchPool;
 
     @Autowired
     private ProcessRepository processRepository;
@@ -91,33 +97,49 @@ public class ImportService {
             processRepository.save(process);
         }
         if (importRequest != null) {
-            requestPool.executeRequest(importRequest);
+            requestImportPool.executeRequest(importRequest);
         }
 
         return importRequest;
     }
 
-    public void checkIfApproveNeeded(ImportRequest rootImportRequest, Process process) {
-//        Process process = processRepository.findOne(rootImportRequest.getIndexProcessId());
+    public void checkIfMatchNeeded(ImportRequest rootImportRequest, Process process) {
         if (process != null) {
-            ProcessStatus oldStatus = process.getStatus();
-            log.info("ImportRequest updating process of id={} process={} oldStatus={} ",
-                    rootImportRequest.getId(), rootImportRequest.getIndexProcessId(), oldStatus);
-            if (rootImportRequest.getStatus().equals(ImportRequest.ImportStatus.DONE)) {
-                process.addNote("Import finished");
-                process.setStatus(ProcessStatus.FINISHED);
-            } else {
-                process.addError("Import failed");
-                process.setStatus(ProcessStatus.FAILED);
-            }
-            addImportStats(process, rootImportRequest);
-            log.info("ImportRequest Process finished of id={} process={} oldStatus={} status={}",
-                    rootImportRequest.getId(), rootImportRequest.getIndexProcessId(), oldStatus, process.getStatus());
+            long toMatch = rootImportRequest.getTotalStats().getMovedToApprove().get();
+            Process processOfMatching = null;
+            if (toMatch > 0) {
+                log.info("ImportService Matching is needed for {} images", toMatch);
+                processOfMatching = new Process();
+                processOfMatching.setName("Processing of Matching");
+                processOfMatching.setStatus(ProcessStatus.PREPARING);
+                processOfMatching.setType(ProcessType.MATCHING);
+                processOfMatching.setParentProcessId(process.getId());
+                processOfMatching.addNote("%d images for matching", toMatch);
 
+                processRepository.save(processOfMatching);
+
+                process.addNote("ImportService Matching process initiated %s", processOfMatching.getId());
+                processRepository.save(process);
+                // update ImportRequests to TO_MATCH with processOfMatching
+                uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), processOfMatching.getId(), ENUMERATION_COMPLETE, TO_MATCH);
+
+                requestMatchPool.executeRequest(rootImportRequest);
+            } else {
+                process.addNote("ImportService Matching process not required");
+                processRepository.save(process);
+            }
+
+        } else {
+            log.info("ImportService Process not found imports={} importRequest={}", rootImportRequest.getIndexProcessIds(), rootImportRequest.getId());
+        }
+    }
+
+    public void checkIfApproveNeeded(ImportRequest rootImportRequest, Process process) {
+        if (process != null) {
             long toApprove = rootImportRequest.getTotalStats().getMovedToApprove().get();
             Process processOfApprove = null;
             if (toApprove > 0) {
-                log.info("ImportRequest Approve is needed for {} images", toApprove);
+                log.info("ImportService Approve is needed for {} images", toApprove);
                 processOfApprove = new Process();
                 processOfApprove.setName("Processing of Approval");
                 processOfApprove.setStatus(ProcessStatus.PREPARING);
@@ -128,35 +150,18 @@ public class ImportService {
                 processRepository.save(processOfApprove);
 
                 process.addNote("Approve process initiated %s", processOfApprove.getId());
+                processRepository.save(process);
+                // update ImportRequests to TO_APPROVE with processOfApprove
+                uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), processOfApprove.getId(), MATCHING_COMPLETE, TO_APPROVE);
+
+                requestApprovePool.executeRequest(rootImportRequest);
             } else {
                 process.addNote("Approve process not required");
+                processRepository.save(process);
             }
-            processRepository.save(process);
 
-            // update all Import Requests to required status
-            if (toApprove > 0) {
-                // update ImportRequests to TO_MATCH with processOfApprove
-                uniSourceRepository.updateAllRequestsToMatch(process.getId());
-            } else {
-                // update ImportRequests to MATCHING_COMPLETE
-            }
         } else {
-            log.info("ImportRequest Process not found id={} importRequest={}", rootImportRequest.getIndexProcessId(), rootImportRequest.getId());
-        }
-    }
-
-    private void addImportStats(Process process, ImportRequest rootImportRequest) {
-        try {
-            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats();
-            process.addNote("Import statistics:");
-            process.addNote(" Folders %d of %d", stats.getFoldersDone().get(), stats.getFolders().get());
-            process.addNote(" Files in total %7d", stats.getFiles().get());
-            process.addNote("   Approve      %7d", stats.getMovedToApprove().get());
-            process.addNote("   Failed       %7d", stats.getFailed().get());
-            process.addNote("   Similar      %7d", stats.getSimilar().get());
-            process.addNote("   Duplicates   %7d", stats.getDuplicates().get());
-        } catch (Exception e) {
-            log.error("Failed to add Statistics", e);
+            log.info("ImportRequest Process not found id={} importRequest={}", process.getId(), rootImportRequest.getId());
         }
     }
 

@@ -195,12 +195,16 @@
     <logger name="org.springframework.data.auditing.AuditingHandler" level="INFO" additivity="true">
     </logger>
 
-	<logger name="org.springframework.web" level="DEBUG" additivity="true">
+	<logger name="org.springframework" level="INFO" additivity="true">
+		<appender-ref ref="SPRING_FILE" />
+	</logger>
+
+	<logger name="org.springframework.web" level="WARN" additivity="true">
 		<appender-ref ref="SPRING_WEB_FILE" />
 	</logger>
 
-	<logger name="org.springframework" level="INFO" additivity="true">
-		<appender-ref ref="SPRING_FILE" />
+	<logger name="o.s.w.s.resource.PathResourceResolver" level="WARN" additivity="false">
+		<appender-ref ref="SPRING_WEB_FILE" />
 	</logger>
 
 	<logger name="org.thymeleaf.standard.expression" level="DEBUG" additivity="true">

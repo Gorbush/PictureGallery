@@ -39,7 +39,7 @@ public class ImportProcessor extends ImportProcessorBase {
     private static Logger log = LoggerFactory.getLogger(ImportProcessor.class);
 
     public static final ImportPoolManagerBase.StatusHolder STATUSES =
-            ImportApproveRequestPoolManager.StatusHolder.define(ENUMERATING_AWAIT, ENUMERATING, ENUMERATED, ANALYSIS_COMPLETE)
+            ImportApproveRequestPoolManager.StatusHolder.define(ENUMERATING_AWAIT, ENUMERATING, ENUMERATED, ENUMERATION_COMPLETE)
                     .processing(TO_ENUMERATE)
                     .abandoned(ENUMERATING_AWAIT, ENUMERATING, ENUMERATED);
 
@@ -63,6 +63,9 @@ public class ImportProcessor extends ImportProcessorBase {
 
     @Autowired
     private ImportService importService;
+
+    @Autowired
+    private ImportSourceRepository uniSourceRepository;
 
     public ImportProcessor() {
         super(STATUSES, ProcessType.IMPORT);
@@ -162,7 +165,7 @@ public class ImportProcessor extends ImportProcessorBase {
 
                     ImportSource info = new ImportSource();
                     info.setImportRequestId(request.getId());
-                    info.addIndexProcessId(request.getIndexProcessId());
+                    info.addIndexProcessId(process.getId());
                     info.setImportRequestRootId(request.getRootId());
                     fileAnalyzer.gatherFileInformation(file, importRootFolder, info);
 
@@ -176,7 +179,7 @@ public class ImportProcessor extends ImportProcessorBase {
                                 Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
                                 request.getStats().incMovedToApprove();
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
-                                info.setStatus(InfoStatus.APPROVING);
+                                info.setStatus(InfoStatus.ANALYSING);
                             }
                         } else {
                             filesIgnoredCount++;
@@ -192,7 +195,7 @@ public class ImportProcessor extends ImportProcessorBase {
                         request.getStats().incFailed();
                         info.setStatus(InfoStatus.FAILED);
                     }
-                    importSourceRepository.save(info);
+                    importSourceRepository.saveByGrade(info);
                 }
             }
 
@@ -212,7 +215,8 @@ public class ImportProcessor extends ImportProcessorBase {
 
     @Override
     protected void onRootImportFinished(ImportRequest request, Process process) {
-        importService.checkIfApproveNeeded(request, process);
+        uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), null, ENUMERATED, ENUMERATION_COMPLETE);
+        importService.checkIfMatchNeeded(request, process);
     }
 
     /**
@@ -288,7 +292,7 @@ public class ImportProcessor extends ImportProcessorBase {
         } else {
             newRequest.setRootPath(path);
         }
-        newRequest.setIndexProcessId(indexProcessId);
+        newRequest.addIndexProcessId(indexProcessId);
         newRequest.setStatus(INIT);
         newRequest.setPath(path);
         newRequest.setName(Paths.get(path).toFile().getName());

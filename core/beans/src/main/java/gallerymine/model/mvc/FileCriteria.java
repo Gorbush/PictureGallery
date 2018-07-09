@@ -1,5 +1,6 @@
 package gallerymine.model.mvc;
 
+import gallerymine.model.support.InfoStatus;
 import lombok.Data;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ public class FileCriteria {
     private String processId;
     private Set<String> populatedBy;
     private Set<String> populatedNotBy;
+    private InfoStatus status;
 
     private PageRequest pager = null;
 

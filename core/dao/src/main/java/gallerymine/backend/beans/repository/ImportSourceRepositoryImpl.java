@@ -2,9 +2,9 @@ package gallerymine.backend.beans.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.WriteResult;
 import gallerymine.backend.utils.RegExpHelper;
 import gallerymine.model.FileInformation;
-import gallerymine.model.ImportSource;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
@@ -13,7 +13,6 @@ import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.DateStats;
 import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.SourceFolderStats;
-import gallerymine.model.support.SourceKind;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -39,8 +38,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static gallerymine.model.importer.ImportRequest.ImportStatus.ANALYSIS_COMPLETE;
-import static gallerymine.model.importer.ImportRequest.ImportStatus.TO_MATCH;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
@@ -226,6 +223,10 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
             criteria.add(Criteria.where("importRequestId").is(sourceCriteria.getRequestId()));
         }
 
+        if (sourceCriteria.getStatus() != null) {
+            criteria.add(Criteria.where("status").is(sourceCriteria.getStatus()));
+        }
+
         if (isNotBlank(sourceCriteria.getRequestRootId())) {
             criteria.add(Criteria.where("importRequestRootId").is(sourceCriteria.getRequestRootId()));
         }
@@ -241,15 +242,32 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
             DateTime ending = sourceCriteria.getToDate();
             if (ending != null && ending.getHourOfDay() == 0 && ending.getMinuteOfHour() == 0) {
                 ending = ending.withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59);
+//            } else {
+//                ending = DateTime.now().withDurationAdded(org.joda.time.Duration.standardDays(1), 1);
             }
             if (starting != null && ending != null) {
                 criteria.add(Criteria.where("timestamp").gte(starting.toDate()).lte(ending.toDate()));
+                criteria.add(
+                        Criteria.where("timestamps").elemMatch(
+                                Criteria.where("stamp").gte(starting.toDate()).lte(ending.toDate())
+                        )
+                );
             } else {
                 if (starting != null) {
                     criteria.add(Criteria.where("timestamp").gte(starting.toDate()));
+                    criteria.add(
+                            Criteria.where("timestamps").elemMatch(
+                                    Criteria.where("stamp").gte(starting.toDate())
+                            )
+                    );
                 }
                 if (ending != null) {
                     criteria.add(Criteria.where("timestamp").lte(ending.toDate()));
+                    criteria.add(
+                            Criteria.where("timestamps").elemMatch(
+                                    Criteria.where("stamp").lte(ending.toDate())
+                            )
+                    );
                 }
             }
         }
@@ -266,7 +284,7 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
         }
 
         if (sourceCriteria.getPopulatedNotBy() != null) {
-            criteria.add(Criteria.where("populatedBy").all(sourceCriteria.getPopulatedNotBy()).not());
+            criteria.add(Criteria.where("populatedBy").not().all(sourceCriteria.getPopulatedNotBy()));
         }
 
         if (criteria.size() > 0) {
@@ -321,18 +339,25 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
     }
 
     @Override
-    public void updateAllRequestsToMatch(String processId) {
+    public void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId, ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus) {
         Query query = new Query();
-        query.addCriteria(
-                Criteria.where("status").is(ANALYSIS_COMPLETE)
-                        .andOperator(Criteria.where("indexProcessId").is(processId))
-        );
+//        Criteria criteria = Criteria.where("indexProcessIds").elemMatch(Criteria.where("indexProcessIds").is(oldProcessId));
+        Criteria criteria = Criteria.where("indexProcessIds").is(oldProcessId);
+        if (oldStatus != null) {
+            criteria = criteria.andOperator(Criteria.where("status").is(oldStatus));
+        }
+        query.addCriteria(criteria);
 
         Update update = new Update();
-        update.set("status", TO_MATCH);
+        update.set("status", newStatus);
+        if (newProcessId != null) {
+            update.addToSet("indexProcessIds", newProcessId);
+        }
 
-        //update age to 11
-        update.set("age", 11);
-        template.updateMulti(query, update, ImportRequest.class);
+        WriteResult writeResult = template.updateMulti(query, update, ImportRequest.class);
+        log.info("Updated {} ImportRequests id=({} added to {}) Status=({} -> {})",
+                writeResult.getN(),
+                newProcessId, oldProcessId,
+                oldStatus, newStatus);
     }
 }

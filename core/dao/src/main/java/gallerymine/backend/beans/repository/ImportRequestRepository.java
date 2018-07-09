@@ -45,12 +45,12 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
 
     Page<ImportRequest> findByParentNull(Pageable pageable);
 
-    ImportRequest findByIndexProcessId(@Param("indexProcessId") String processId);
+    ImportRequest findByIndexProcessIdsContains(@Param("processId") String processId);
 
-    Collection<ImportRequest> findAllByIndexProcessIdAndParentIsNullOrderByCreatedAsc(@Param("indexProcessId") String processId);
+    Collection<ImportRequest> findAllByIndexProcessIdsIsContainingAndParentIsNullOrderByCreatedAsc(@Param("indexProcessId") String processId);
 
     Collection<ImportRequest> findByStatus(Collection<ImportRequest.ImportStatus> statuses);
 
-    @Query(value="{indexProcessId: ?0 }}", fields="{updated : 0}")
+    @Query(value="{indexProcessIds: ?0 }}", fields="{updated : 0}")
     ImportRequest findLastUpdated(String requestId, Sort sort);
 }

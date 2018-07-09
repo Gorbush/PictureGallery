@@ -186,6 +186,7 @@ var SourceBlock = {
             matchingImageDiv: null,
             matchingImage: null,
             matchingImageAnch: null,
+            status: null,
             fileName: null,
             filePath: null,
             fileSize: null,
@@ -208,6 +209,7 @@ var SourceBlock = {
                 this.matchingImageDiv = $("div.source_image", this.sourceBlockElement);
                 this.matchingImage = $("img", this.matchingImageDiv);
                 this.matchingImageAnch = $(".source_anch", this.matchingImageDiv);
+                this.status = $("div.status", this.sourceBlockElement);
                 this.fileName = $("div.fileName", this.sourceBlockElement);
                 this.filePath = $("div.filePath", this.sourceBlockElement);
                 this.fileSize = $("div.fileSize", this.sourceBlockElement);
@@ -256,6 +258,7 @@ var SourceBlock = {
                 // var fullImagePic = "/pics/"+this.dataObject.filePath+"/"+this.dataObject.fileName;
                 this.matchingImageAnch.attr("href", "/srcs/"+fullImageSrc);
                 this.matchingImageAnch.attr("title", this.dataObject.label);
+                this.status.text(this.dataObject.status);
                 this.fileName.text(this.dataObject.fileName);
                 this.filePath.text(this.dataObject.filePath);
                 this.fileSize.text(fileSizeSI(this.dataObject.size));
