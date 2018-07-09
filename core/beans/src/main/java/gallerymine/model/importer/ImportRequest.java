@@ -1,6 +1,7 @@
 package gallerymine.model.importer;
 
 import com.google.common.collect.ImmutableSet;
+import gallerymine.model.support.ProcessType;
 import lombok.Data;
 import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedDate;
@@ -96,6 +97,9 @@ public class ImportRequest {
         AtomicLong files = new AtomicLong();
         AtomicLong foldersDone = new AtomicLong();
 
+        private Boolean allFilesProcessed = false;
+        private Boolean allFoldersProcessed = false;
+
         public ImportStats append(ImportStats subStats) {
             processed.addAndGet(subStats.processed.get());
             movedToApprove.addAndGet(subStats.movedToApprove.get());
@@ -179,8 +183,6 @@ public class ImportRequest {
 
     private ImportStatus status = ImportStatus.START;
 
-    private Boolean allFilesProcessed = false;
-    private Boolean allFoldersProcessed = false;
     private List<String> errors = new ArrayList<>();
     private List<String> notes = new ArrayList<>();
     private Integer filesCount;
@@ -190,8 +192,8 @@ public class ImportRequest {
     @Indexed
     private Set<String> indexProcessIds = new HashSet<>();
 
-    private ImportStats stats = new ImportStats();
-    private ImportStats subStats = new ImportStats();
+    private Map<ProcessType, ImportStats> stats = new HashMap<>();
+    private Map<ProcessType, ImportStats> subStats = new HashMap<>();
 
     @CreatedDate
     private DateTime created;
@@ -252,15 +254,15 @@ public class ImportRequest {
         return this;
     }
 
-    public void appendSubStats(ImportStats subStats) {
-        this.subStats.append(subStats);
+    public void appendSubStats(ProcessType processType, ImportStats subStats) {
+        getSubStats(processType).append(subStats);
         setUpdated(DateTime.now());
     }
 
-    public ImportStats getTotalStats() {
+    public ImportStats getTotalStats(ProcessType processType) {
         return new ImportStats()
-                .append(subStats)
-                .append(stats);
+                .append(getSubStats(processType))
+                .append(getStats(processType));
     }
 
     public void setName(String name) {
@@ -272,4 +274,11 @@ public class ImportRequest {
         indexProcessIds.add(indexProcessId);
     }
 
+    public ImportStats getStats(ProcessType processType) {
+        return stats.computeIfAbsent(processType, k -> new ImportStats());
+    }
+
+    public ImportStats getSubStats(ProcessType processType) {
+        return subStats.computeIfAbsent(processType, k -> new ImportStats());
+    }
 }

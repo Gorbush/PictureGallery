@@ -11,7 +11,7 @@
             <outputDirectory>lib</outputDirectory>
             <unpack>false</unpack>
             <excludes>
-                <exclude>com.sephora.retail.bi:esb-common:zip:misc</exclude>
+                <exclude>project:module:zip:misc</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
@@ -19,7 +19,7 @@
             <outputDirectory>/data</outputDirectory>
             <unpack>true</unpack>
             <includes>
-                <include>com.sephora.retail.bi:esb-common:zip:misc</include>
+                <exclude>project:module:zip:misc</exclude>
             </includes>
         </dependencySet>
     </dependencySets>

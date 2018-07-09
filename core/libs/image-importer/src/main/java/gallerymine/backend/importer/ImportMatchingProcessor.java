@@ -64,6 +64,9 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             return;
 
         request.setStatus(statusHolder.getInProcessing());
+        ImportRequest.ImportStats stats = request.getStats(processType);
+        ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.IMPORT);
+        stats.setFolders(statsEnum.getFolders());
         requestRepository.save(request);
         log.info(this.getClass().getSimpleName()+" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         try {
@@ -87,9 +90,14 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                     info.setStatus(InfoStatus.APPROVING);
                     importSourceRepository.saveByGrade(info);
                     filesSucceedCount++;
+                    request.getStats(processType)
+                            .incMovedToApprove()
+                            .incFiles();
                 } catch (Exception e) {
+                    request.getStats(processType).incFailed();
                     log.error(this.getClass().getSimpleName()+" Failed processing info id=%s path=%s", info.getId(), info.getFileName());
                 }
+                requestRepository.save(request);
             }
 
             String info = request.addNote("Matching info gathered for id=%s files %d of %d. Failed:%d",
@@ -97,6 +105,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             log.info(this.getClass().getSimpleName()+" "+info);
 
             request.setStatus(statusHolder.getProcessingDone());
+            request.getStats(processType).setAllFilesProcessed(true);
             requestRepository.save(request);
         } catch (Exception e) {
             request.addError("Matching info analysing failed for indexRequest id=%s", request.getId());

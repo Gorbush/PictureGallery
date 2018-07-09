@@ -105,7 +105,7 @@ public class ImportService {
 
     public void checkIfMatchNeeded(ImportRequest rootImportRequest, Process process) {
         if (process != null) {
-            long toMatch = rootImportRequest.getTotalStats().getMovedToApprove().get();
+            long toMatch = rootImportRequest.getTotalStats(process.getType()).getMovedToApprove().get();
             Process processOfMatching = null;
             if (toMatch > 0) {
                 log.info("ImportService Matching is needed for {} images", toMatch);
@@ -136,7 +136,7 @@ public class ImportService {
 
     public void checkIfApproveNeeded(ImportRequest rootImportRequest, Process process) {
         if (process != null) {
-            long toApprove = rootImportRequest.getTotalStats().getMovedToApprove().get();
+            long toApprove = rootImportRequest.getTotalStats(process.getType()).getMovedToApprove().get();
             Process processOfApprove = null;
             if (toApprove > 0) {
                 log.info("ImportService Approve is needed for {} images", toApprove);

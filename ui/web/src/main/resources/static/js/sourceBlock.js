@@ -206,25 +206,25 @@ var SourceBlock = {
                 this.sourceBlockElement = getTemplateCopy("sourceBlock");
                 this.sourceBlockElement.data("controller", this);
                 this.targetContainer.append(this.sourceBlockElement);
-                this.matchingImageDiv = $("div.source_image", this.sourceBlockElement);
-                this.matchingImage = $("img", this.matchingImageDiv);
-                this.matchingImageAnch = $(".source_anch", this.matchingImageDiv);
-                this.status = $("div.status", this.sourceBlockElement);
-                this.fileName = $("div.fileName", this.sourceBlockElement);
-                this.filePath = $("div.filePath", this.sourceBlockElement);
-                this.fileSize = $("div.fileSize", this.sourceBlockElement);
-                this.timeStamp = $("div.timeStamp", this.sourceBlockElement);
+                this.matchingImageDiv   = $("div.source_image", this.sourceBlockElement);
+                this.matchingImage      = $("img", this.matchingImageDiv);
+                this.matchingImageAnch  = $(".source_anch", this.matchingImageDiv);
+                this.status             = $("div.status", this.sourceBlockElement);
+                this.fileName           = $("div.fileName", this.sourceBlockElement);
+                this.filePath           = $("div.filePath", this.sourceBlockElement);
+                this.fileSize           = $("div.fileSize", this.sourceBlockElement);
+                this.timeStamp          = $("div.timeStamp", this.sourceBlockElement);
 
                 this.folderStats = $("div.folderStats", this.sourceBlockElement);
                 if (!this.showStats) {
                     this.folderStats.hide();
                 }
-                this.folderStatsMessage = $(".message", this.folderStats);
-                this.folderStatsData = $(".data", this.folderStats);
-                this.folderStatsDataFiles = $(".files", this.folderStatsData);
-                this.folderStatsDataMatched = $(".matched", this.folderStatsData);
-                this.folderStatsDataMatchable = $(".matchable", this.folderStatsData);
-                this.folderStatsDataDups = $(".duplicates", this.folderStatsData);
+                this.folderStatsMessage         = $(".message", this.folderStats);
+                this.folderStatsData            = $(".data", this.folderStats);
+                this.folderStatsDataFiles       = $(".files", this.folderStatsData);
+                this.folderStatsDataMatched     = $(".matched", this.folderStatsData);
+                this.folderStatsDataMatchable   = $(".matchable", this.folderStatsData);
+                this.folderStatsDataDups        = $(".duplicates", this.folderStatsData);
 
                 this.decisionButtons = DecisionButtonBlock.create(this);
                 this.decisionButtons.selectButton("");

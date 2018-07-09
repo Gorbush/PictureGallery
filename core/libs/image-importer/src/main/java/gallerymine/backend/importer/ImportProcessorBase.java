@@ -67,7 +67,6 @@ public abstract class ImportProcessorBase implements Runnable {
     public ImportProcessorBase(ImportApproveRequestPoolManager.StatusHolder statuses, ProcessType processType) {
         this.statusHolder = statuses;
         this.processType = processType;
-
     }
 
     protected boolean validateImportRequest(Process process, Path path) {
@@ -166,27 +165,27 @@ public abstract class ImportProcessorBase implements Runnable {
         if (child != null) {
             if (child.getStatus().isFinal()) {
                 log.info(this.getClass().getSimpleName()+" Adding child substats from id={}", child.getId());
-                request.getStats().incFoldersDone();
-                request.getSubStats().append(child.getTotalStats());
+                request.getStats(processType).incFoldersDone();
+                request.getSubStats(processType).append(child.getTotalStats(processType));
                 requestRepository.save(request);
             } else {
                 log.error(this.getClass().getSimpleName()+" Adding child substats from id={} to parent={} while child is not FINISHED", child.getId(), requestId);
             }
         }
-
-        boolean allSubTasksDone = request.getStats().getFolders().get() == request.getStats().getFoldersDone().get();
+        ImportRequest.ImportStats stats = request.getStats(processType);
+        boolean allSubTasksDone = stats.getFolders().get() == stats.getFoldersDone().get();
 
         if (!allSubTasksDone)  {
             log.debug(this.getClass().getSimpleName()+" id={} Not all subtasks are done", requestId);
             return;
         } else {
-            if (!request.getAllFoldersProcessed()) {
-                request.setAllFoldersProcessed(true);
+            if (!stats.getAllFoldersProcessed()) {
+                stats.setAllFoldersProcessed(true);
                 requestRepository.save(request);
             }
         }
 
-        boolean isAllFilesProcessed = request.getAllFilesProcessed();
+        boolean isAllFilesProcessed = stats.getAllFilesProcessed();
 
         if (!isAllFilesProcessed)  {
             log.debug(this.getClass().getSimpleName()+" id={} Not all files are processed", requestId);
@@ -195,7 +194,7 @@ public abstract class ImportProcessorBase implements Runnable {
 
         ImportRequest.ImportStatus currentStatus = request.getStatus();
 
-        boolean someErrors = request.getTotalStats().getFailed().get() > 0;
+        boolean someErrors = request.getTotalStats(processType).getFailed().get() > 0;
 
         request.setStatus(statusHolder.getProcessingDone());
 
@@ -237,7 +236,7 @@ public abstract class ImportProcessorBase implements Runnable {
 
     private void addImportStats(Process process, ImportRequest rootImportRequest) {
         try {
-            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats();
+            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats(processType);
             process.addNote("Import statistics:");
             process.addNote(" Folders %d of %d", stats.getFoldersDone().get(), stats.getFolders().get());
             process.addNote(" Files in total %7d", stats.getFiles().get());

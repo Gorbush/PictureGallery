@@ -139,7 +139,7 @@ public class ImportProcessor extends ImportProcessorBase {
                 foldersCount++;
             }
             request.setFoldersCount(foldersCount);
-            request.getStats().incFolders(foldersCount);
+            request.getStats(processType).incFolders(foldersCount);
             requestRepository.save(request);
             log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         } catch (IOException e) {
@@ -171,19 +171,19 @@ public class ImportProcessor extends ImportProcessorBase {
 
                     if (imageAnalyzer.acceptsExtension(fileExt)) {
                         filesCount++;
-                        request.getStats().incFiles();
+                        request.getStats(processType).incFiles();
                         processPictureFile(file, importRootFolder, info);
 
                         if (!info.isFailed()) {
                             if (!checkIfDuplicate(file, request, info)) {
                                 Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
-                                request.getStats().incMovedToApprove();
+                                request.getStats(processType).incMovedToApprove();
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 info.setStatus(InfoStatus.ANALYSING);
                             }
                         } else {
                             filesIgnoredCount++;
-                            request.getStats().incFailed();
+                            request.getStats(processType).incFailed();
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(targetFolder.toFile().getAbsolutePath());
                             info.setStatus(InfoStatus.FAILED);
@@ -192,7 +192,7 @@ public class ImportProcessor extends ImportProcessorBase {
                     } else {
                         Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                         info.setRootPath(targetFolder.toFile().getAbsolutePath());
-                        request.getStats().incFailed();
+                        request.getStats(processType).incFailed();
                         info.setStatus(InfoStatus.FAILED);
                     }
                     importSourceRepository.saveByGrade(info);
@@ -201,12 +201,12 @@ public class ImportProcessor extends ImportProcessorBase {
 
             request.setFilesCount(filesCount);
             request.setFilesIgnoredCount(filesIgnoredCount);
-            request.setAllFilesProcessed(true);
+            request.getStats(processType).setAllFilesProcessed(true);
             requestRepository.save(request);
         } catch (IOException e) {
             request.setFilesCount(-1);
             request.setFilesIgnoredCount(-1);
-            request.setAllFilesProcessed(true);
+            request.getStats(processType).setAllFilesProcessed(true);
             request.addError("indexing failed for file "+path);
             requestRepository.save(request);
             log.error("ImportRequest  indexing failed for file {}. Reason: {}", path, e.getMessage());
