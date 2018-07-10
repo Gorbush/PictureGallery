@@ -10,9 +10,7 @@ import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.PageHierarchyImpl;
 import gallerymine.model.mvc.SourceCriteria;
-import gallerymine.model.support.DateStats;
-import gallerymine.model.support.InfoStatus;
-import gallerymine.model.support.SourceFolderStats;
+import gallerymine.model.support.*;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -90,6 +88,18 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
             query.with(new Sort(direction, sourceCriteria.getSortByField()));
         }
         return template.stream(query, clazz);
+    }
+
+    @Override
+    public PictureInformation findInfo(String id) {
+        PictureInformation info = fetchOne(id, PictureGrade.GALLERY.getEntityClass());
+        if (info == null) {
+            info = fetchOne(id, PictureGrade.IMPORT.getEntityClass());
+        }
+        if (info == null) {
+            info = fetchOne(id, PictureGrade.SOURCE.getEntityClass());
+        }
+        return info;
     }
 
     @Override
@@ -339,7 +349,9 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
     }
 
     @Override
-    public void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId, ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus) {
+    public void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId,
+                                               ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus,
+                                               ProcessType processType) {
         Query query = new Query();
 //        Criteria criteria = Criteria.where("indexProcessIds").elemMatch(Criteria.where("indexProcessIds").is(oldProcessId));
         Criteria criteria = Criteria.where("indexProcessIds").is(oldProcessId);
@@ -350,6 +362,9 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
 
         Update update = new Update();
         update.set("status", newStatus);
+        if (processType != null) {
+            update.set("activeProcessType", processType);
+        }
         if (newProcessId != null) {
             update.addToSet("indexProcessIds", newProcessId);
         }

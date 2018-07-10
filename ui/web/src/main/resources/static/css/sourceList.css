@@ -147,17 +147,17 @@ div.SourceBlockContainer.compact  div.sourceBlock {
     float: left;
 }
 
-.source-block-unsaved {
+div.sourceBlock[status="APPROVING"] {
     background-color: #dcdcdc;
 }
-.source-block-unset {
+div.sourceBlock[status="SIMILAR"] {
     background-color: #dcd9b4;
 }
-.source-block-duplicate {
-    background-color: #dcc7d2;
-}
-.source-block-primary {
+div.sourceBlock[status="APPROVED"] {
     background-color: #acdcc2;
+}
+div.sourceBlock[status="DUPLICATE"] {
+    background-color: #dcc7d2;
 }
 div.sourceBlock div.sourceBlockBody {
     position: absolute;
@@ -231,7 +231,7 @@ div.decisionBlock {
     align-content: center;
 }
 div.decisionBlock .decisionButton{
-    background-color: #1deded;
+    background-color: #add5a5;
     padding: 3px;
     cursor: pointer;
 }

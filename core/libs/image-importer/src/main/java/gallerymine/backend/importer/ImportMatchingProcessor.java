@@ -67,6 +67,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
         ImportRequest.ImportStats stats = request.getStats(processType);
         ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.IMPORT);
         stats.setFolders(statsEnum.getFolders());
+        stats.setFiles(statsEnum.getFilesDone());
         requestRepository.save(request);
         log.info(this.getClass().getSimpleName()+" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         try {
@@ -92,7 +93,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                     filesSucceedCount++;
                     request.getStats(processType)
                             .incMovedToApprove()
-                            .incFiles();
+                            .incFilesDone();
                 } catch (Exception e) {
                     request.getStats(processType).incFailed();
                     log.error(this.getClass().getSimpleName()+" Failed processing info id=%s path=%s", info.getId(), info.getFileName());
@@ -112,12 +113,6 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             requestRepository.save(request);
             log.error(this.getClass().getSimpleName()+" Matching info analysing failed for indexRequest id=%s {}. Reason: {}", path, e.getMessage());
         }
-    }
-
-    @Override
-    protected void onRootImportFinished(ImportRequest request, Process process) {
-        uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), null, MATCHED, MATCHING_COMPLETE);
-        importService.checkIfApproveNeeded(request, process);
     }
 
 }

@@ -1,5 +1,6 @@
 package gallerymine.backend.helpers;
 
+import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.model.importer.ThumbRequest;
 import org.slf4j.Logger;
@@ -26,6 +27,9 @@ public class ThumbRequestPool {
     private ApplicationContext context;
 
     @Autowired
+    private AppConfig appConfig;
+
+    @Autowired
     private ThumbRequestRepository requestRepository;
 
     private ThreadPoolTaskExecutor pool;
@@ -45,12 +49,12 @@ public class ThumbRequestPool {
     private ThumbRequest checkRequest(ThumbRequest requestSrc) {
         ThumbRequest request = requestRepository.findOne(requestSrc.getId());
         if (request == null) {
-            log.info("ThumbRequest not found for id={} and path={}/{}", requestSrc.getId(), requestSrc.getFilePath(), requestSrc.getFileName());
+            log.info("ThumbRequest not found for id={} and path={}", requestSrc.getId(), requestSrc.getFilePath());
             return null;
         }
 
         request.setInProgress(true);
-        log.info("ThumbRequest status changed id={} and path={}/{}", requestSrc.getId(), requestSrc.getFilePath(), requestSrc.getFileName());
+        log.info("ThumbRequest status changed id={} and path={}", requestSrc.getId(), requestSrc.getFilePath());
         requestRepository.save(request);
 
         return request;
@@ -63,15 +67,18 @@ public class ThumbRequestPool {
         if (request == null) {
             return;
         }
-        log.info("ThumbRequest status changed id={} and path={}/{}", request.getId(), request.getFilePath(), request.getFileName());
+        log.info("ThumbRequest status changed id={} and path={}", request.getId(), request.getFilePath());
         bean.setRequest(request);
         pool.execute(bean);
-        log.info("ThumbRequest scheduled id={} and path={}/{}", request.getId(), request.getFilePath(), request.getFileName());
+        log.info("ThumbRequest scheduled id={} and path={}", request.getId(), request.getFilePath());
     }
 
     @Scheduled(fixedDelay = 10*1000)
     public void checkForAwaitingRequests() {
         Thread.currentThread().setName("ThumbRequestRunner");
+        if (appConfig.isDisableThumbs()) {
+            return;
+        }
         int queued = pool.getThreadPoolExecutor().getQueue().size();
         if (queued < 1) { // No elements are in memory queue - check DB
             Page<ThumbRequest> foundRequests = requestRepository.findByInProgress(false,

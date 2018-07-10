@@ -51,8 +51,9 @@ public class ImportRequest {
         /** User approval statuses start */
         TO_APPROVE(false, false),
         APPROVING_AWAIT(false, true),
-        APPROVED(true, true),
-        APPROVAL_COMPLETE(false, false),
+        APPROVING(false, true),
+        APPROVED(true, false),
+        APPROVAL_COMPLETE(true, false),
         /** User approval statuses end */
 
         RESTART(false, false),
@@ -92,10 +93,12 @@ public class ImportRequest {
         AtomicLong similar = new AtomicLong();
         AtomicLong duplicates = new AtomicLong();
         AtomicLong failed = new AtomicLong();
+        AtomicLong skipped = new AtomicLong();
 
         AtomicLong folders = new AtomicLong();
         AtomicLong files = new AtomicLong();
         AtomicLong foldersDone = new AtomicLong();
+        AtomicLong filesDone = new AtomicLong();
 
         private Boolean allFilesProcessed = false;
         private Boolean allFoldersProcessed = false;
@@ -106,10 +109,12 @@ public class ImportRequest {
             similar.addAndGet(subStats.similar.get());
             duplicates.addAndGet(subStats.duplicates.get());
             failed.addAndGet(subStats.failed.get());
+            skipped.addAndGet(subStats.skipped.get());
 
             folders.addAndGet(subStats.folders.get());
             foldersDone.addAndGet(subStats.foldersDone.get());
             files.addAndGet(subStats.files.get());
+            filesDone.addAndGet(subStats.filesDone.get());
             return this;
         }
 
@@ -120,6 +125,11 @@ public class ImportRequest {
         }
         public ImportStats incFailed() {
             failed.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incSkipped() {
+            skipped.incrementAndGet();
             setUpdated(DateTime.now());
             return this;
         }
@@ -155,6 +165,11 @@ public class ImportRequest {
         }
         public ImportStats incFiles() {
             files.incrementAndGet();
+            setUpdated(DateTime.now());
+            return this;
+        }
+        public ImportStats incFilesDone() {
+            filesDone.incrementAndGet();
             setUpdated(DateTime.now());
             return this;
         }
@@ -194,6 +209,7 @@ public class ImportRequest {
 
     private Map<ProcessType, ImportStats> stats = new HashMap<>();
     private Map<ProcessType, ImportStats> subStats = new HashMap<>();
+    private ProcessType activeProcessType = null;
 
     @CreatedDate
     private DateTime created;
@@ -263,6 +279,16 @@ public class ImportRequest {
         return new ImportStats()
                 .append(getSubStats(processType))
                 .append(getStats(processType));
+    }
+
+    public ImportStats getTotalStats() {
+        if (activeProcessType != null) {
+            return new ImportStats()
+                    .append(getSubStats(activeProcessType))
+                    .append(getStats(activeProcessType));
+        } else {
+            return null;
+        }
     }
 
     public void setName(String name) {

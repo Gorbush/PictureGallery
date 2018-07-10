@@ -84,6 +84,21 @@
 		</encoder>
 	</appender>
 
+	<appender name="ANALYSER_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/analyser.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/analyser.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
     <appender name="INDEX_FILE_FAILED" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Append>true</Append>
         <File>logs/indexer_error.log</File>
@@ -203,8 +218,12 @@
 		<appender-ref ref="SPRING_WEB_FILE" />
 	</logger>
 
-	<logger name="o.s.w.s.resource.PathResourceResolver" level="WARN" additivity="false">
+	<logger name="org.springframework.web.servlet.resource.PathResourceResolver" level="WARN" additivity="false">
 		<appender-ref ref="SPRING_WEB_FILE" />
+	</logger>
+
+	<logger name="gallerymine.backend.helpers.analyzer" level="WARN" additivity="false">
+		<appender-ref ref="ANALYSER_FILE" />
 	</logger>
 
 	<logger name="org.thymeleaf.standard.expression" level="DEBUG" additivity="true">

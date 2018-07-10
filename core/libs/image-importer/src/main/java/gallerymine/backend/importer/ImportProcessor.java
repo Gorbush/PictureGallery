@@ -29,6 +29,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -127,6 +128,7 @@ public class ImportProcessor extends ImportProcessorBase {
             return;
 
         request.setStatus(statusHolder.getInProcessing());
+        request.getStats(processType).getFiles().set(-1);
         requestRepository.save(request);
 
         Path enumeratingDir = null;
@@ -154,6 +156,7 @@ public class ImportProcessor extends ImportProcessorBase {
             Path importRootFolder = Paths.get(request.getRootPath());
             int filesCount = 0;
             int filesIgnoredCount = 0;
+            ImportRequest.ImportStats stats = request.getStats(processType);
             try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
                 for (Path file : directoryStreamOfFiles) {
                     String fileName = file.toString().toLowerCase();
@@ -171,19 +174,19 @@ public class ImportProcessor extends ImportProcessorBase {
 
                     if (imageAnalyzer.acceptsExtension(fileExt)) {
                         filesCount++;
-                        request.getStats(processType).incFiles();
+                        stats.incFilesDone();
                         processPictureFile(file, importRootFolder, info);
 
                         if (!info.isFailed()) {
                             if (!checkIfDuplicate(file, request, info)) {
                                 Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
-                                request.getStats(processType).incMovedToApprove();
+                                stats.incMovedToApprove();
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 info.setStatus(InfoStatus.ANALYSING);
                             }
                         } else {
                             filesIgnoredCount++;
-                            request.getStats(processType).incFailed();
+                            stats.incFailed();
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(targetFolder.toFile().getAbsolutePath());
                             info.setStatus(InfoStatus.FAILED);
@@ -192,16 +195,30 @@ public class ImportProcessor extends ImportProcessorBase {
                     } else {
                         Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                         info.setRootPath(targetFolder.toFile().getAbsolutePath());
-                        request.getStats(processType).incFailed();
+                        stats.incFailed();
                         info.setStatus(InfoStatus.FAILED);
                     }
                     importSourceRepository.saveByGrade(info);
+                    if (!InfoStatus.FAILED.equals(info.getStatus()) && !info.hasThumb()) {
+                        log.warn(" No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
+                        Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
+                        String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
+                        ThumbRequest request = new ThumbRequest(info.getFullFilePath(), relativeStoredPath);
+                        request.setSource(info.getId());
+                        thumbRequestRepository.save(request);
+                    }
                 }
             }
 
             request.setFilesCount(filesCount);
             request.setFilesIgnoredCount(filesIgnoredCount);
-            request.getStats(processType).setAllFilesProcessed(true);
+            stats.setAllFilesProcessed(true);
+            stats.getFiles().set(filesCount);
+            if (stats.getFilesDone().get() != filesCount) {
+                log.warn("Cound Mismatch for ImportRequest id={} done={} <> {}",
+                        request.getId(), stats.getFilesDone().get() , filesCount);
+            }
+            stats.getFilesDone().set(filesCount);
             requestRepository.save(request);
         } catch (IOException e) {
             request.setFilesCount(-1);
@@ -211,12 +228,6 @@ public class ImportProcessor extends ImportProcessorBase {
             requestRepository.save(request);
             log.error("ImportRequest  indexing failed for file {}. Reason: {}", path, e.getMessage());
         }
-    }
-
-    @Override
-    protected void onRootImportFinished(ImportRequest request, Process process) {
-        uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), null, ENUMERATED, ENUMERATION_COMPLETE);
-        importService.checkIfMatchNeeded(request, process);
     }
 
     /**
@@ -261,13 +272,6 @@ public class ImportProcessor extends ImportProcessorBase {
                 }
             }
 
-            if (!info.hasThumb()) {
-                log.warn(" No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
-                Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
-                String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
-                ThumbRequest request = new ThumbRequest(info.getFilePath(), info.getFileName(), relativeStoredPath);
-                thumbRequestRepository.save(request);
-            }
         } catch (Exception e) {
             info.addError("Failed: "+e.getMessage());
             log.error("   Failed to process {}. Reason: {}", file.toAbsolutePath(), e.getMessage(), e);
@@ -295,6 +299,7 @@ public class ImportProcessor extends ImportProcessorBase {
         newRequest.addIndexProcessId(indexProcessId);
         newRequest.setStatus(INIT);
         newRequest.setPath(path);
+        newRequest.setActiveProcessType(ProcessType.IMPORT);
         newRequest.setName(Paths.get(path).toFile().getName());
 
         requestRepository.save(newRequest);

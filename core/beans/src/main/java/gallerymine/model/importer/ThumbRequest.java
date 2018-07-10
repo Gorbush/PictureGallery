@@ -21,7 +21,6 @@ public class ThumbRequest {
 
     @Indexed
     private String filePath;
-    private String fileName;
     private String source;
     private String error;
     private String thumbName;
@@ -33,9 +32,8 @@ public class ThumbRequest {
     public ThumbRequest() {
     }
 
-    public ThumbRequest(String filePath, String fileName, String thumbName) {
+    public ThumbRequest(String filePath, String thumbName) {
         this.filePath = filePath;
-        this.fileName = fileName;
         this.thumbName = thumbName;
     }
 

@@ -16,26 +16,29 @@ import java.nio.file.Paths;
 @Data
 public class AppConfig {
 
-    @Value("${galleryRootFolder}")
+    @Value("${gallery.paths.galleryRootFolder}")
     public String galleryRootFolder;
 
-    @Value("${sourcesRootFolder}")
+    @Value("${gallery.paths.sourcesRootFolder}")
     public String sourcesRootFolder;
 
-    @Value("${thumbsRootFolder}")
+    @Value("${gallery.paths.thumbsRootFolder}")
     public String thumbsRootFolder;
 
-    @Value("${importRootFolder}")
+    @Value("${gallery.paths.importRootFolder}")
     public String importRootFolder;
 
-    @Value("${importExposedRootFolder}")
+    @Value("${gallery.paths.importExposedRootFolder}")
     public String importExposedRootFolder;
 
-    @Value("${dryRunImportMoves}")
+    @Value("${gallery.debug.dryRunImportMoves}")
     public boolean dryRunImportMoves = true;
 
     @Value("${gallery.import.abandoned_timeout_ms}")
     public long abandonedTimoutMs;
+
+    @Value("${gallery.import.disableThumbs}")
+    public boolean disableThumbs = false;
 
     Path importRootFolderPath;
 

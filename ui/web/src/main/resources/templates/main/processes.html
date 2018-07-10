@@ -54,7 +54,8 @@
                     <td>
                         <a onclick="Processes.restartProcess(this);return false;" th:attr="rowid=${detailed.process.id}">restart</a>
                         &nbsp;
-                        <a th:if="${detailed.process.type.name() == 'IMPORT'}" onclick="Processes.openDetails(this);return false;" th:attr="rowid=${detailed.process.id}">details</a>
+                        <!-- th:if="${detailed.process.type.name() == 'IMPORT'}" -->
+                        <a onclick="Processes.openDetails(this);return false;" th:attr="rowid=${detailed.process.id}">details</a>
                     </td>
 
                     <!--<td th:text="${process.id}">1</td>-->

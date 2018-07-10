@@ -102,23 +102,30 @@ public class SourcesController {
                     .build();
         }
         Boolean done = false;
-        if ("approve".equals(action)) {
-            done = importService.actionApprove(source);
+        try {
+            if ("approve".equals(action)) {
+                done = importService.actionApprove(source);
+            }
+            if ("duplicate".equals(action)) {
+                done = importService.actionMarkAsDuplicate(source);
+            }
+
+            return responseOk()
+                    .result(source)
+                    .put("op", "approve")
+                    .put("id", id)
+                    .put("kind", kind)
+                    .put("action", action)
+                    .put("done", done)
+                    .build();
+        } catch (Exception e) {
+            return responseError("Failed to approve. Reason: "+e.getMessage(), e)
+                    .put("op", "approve")
+                    .put("id", id)
+                    .put("kind", kind)
+                    .put("action", action)
+                    .put("done", done);
         }
-        if ("duplicate".equals(action)) {
-            done = importService.actionMarkAsDuplicate(source);
-        }
-
-
-        return responseOk()
-                .result(source)
-                .put("op", "approve")
-                .put("id", id)
-                .put("kind", kind)
-                .put("action", action)
-                .put("done", done)
-                .build();
-
     }
 
     @PostMapping("uni")

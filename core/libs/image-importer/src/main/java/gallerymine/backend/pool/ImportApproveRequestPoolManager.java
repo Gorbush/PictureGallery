@@ -20,11 +20,6 @@ public class ImportApproveRequestPoolManager extends ImportPoolManagerBase {
     }
 
     @Override
-    public void checkForAwaitingRequests() {
-//        super.checkForAwaitingRequests();
-    }
-
-    @Override
     public void checkForAbandonedRequests() {
 //        super.checkForAbandonedRequests();
     }

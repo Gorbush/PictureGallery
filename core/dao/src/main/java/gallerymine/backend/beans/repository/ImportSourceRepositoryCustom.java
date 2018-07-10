@@ -6,6 +6,7 @@ import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.DateStats;
+import gallerymine.model.support.ProcessType;
 import gallerymine.model.support.SourceFolderStats;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
@@ -25,12 +26,14 @@ public interface ImportSourceRepositoryCustom {
     <T extends PictureInformation> T fetchOne(String id, Class<T> clazz);
     <T extends PictureInformation> T saveByGrade(T entity);
 
+    <T extends PictureInformation> T findInfo(String id);
+
     Page<FolderStats> fetchPathCustom(SourceCriteria criteria, Class<? extends FileInformation> clazz);
     List<DateStats> fetchDatesCustom(SourceCriteria criteria, Class<? extends FileInformation> clazz);
 
     SourceFolderStats getFolderStats(String rootFolder, String folderPath, Class<? extends FileInformation> clazz);
 
-    void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId, ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus);
+    void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId, ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus, ProcessType processType);
 //    @Query(value="{'name': ?0}");
 //    Page<Foo> findByMethod(String name, Pageable pageable);
 }

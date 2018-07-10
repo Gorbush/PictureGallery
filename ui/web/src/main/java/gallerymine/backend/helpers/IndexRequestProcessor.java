@@ -267,7 +267,7 @@ public class IndexRequestProcessor implements Runnable {
                 log.warn(" No thumbnail injected - need to generate one for {} in {}", pictureSource.getFileName(), pictureSource.getFilePath());
                 File thumbStoredFile = generatePicThumbName(pictureSource);
                 String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.getAbsolutePath());
-                ThumbRequest request = new ThumbRequest(pictureSource.getFilePath(), pictureSource.getFileName(), relativeStoredPath);
+                ThumbRequest request = new ThumbRequest(pictureSource.getFullFilePath(), relativeStoredPath);
                 thumbRequestRepository.save(request);
             }
 

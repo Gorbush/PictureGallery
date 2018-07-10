@@ -267,7 +267,17 @@ var SourceBlock = {
                 if (this.showStats) {
                     initFolderStatsRequest(this);
                 }
+                this.markDecision(this.dataObject.grade, this.dataObject.status);
+            },
 
+            getDecision: function () {
+                return this.decisionButtons.getSelectedButton();
+            },
+
+            markDecision: function (grade, status) {
+                this.sourceBlockElement.get(0).setAttribute("status", status);
+                this.sourceBlockElement.get(0).setAttribute("grade", grade);
+                /*
                 if (!validValue(this.dataObject.id)) {
                     this.sourceBlockElement.addClass("source-block-unsaved");
                 }
@@ -280,13 +290,7 @@ var SourceBlock = {
                 if (this.dataObject.kind === "PRIMARY") {
                     this.sourceBlockElement.addClass("source-block-primary");
                 }
-            },
-
-            getDecision: function () {
-                return this.decisionButtons.getSelectedButton();
-            },
-
-            markDecision: function (grade, status) {
+                */
                 return this.decisionButtons.markDecision(grade, status);
             },
 

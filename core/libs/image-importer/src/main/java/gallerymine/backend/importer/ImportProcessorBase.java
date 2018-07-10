@@ -138,7 +138,7 @@ public abstract class ImportProcessorBase implements Runnable {
         try {
             requestProcessing(requestSrc, process);
 
-            checkSubsAndDone(request.getId(), null);
+            importService.checkSubsAndDone(request.getId(), null, process.getType(), statusHolder.getProcessingDone());
         } catch (Exception e) {
             request.setStatus(statusHolder.getFinished());
             request.addError(e.getMessage());
@@ -149,107 +149,6 @@ public abstract class ImportProcessorBase implements Runnable {
             pool.checkForAwaitingRequests();
         }
     }
-
-    protected void checkSubsAndDone(String requestId, ImportRequest child) {
-        if (requestId == null) {
-            log.error(this.getClass().getSimpleName()+" Failed to check subs for request id={}", requestId);
-            return;
-        }
-
-        ImportRequest request = requestRepository.findOne(requestId);
-        if (request == null) {
-            log.error(this.getClass().getSimpleName()+" Request not found, failed to check subs for id={}", requestId);
-            return;
-        }
-
-        if (child != null) {
-            if (child.getStatus().isFinal()) {
-                log.info(this.getClass().getSimpleName()+" Adding child substats from id={}", child.getId());
-                request.getStats(processType).incFoldersDone();
-                request.getSubStats(processType).append(child.getTotalStats(processType));
-                requestRepository.save(request);
-            } else {
-                log.error(this.getClass().getSimpleName()+" Adding child substats from id={} to parent={} while child is not FINISHED", child.getId(), requestId);
-            }
-        }
-        ImportRequest.ImportStats stats = request.getStats(processType);
-        boolean allSubTasksDone = stats.getFolders().get() == stats.getFoldersDone().get();
-
-        if (!allSubTasksDone)  {
-            log.debug(this.getClass().getSimpleName()+" id={} Not all subtasks are done", requestId);
-            return;
-        } else {
-            if (!stats.getAllFoldersProcessed()) {
-                stats.setAllFoldersProcessed(true);
-                requestRepository.save(request);
-            }
-        }
-
-        boolean isAllFilesProcessed = stats.getAllFilesProcessed();
-
-        if (!isAllFilesProcessed)  {
-            log.debug(this.getClass().getSimpleName()+" id={} Not all files are processed", requestId);
-            return;
-        }
-
-        ImportRequest.ImportStatus currentStatus = request.getStatus();
-
-        boolean someErrors = request.getTotalStats(processType).getFailed().get() > 0;
-
-        request.setStatus(statusHolder.getProcessingDone());
-
-        requestRepository.save(request);
-        log.info(this.getClass().getSimpleName()+" status changed id={} oldStatus={} status={} path={}",
-                request.getId(), currentStatus, request.getStatus(), request.getPath());
-        if (StringUtils.isNotBlank(request.getParent())) {
-            log.info(this.getClass().getSimpleName()+" processing parent of id={} parent={}", requestId, request.getParent());
-            checkSubsAndDone(request.getParent(), request);
-        }
-
-        importService.finishRequestProcessing(request);
-
-        log.info(this.getClass().getSimpleName()+" finished id={} status={}", requestId, request.getStatus());
-
-        if (!request.getIndexProcessIds().isEmpty() &&  // has process
-            StringUtils.isBlank(request.getParent())) { // this is the top import request
-            Process process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
-            finishProcess(request, process);
-            onRootImportFinished(request, process);
-        }
-    }
-
-    protected void finishProcess(ImportRequest rootImportRequest, Process process) {
-        ProcessStatus oldStatus = process.getStatus();
-        log.info(this.getClass().getSimpleName()+" updating process of id={} process={} oldStatus={} rootImportStatus={}",
-                rootImportRequest.getId(), process.getId(), oldStatus, rootImportRequest.getStatus());
-        if (rootImportRequest.getStatus().isInProgress()) {
-            process.addError("Import failed");
-            process.setStatus(ProcessStatus.FAILED);
-        } else {
-            process.addNote("Import finished");
-            process.setStatus(ProcessStatus.FINISHED);
-        }
-        addImportStats(process, rootImportRequest);
-        log.info(this.getClass().getSimpleName()+" Process finished of id={} process={} oldStatus={} status={}",
-                rootImportRequest.getId(), process.getId(), oldStatus, process.getStatus());
-    }
-
-    private void addImportStats(Process process, ImportRequest rootImportRequest) {
-        try {
-            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats(processType);
-            process.addNote("Import statistics:");
-            process.addNote(" Folders %d of %d", stats.getFoldersDone().get(), stats.getFolders().get());
-            process.addNote(" Files in total %7d", stats.getFiles().get());
-            process.addNote("   Approve      %7d", stats.getMovedToApprove().get());
-            process.addNote("   Failed       %7d", stats.getFailed().get());
-            process.addNote("   Similar      %7d", stats.getSimilar().get());
-            process.addNote("   Duplicates   %7d", stats.getDuplicates().get());
-        } catch (Exception e) {
-            log.error("Failed to add Statistics", e);
-        }
-    }
-
-    protected abstract void onRootImportFinished(ImportRequest request, Process process);
 
     public void setRequest(ImportRequest request) {
         this.request = request;

@@ -13,6 +13,8 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -89,11 +91,8 @@ public class FileInformation implements Comparable<FileInformation> {
     }
 
     public String getFullFilePath() {
-        if (StringUtils.isNotBlank(filePath)) {
-            return filePath + '/' + fileName;
-        } else {
-            return fileName;
-        }
+        Path path = Paths.get(rootPath, filePath);
+        return path.toString();
     }
 
     public String getLocation() {

@@ -1,6 +1,5 @@
 package gallerymine.backend.importer;
 
-import com.google.common.collect.Sets;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
@@ -8,20 +7,14 @@ import gallerymine.backend.matchers.SourceFilesMatcher;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
 import gallerymine.backend.services.ImportService;
-import gallerymine.model.ImportSource;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
-import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.ProcessType;
-import gallerymine.model.support.SourceMatchReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import java.nio.file.Path;
-import java.util.Iterator;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -34,7 +27,7 @@ public class ImportApproveProcessor extends ImportProcessorBase {
     public static final String KIND_APPROVE = "Approve";
 
     public static final ImportPoolManagerBase.StatusHolder STATUSES =
-            ImportApproveRequestPoolManager.StatusHolder.define(APPROVING_AWAIT, null, APPROVED, APPROVAL_COMPLETE)
+            ImportApproveRequestPoolManager.StatusHolder.define(APPROVING_AWAIT, APPROVING, APPROVED, APPROVAL_COMPLETE)
                     .processing(TO_APPROVE)
                     .abandoned();
 
@@ -42,7 +35,7 @@ public class ImportApproveProcessor extends ImportProcessorBase {
     private GenericFileAnalyser fileAnalyzer;
 
     @Autowired
-    private ImportSourceRepository importSourceRepository;
+    private ImportSourceRepository uniSourceRepository;
 
     @Autowired
     private SourceFilesMatcher sourceFilesMatcher;
@@ -56,11 +49,23 @@ public class ImportApproveProcessor extends ImportProcessorBase {
 
     public void requestProcessing(ImportRequest request, Process process) throws ImportFailedException {
         log.warn(this.getClass().getSimpleName()+" approve processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-    }
+        ImportRequest.ImportStats stats = request.getStats(processType);
+        ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.MATCHING);
+        stats.setFolders(statsEnum.getFolders());
+        stats.setFiles(statsEnum.getFiles());
 
-    @Override
-    protected void onRootImportFinished(ImportRequest request, Process process) {
-//        importService.checkIfApproveNeeded(request, process);
+        stats.setAllFilesProcessed(stats.getFiles().get() == 0L);
+        stats.setAllFoldersProcessed(stats.getFolders().get() == 0L);
+
+        if (stats.getAllFilesProcessed() && stats.getAllFoldersProcessed()) {
+            requestRepository.save(request);
+            importService.checkSubsAndDone(request.getId(), null, processType, statusHolder.getProcessingDone());
+        } else {
+            request.setStatus(statusHolder.getInProcessing());
+            requestRepository.save(request);
+        }
+
+        log.info(this.getClass().getSimpleName()+" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
     }
 
 }

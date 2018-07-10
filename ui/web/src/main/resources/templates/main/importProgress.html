@@ -58,6 +58,7 @@
                 <input type="hidden" id="activeDetailId" th:value="${latestDetail?.id}"></input>
                 <table class="table table-bordered table-striped">
                     <tr><td> Name </td><td name="process.name" th:text="${process.name}"></td> </tr>
+                    <tr><td> Type </td><td name="process.type" th:text="${process.type}"></td> </tr>
                     <tr><td> Status </td>
                         <td>
                             <span name="process.status" th:text="${process.status}"></span>
@@ -84,7 +85,7 @@
                     <tr th:each="detail : ${details}">
                         <td> Details status </td><td>
                             <span name="detail.status" th:text="${detail.status}">1</span>&nbsp;
-                            <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.errorsText() != null}">
+                            <span class="glyphicon glyphicon-warning-sign log-container" th:if="${detail.errors.size() > 0}">
                                     <div name="detail.error" class="log-content" th:text="${detail.errorsText() }"></div>
                             </span>
                         </td>
@@ -130,6 +131,7 @@
             <div class="node_postblock">
                 <div name="status" class="status">Status</div>
                 <div name="totalStats.files" class="counts">Files</div>
+                <div name="totalStats.filesDone" class="counts">/Done</div>
                 <div name="totalStats.failed" class="counts">/Failed</div>
                 <div name="totalStats.folders" class="counts">Folders</div>
                 <div name="totalStats.foldersDone" class="counts">/Done</div>

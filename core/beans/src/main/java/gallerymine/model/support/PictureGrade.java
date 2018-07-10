@@ -2,6 +2,7 @@ package gallerymine.model.support;
 
 import gallerymine.model.ImportSource;
 import gallerymine.model.Picture;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 
 public enum PictureGrade {
