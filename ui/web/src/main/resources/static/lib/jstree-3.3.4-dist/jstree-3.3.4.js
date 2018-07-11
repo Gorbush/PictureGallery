@@ -1114,7 +1114,7 @@
 	    return obj.parent;
 	},
 	/**
-	 * get a jQuery collection of all the children of a node (node must be rendered)
+	 * get a jQuery collection of all the children of a node (node must be rendered), returns false on error
 	 * @name get_children_dom(obj)
 	 * @param  {mixed} obj
 	 * @return {jQuery}
@@ -1394,6 +1394,9 @@
 			.done($.proxy(function (d,t,x) {
 				var type = x.getResponseHeader('Content-Type');
 				if((type && type.indexOf('json') !== -1) || typeof d === "object") {
+                    if($.isFunction(s.postprocessor)) {
+                        d = s.postprocessor.call(this, obj, d);
+                    }
 				    return this._append_json_data(obj, d, function (status) { callback.call(this, status); });
 				    //return callback.call(this, this._append_json_data(obj, d));
 				}
@@ -1748,7 +1751,7 @@
 			    return tmp.id;
 			};
 
-		    if(dat.length && dat[0].id !== undefined && dat[0].parent !== undefined) {
+		    if(dat.length && dat[0].id !== undefined && dat[0].parent !== undefined && dat[0].parent !== null) {
 			// Flat JSON support (for easy import from DB):
 			// 1) convert to object (foreach)
 			for(i = 0, j = dat.length; i < j; i++) {
@@ -2477,11 +2480,15 @@
 		}
 	    }
 
-	    if(this.settings.core.force_text) {
-		node.childNodes[1].appendChild(d.createTextNode(obj.text));
-	    }
-	    else {
-		node.childNodes[1].innerHTML += obj.text;
+        if (this.settings.core.data.renderer) {
+            this.settings.core.data.renderer(node, obj, this.settings, this, d);
+        } else {
+            if(this.settings.core.force_text) {
+            node.childNodes[1].appendChild(d.createTextNode(obj.text));
+            }
+            else {
+            node.childNodes[1].innerHTML += obj.text;
+            }
 	    }
 
 
