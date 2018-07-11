@@ -45,19 +45,22 @@ var ImportRequestsTree = {
                     "url" : function (node, cb, par2) {
                         var id;
                         if (node.id === "#") {
-                            id = ImportRequestsTree.getActiveImportId();
-                            // id = "";
+                            // id = ImportRequestsTree.getActiveImportId();
+                            id = "";
                         } else {
-                            id = node.data.nodeId;
+                            id = node.original.content.id;
                         }
                         var processId = ImportRequestsTree.getActiveProcessId();
                         return "/importing/list/"+processId+"/"+id;
                     },
                     "postprocessor": function (node, data, par2) {
-                        return ImportRequestsTree.preprocessAsNodes(data.list.content, data.result);
+                        var dataNew = ImportRequestsTree.preprocessAsNodes(data.list.content, data.result);
+                        // dataNew.id = node.id;
+                        // dataNew.parent = node.parent;
+                        return dataNew;
                     },
                     "renderer" : function (node, obj, settings, jstree, document) {
-                        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, obj.data);
+                        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, obj.original.content);
                         moveChildren(row[0], node.childNodes[1]);
                     }
                 }
@@ -93,48 +96,50 @@ var ImportRequestsTree = {
     },
 
     preprocessAsNodes: function (nodesList, nodeParent) {
-        function prepareNode(node) {
-            node.text = (node.path === "") ? "Gallery Root" : node.path;
-            if (node.rootPath && node.text.startsWith(node.rootPath)) {
-                node.text = node.text.substr(node.rootPath.length);
+        function prepareNode(nodeData) {
+            var node = {};
+            node.text = (nodeData.path === "") ? "Gallery Root" : nodeData.path;
+            if (node.rootPath && node.text.startsWith(nodeData.rootPath)) {
+                node.text = node.text.substr(nodeData.rootPath.length);
             }
             if (node.text.startsWith("/")) {
                 node.text = node.text.substr(1);
             }
-            node.icon = "NODE_STATUS_" + node.status;
-            node.data = node;
+            node.icon = "NODE_STATUS_" + nodeData.status;
+            node.content = nodeData;
             node.state = {
                 opened: false
             };
-            node.parent = node.id;
+            node.parent = nodeData.parent;
             if (node.parent === null) {
                 node.parent = '#';
                 // node.id = '#';
-            } else {
-                // node.parent = node.id;
+            // } else {
+            //     node.parent = node.id;
             }
-            if (node.parent === node.rootId) {
-                node.parent = '#';
-                node.id = '#';
-            }
-            node.nodeId = node.id;
-            // delete node.id;
+            // if (node.parent === nodeData.rootId) {
+            //     node.parent = '#';
+                // node.id = '#';
+            // }
+
+            return node;
         }
 
+        var nodes = [];
         for(nodexIndex in nodesList) {
             var node = nodesList[nodexIndex];
-            prepareNode(node);
+            nodes.push(prepareNode(node));
         }
 
         if (nodeParent) {
-            prepareNode(nodeParent);
+            var parentNode = prepareNode(nodeParent);
             // nodesList.push(nodeParent);
-            if (nodesList.length > 0) {
-                nodeParent.children = nodesList;
+            if (nodes.length > 0) {
+                parentNode.children = nodes;
             }
-            return nodeParent;
+            return parentNode;
         }
-        return nodesList;
+        return nodes;
     },
 
     analyseNode: function (tree, node) {
@@ -216,7 +221,7 @@ var ImportRequestsTree = {
     },
 
     onNodeClick: function (e, context) {
-        var data = context.node.data;
+        var data = context.node.original.content;
         var importRequestId = data.id;
         console.log("Selected node "+importRequestId);
         ImportRequestsTree.setActiveImportId(importRequestId);

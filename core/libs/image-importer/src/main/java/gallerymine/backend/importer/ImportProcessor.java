@@ -257,7 +257,7 @@ public class ImportProcessor extends ImportProcessorBase {
         if (similarFound) {
             Path targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
             info.setRootPath(targetFolder.toFile().getAbsolutePath());
-            info.setStatus(InfoStatus.SIMILAR);
+            info.setStatus(InfoStatus.DUPLICATE);
             return true;
         }
         return false;

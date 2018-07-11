@@ -4,6 +4,7 @@ import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
+import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
@@ -14,6 +15,7 @@ import gallerymine.model.Picture;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
@@ -173,6 +175,7 @@ public class ImportService {
         }
     }
 
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public void checkSubsAndDone(String requestId, ImportRequest child, ProcessType processType, ImportRequest.ImportStatus processingDoneStatus) throws ImportFailedException {
         if (requestId == null) {
             log.error(" checkSubsAndDone failed: Failed to check subs for request id={}", requestId);
@@ -187,10 +190,16 @@ public class ImportService {
         log.info(" checkSubsAndDone for id={} path={}", requestId, request.getPath());
         if (child != null) {
             if (child.getStatus().isFinal()) {
-                log.info("  Adding child substats from id={} path={}", child.getId(), child.getPath());
-                request.getStats(processType).incFoldersDone();
-                request.getSubStats(processType).append(child.getTotalStats(processType));
-                requestRepository.save(request);
+                if (request.appendSubStats(processType, child)) {
+                    ImportRequest.ImportStats stats = request.getStats(processType);
+                    stats.incFoldersDone();
+                    log.info("  Adding child substats folders={} of {} from type={} id={} child={} path={} ",
+                            stats.getFoldersDone().get(), stats.getFolders().get(), processType,
+                            request.getId(), child.getId(), child.getPath());
+                    requestRepository.save(request);
+                } else {
+                    log.info("  Already added child substats from id={} path={}", child.getId(), child.getPath());
+                }
             } else {
                 log.error("  Adding child substats from id={} path={} to parent={} while child is not FINISHED", child.getId(), child.getPath(), requestId);
             }
@@ -308,27 +317,30 @@ public class ImportService {
     public Boolean actionApprove(PictureInformation source) throws Exception {
         log.info("approve for image id={} status={}", source.getId(), source.getStatus());
 
-        PictureInformation target = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
-        if (target != null) {
+        PictureInformation picture = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
+        if (picture == null) {
+            log.info("  source id={} is getting approved", source.getId());
+            picture = new Picture();
+            picture.copyFrom(source);
+            picture.setGrade(PictureGrade.GALLERY);
+            picture.addSource(source.getId(), source.getGrade());
+
+            uniSourceRepository.saveByGrade(picture);
+        } else {
+            log.info("  source id={} is already approved", source.getId());
+        }
+
+        InfoStatus oldStatus = source.getStatus();
+        if (APPROVED.equals(oldStatus)) {
             log.info("  source id={} is already approved", source.getId());
             return true;
         }
-        log.info("  source id={} is getting approved", source.getId());
-
-        Picture picture = new Picture();
-        picture.copyFrom(source);
-        picture.setGrade(PictureGrade.GALLERY);
-        picture.addSource(source.getId(), source.getGrade());
-
-        uniSourceRepository.saveByGrade(picture);
-
         source.setStatus(APPROVED);
         source.setAssignedToPicture(true);
         source.addSource(picture.getId(), picture.getGrade());
         uniSourceRepository.saveByGrade(source);
 
         log.info("  source id={} is approved", source.getId());
-
         ImportRequest request = requestRepository.findOne(source.getImportRequestId());
         if (request == null) {
             log.info("  source id={} is missing import request requestId={}", source.getId(), source.getImportRequestId());
@@ -341,23 +353,31 @@ public class ImportService {
         }
 
         // Updating stats for Import Request and propagate to parent
-        request.getStats(ProcessType.APPROVAL).incFilesDone();
+        if (!oldStatus.isFinalStatus()) {
+            request.getStats(ProcessType.APPROVAL).incFilesDone();
+        }
         request.getStats(ProcessType.APPROVAL).incMovedToApprove();
+        if (DUPLICATE.equals(oldStatus)) {
+            request.getStats(ProcessType.APPROVAL).getDuplicates().decrementAndGet();
+        }
         requestRepository.save(request);
 
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);
+
         return true;
     }
 
     public Boolean actionMarkAsDuplicate(PictureInformation source) throws Exception {
-        if (DUPLICATE.equals(source.getStatus())) {
-            log.info("  source id={} is already marked as Duplicate", source.getId());
-            return true;
-        }
         PictureInformation target = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
         if (target != null) {
             log.info("  source id={} was approved - removing", source.getId());
             uniSourceRepository.delete(target);
+        }
+        InfoStatus oldStatus = source.getStatus();
+
+        if (DUPLICATE.equals(oldStatus)) {
+            log.info("  source id={} is already marked as Duplicate", source.getId());
+            return true;
         }
 
         source.setStatus(DUPLICATE);
@@ -376,8 +396,14 @@ public class ImportService {
         }
 
         // Updating stats for Import Request and propagate to parent
-        request.getStats(ProcessType.APPROVAL).incFilesDone();
+        if (!oldStatus.isFinalStatus()) {
+            request.getStats(ProcessType.APPROVAL).incFilesDone();
+        }
         request.getStats(ProcessType.APPROVAL).incDuplicates();
+        if (APPROVED.equals(oldStatus)) {
+            request.getStats(ProcessType.APPROVAL).getMovedToApprove().decrementAndGet();
+        }
+
         requestRepository.save(request);
 
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);

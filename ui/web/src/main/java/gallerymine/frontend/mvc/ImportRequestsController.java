@@ -110,10 +110,16 @@ public class ImportRequestsController {
     @ResponseBody
     public Object listByParent(@PathVariable("processId") String processId, @PathVariable("parentId") Optional<String> parentId) {
 		log.info("ImportRequests list by parent request={} process={}", parentId.orElseGet(() -> "ROOT"), processId);
-        Page<ImportRequest> page = requestRepository.findByParentAndIndexProcessIds(
-                parentId.orElse(null),
-				processId,
-                new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
+        Page<ImportRequest> page;
+        if (parentId.isPresent()) {
+			page = requestRepository.findByParentAndIndexProcessIds(
+					parentId.get(),
+					processId,
+					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
+		} else {
+			page = requestRepository.findSubRootIndexes(processId,
+					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
+		}
 		long tm = System.currentTimeMillis();
 		page.getContent().forEach(p -> {
 			p.getStats(ProcessType.APPROVAL).getFailed().set(tm);
@@ -128,6 +134,16 @@ public class ImportRequestsController {
 				request.setName(request.getName() + tm);
 			} else {
 				log.warn("Request not found");
+			}
+		} else {
+			Page<ImportRequest> pageOfRoots = requestRepository.findRootIndexes(processId,
+					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
+			if (pageOfRoots != null && pageOfRoots.getTotalElements() > 0) {
+				request = pageOfRoots.getContent().get(0);
+				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
+				request.setName(request.getName() + tm);
+			} else {
+				log.warn("RootRequest not found");
 			}
 		}
 

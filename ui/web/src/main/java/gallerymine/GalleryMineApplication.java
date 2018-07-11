@@ -21,9 +21,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.*;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -39,6 +37,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @EnableScheduling
 @EnableMongoAuditing
 @EnableMongoRepositories
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+//@EnableLoadTimeWeaving
 @Import({ WebAppConfig.class, WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter.class })
 @ComponentScan(basePackages = {
 		"gallerymine.backend",

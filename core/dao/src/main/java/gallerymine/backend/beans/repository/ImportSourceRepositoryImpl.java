@@ -340,9 +340,6 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
             if (InfoStatus.DUPLICATE.equals(source.getStatus())) {
                 stats.incFilesDuplicates();
             }
-            if (InfoStatus.SIMILAR.equals(source.getStatus())) {
-                stats.incFilesDuplicates();
-            }
         });
 
         return stats;

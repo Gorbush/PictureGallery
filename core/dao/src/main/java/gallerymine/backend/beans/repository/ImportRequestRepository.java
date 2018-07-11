@@ -43,6 +43,12 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
 
     Page<ImportRequest> findByParentAndIndexProcessIds(String parent, String processId, Pageable pageable);
 
+    @Query(value="{indexProcessIds: ?0, parent: { $exists: false } }")
+    Page<ImportRequest> findRootIndexes(String processId, Pageable pageable);
+
+    @Query(value="{indexProcessIds: ?0, $expr:{$eq:[\"$parent\", \"$rootId\"]} }")
+    Page<ImportRequest> findSubRootIndexes(String processId, Pageable pageable);
+
     Collection<ImportRequest> findByParent(String parent);
 
     Page<ImportRequest> findByParentNull(Pageable pageable);
@@ -53,6 +59,6 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
 
     Collection<ImportRequest> findByStatus(Collection<ImportRequest.ImportStatus> statuses);
 
-    @Query(value="{indexProcessIds: ?0 }}", fields="{updated : 0}")
+    @Query(value="{indexProcessIds: ?0 }", fields="{updated : 0}")
     ImportRequest findLastUpdated(String requestId, Sort sort);
 }

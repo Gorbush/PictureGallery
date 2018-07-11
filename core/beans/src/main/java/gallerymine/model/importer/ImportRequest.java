@@ -7,6 +7,7 @@ import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -209,12 +210,17 @@ public class ImportRequest {
 
     private Map<ProcessType, ImportStats> stats = new HashMap<>();
     private Map<ProcessType, ImportStats> subStats = new HashMap<>();
+    private Map<ProcessType, Set<String>> statsAppended = new HashMap<>();
+
     private ProcessType activeProcessType = null;
 
     @CreatedDate
     private DateTime created;
     @LastModifiedDate
     private DateTime updated;
+
+    @Version
+    private long version = 0;
 
     public ImportRequest() {
     }
@@ -270,9 +276,17 @@ public class ImportRequest {
         return this;
     }
 
-    public void appendSubStats(ProcessType processType, ImportStats subStats) {
-        getSubStats(processType).append(subStats);
+    /** Appends subordinate ImportRequest stats to the parent ImportRequest
+     * if it was not yet added. Returns false if already added before.*/
+    public boolean appendSubStats(ProcessType processType, ImportRequest subStats) {
+        Set<String> applied = statsAppended.computeIfAbsent(processType, p -> new HashSet<>());
+        if (applied.contains(subStats.id)) {
+            return false;
+        }
+        applied.add(subStats.id);
+        getSubStats(processType).append(subStats.getTotalStats(processType));
         setUpdated(DateTime.now());
+        return true;
     }
 
     public ImportStats getTotalStats(ProcessType processType) {
