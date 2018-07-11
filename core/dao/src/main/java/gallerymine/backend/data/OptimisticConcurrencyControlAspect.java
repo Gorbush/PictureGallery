@@ -4,16 +4,19 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
 @Aspect
+@Component
 public class OptimisticConcurrencyControlAspect {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OptimisticConcurrencyControlAspect.class);
@@ -23,6 +26,9 @@ public class OptimisticConcurrencyControlAspect {
         RetryVersion retryAnnotation = getRetryAnnotation(pjp);
         return (retryAnnotation != null) ? proceed(pjp, retryAnnotation) : proceed(pjp);
     }
+
+//    @Pointcut("execution(public * *(..))")// the pointcut expression
+//    private void anyOldTransfer() {}
 
     private Object proceed(ProceedingJoinPoint pjp) throws Throwable {
         return pjp.proceed();
