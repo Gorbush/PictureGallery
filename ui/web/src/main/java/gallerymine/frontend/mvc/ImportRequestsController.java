@@ -25,6 +25,8 @@ import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.services.ImportService;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.support.ProcessType;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,14 +106,35 @@ public class ImportRequestsController {
         }
     }
 
-    @GetMapping(value = {"list/", "list/{parentId}"} )
+    @GetMapping(value = {"list/{processId}", "list/{processId}/{parentId}"} )
     @ResponseBody
-    public Object listByParent(@PathVariable("parentId") Optional<String> parentId) {
-        Page<ImportRequest> page = requestRepository.findByParent(
+    public Object listByParent(@PathVariable("processId") String processId, @PathVariable("parentId") Optional<String> parentId) {
+		log.info("ImportRequests list by parent request={} process={}", parentId.orElseGet(() -> "ROOT"), processId);
+        Page<ImportRequest> page = requestRepository.findByParentAndIndexProcessIds(
                 parentId.orElse(null),
+				processId,
                 new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
+		long tm = System.currentTimeMillis();
+		page.getContent().forEach(p -> {
+			p.getStats(ProcessType.APPROVAL).getFailed().set(tm);
+			p.setName(p.getName() + tm);
+		});
 
-        return responseOk().put("response", page).build();
+		ImportRequest request = null;
+		if (parentId.isPresent()) {
+			request = requestRepository.findOne(parentId.get());
+			if (request != null) {
+				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
+				request.setName(request.getName() + tm);
+			} else {
+				log.warn("Request not found");
+			}
+		}
+
+        return responseOk()
+				.results(page)
+				.result(request)
+				.build();
     }
 
     @GetMapping("{id}" )

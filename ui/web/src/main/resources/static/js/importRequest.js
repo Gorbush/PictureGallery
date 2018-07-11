@@ -38,18 +38,23 @@ var ImportRequestsTree = {
             });
         ImportRequestsTree.viewSwitcher.setSourceList(SourceList);
 
+        ImportRequestsTree.treeComponent =
         ImportRequestsTree.tree.jstree({
             'core': {
                 'data' : {
                     "url" : function (node, cb, par2) {
-                        var id = node.id;
+                        var id;
                         if (node.id === "#") {
                             id = ImportRequestsTree.getActiveImportId();
+                            // id = "";
+                        } else {
+                            id = node.data.nodeId;
                         }
-                        return "/importing/list/"+id;
+                        var processId = ImportRequestsTree.getActiveProcessId();
+                        return "/importing/list/"+processId+"/"+id;
                     },
                     "postprocessor": function (node, data, par2) {
-                        return ImportRequestsTree.preprocessAsNodes(data.response.content);
+                        return ImportRequestsTree.preprocessAsNodes(data.list.content, data.result);
                     },
                     "renderer" : function (node, obj, settings, jstree, document) {
                         var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, obj.data);
@@ -87,9 +92,8 @@ var ImportRequestsTree = {
         }).on("select_node.jstree", ImportRequestsTree.onNodeClick);
     },
 
-    preprocessAsNodes: function (nodesList) {
-        for(nodexIndex in nodesList) {
-            var node = nodesList[nodexIndex];
+    preprocessAsNodes: function (nodesList, nodeParent) {
+        function prepareNode(node) {
             node.text = (node.path === "") ? "Gallery Root" : node.path;
             if (node.rootPath && node.text.startsWith(node.rootPath)) {
                 node.text = node.text.substr(node.rootPath.length);
@@ -102,41 +106,34 @@ var ImportRequestsTree = {
             node.state = {
                 opened: false
             };
-            if (node.parent === null || node.parent === node.rootId) {
+            node.parent = node.id;
+            if (node.parent === null) {
                 node.parent = '#';
-            }
-            var rowText = '<div class="node_postblock">';
-            rowText += '  <div class="status" data-toggle="tooltip" ';
-            if (node.updated) {
-                var tooltip = formatDate(node.updated);
-                rowText += ' tooltip="'+tooltip+'"';
-            }
-            rowText += '>' +node.status+'</div>';
-            rowText += '  <div class="filesCount">';
-            if (node.filesCount != null) {
-                if (node.filesIgnoredCount != null && node.filesIgnoredCount > 0) {
-                    rowText += '(' + node.filesIgnoredCount + ')';
-                }
-                rowText += ' ' + node.filesCount;
-            }
-            rowText += '  </div>';
-            rowText += '  <div class="foldersCount">';
-            if (node.foldersCount != null) {
-                if (node.foldersCount > 0) {
-                    rowText += node.foldersCount;
-                    node.children = true;
-                } else {
-                    node.children = false;
-                }
+                // node.id = '#';
             } else {
-                node.children = true;
+                // node.parent = node.id;
             }
-            rowText += '  </div>';
-            rowText += '</div>';
-
-            node.text += rowText;
+            if (node.parent === node.rootId) {
+                node.parent = '#';
+                node.id = '#';
+            }
+            node.nodeId = node.id;
+            // delete node.id;
         }
 
+        for(nodexIndex in nodesList) {
+            var node = nodesList[nodexIndex];
+            prepareNode(node);
+        }
+
+        if (nodeParent) {
+            prepareNode(nodeParent);
+            // nodesList.push(nodeParent);
+            if (nodesList.length > 0) {
+                nodeParent.children = nodesList;
+            }
+            return nodeParent;
+        }
         return nodesList;
     },
 
@@ -191,7 +188,6 @@ var ImportRequestsTree = {
         ImportRequestsTree.progress.files.setProgress(stats.files, 0,stats.files+" files");
     },
     refresh: function() {
-        ImportRequestsTree.tree.jstree(true).refresh();
         var id = ImportRequestsTree.getActiveProcessId();
         AjaxHelper.runGET("/processes/"+id,
             function (response) {
@@ -199,6 +195,16 @@ var ImportRequestsTree = {
                 FormHelper.populate($("#importDetailsListData"), response.result);
             }
         );
+
+        var tree = ImportRequestsTree.tree.jstree(true);
+        // var selectedNode = tree.get_selected();
+        // tree.refresh_node(selectedNode);
+        // tree.deselect_all();
+        // tree.select_node("#");
+        // tree = ImportRequestsTree.treeComponent;
+        // var currentNode = tree._get_node(null, false);
+        // var parentNode = tree._get_parent(currentNode);
+        tree.refresh(false, false);
     },
 
     updateTotals: function (data) {
@@ -256,8 +262,10 @@ $(document).ready(function() {
 });
 
 function getIndexRequests(nodeId) {
+    debugger;
     var response = "";
-    var url = "/importing/list/"+(nodeId==="#"?"":nodeId);
+    var processId = ImportRequestsTree.getActiveProcessId();
+    var url = "/importing/list/"+processId+"/"+(nodeId==="#"?"":nodeId);
     $.ajax({
         type: "GET",
         url: url,
@@ -276,7 +284,7 @@ function getIndexRequests(nodeId) {
         async: false
     });
     if (response.status === '200') {
-        return ImportRequestsTree.preprocessAsNodes(response.response.content);
+        return ImportRequestsTree.preprocessAsNodes(response.list.content, response.result);
     }
     return [{"text" : "ERROR", "id" : "1", "children" : false}];
 }

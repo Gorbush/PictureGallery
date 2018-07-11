@@ -10,7 +10,7 @@ $(document).ready(function() {
                     return "/indexing/list/"+node.id;
                 },
                 "postprocessor": function (node, data, par2) {
-                    return preprocessAsNodes(data.response.content);
+                    return preprocessAsNodes(data.list.content, data.result);
                 }
             }
         },
@@ -86,11 +86,11 @@ function getIndexRequests(nodeId) {
         async: false
     });
     if (response.status === '200') {
-        return preprocessAsNodes(response.response.content);
+        return preprocessAsNodes(response.list.content, response.result);
     }
     return [{"text" : "ERROR", "id" : "1", "children" : false}];
 }
-function preprocessAsNodes(nodesList) {
+function preprocessAsNodes(nodesList, node) {
     for(nodexIndex in nodesList) {
         var node = nodesList[nodexIndex];
         node.text = (node.path === "") ? "Gallery Root" : node.path;

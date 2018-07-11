@@ -122,16 +122,19 @@ public class ImportProcessor extends ImportProcessorBase {
     } */
 
     public void requestProcessing(ImportRequest requestSrc, Process process) throws ImportFailedException {
+        log.warn("   import processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         Path path = appConfig.getImportRootFolderPath().resolve(request.getPath());
 
         if (!validateImportRequest(process, path))
             return;
 
+        ImportRequest.ImportStatus oldStatus = request.getStatus();
         request.setStatus(statusHolder.getInProcessing());
         request.getStats(processType).getFiles().set(-1);
         requestRepository.save(request);
 
         Path enumeratingDir = null;
+        log.info("  folders enumerating id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         try (DirectoryStream<Path> directoryStreamOfFolders = Files.newDirectoryStream(path, file -> file.toFile().isDirectory())) {
             int foldersCount = 0;
             for (Path dir : directoryStreamOfFolders) {
@@ -143,26 +146,29 @@ public class ImportProcessor extends ImportProcessorBase {
             request.setFoldersCount(foldersCount);
             request.getStats(processType).incFolders(foldersCount);
             requestRepository.save(request);
-            log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.info("    folders processed {}. id={} status={} path={}",
+                    foldersCount,
+                    request.getId(), request.getStatus(), request.getPath());
         } catch (IOException e) {
             request.setFoldersCount(-1);
             request.addError("ImportRequest indexing failed for folder "+enumeratingDir);
             requestRepository.save(request);
-            log.error("ImportRequest Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
+            log.error(" Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
         }
 
+        log.info("    files enumerating id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         try {
-            log.info("ImportRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             Path importRootFolder = Paths.get(request.getRootPath());
             int filesCount = 0;
             int filesIgnoredCount = 0;
+            int filesSucceedCount = 0;
             ImportRequest.ImportStats stats = request.getStats(processType);
             try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
                 for (Path file : directoryStreamOfFiles) {
                     String fileName = file.toString().toLowerCase();
                     String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
                     if (fileName.startsWith(".")) {
-                        log.info("ImportRequest Ignore system file {}", file.toAbsolutePath().toString());
+                        log.info(" Ignore system file {}", file.toAbsolutePath().toString());
                         continue;
                     }
 
@@ -183,6 +189,7 @@ public class ImportProcessor extends ImportProcessorBase {
                                 stats.incMovedToApprove();
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 info.setStatus(InfoStatus.ANALYSING);
+                                filesSucceedCount++;
                             }
                         } else {
                             filesIgnoredCount++;
@@ -190,7 +197,7 @@ public class ImportProcessor extends ImportProcessorBase {
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(targetFolder.toFile().getAbsolutePath());
                             info.setStatus(InfoStatus.FAILED);
-                            logUnknownFormats.error("ImportRequest Unknown format of file {}", file.toAbsolutePath().toString());
+                            logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
                         }
                     } else {
                         Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
@@ -200,7 +207,7 @@ public class ImportProcessor extends ImportProcessorBase {
                     }
                     importSourceRepository.saveByGrade(info);
                     if (!InfoStatus.FAILED.equals(info.getStatus()) && !info.hasThumb()) {
-                        log.warn(" No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
+                        log.warn("     No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
                         Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
                         String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
                         ThumbRequest request = new ThumbRequest(info.getFullFilePath(), relativeStoredPath);
@@ -215,19 +222,23 @@ public class ImportProcessor extends ImportProcessorBase {
             stats.setAllFilesProcessed(true);
             stats.getFiles().set(filesCount);
             if (stats.getFilesDone().get() != filesCount) {
-                log.warn("Cound Mismatch for ImportRequest id={} done={} <> {}",
+                log.warn("     Count Mismatch for ImportRequest id={} done={} <> {}",
                         request.getId(), stats.getFilesDone().get() , filesCount);
             }
             stats.getFilesDone().set(filesCount);
             requestRepository.save(request);
+            log.info("     files processing done {} or {} succeeded ({} ignored). id={} status={} path={}",
+                    filesCount, filesSucceedCount, filesIgnoredCount,
+                    request.getId(), request.getStatus(), request.getPath());
         } catch (IOException e) {
             request.setFilesCount(-1);
             request.setFilesIgnoredCount(-1);
             request.getStats(processType).setAllFilesProcessed(true);
             request.addError("indexing failed for file "+path);
             requestRepository.save(request);
-            log.error("ImportRequest  indexing failed for file {}. Reason: {}", path, e.getMessage());
+            log.error("     import processing failed for file {}. Reason: {}", path, e.getMessage());
         }
+        log.warn("   import processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
     }
 
     /**
@@ -285,6 +296,7 @@ public class ImportProcessor extends ImportProcessorBase {
         } catch (FileNotFoundException e) {
             throw new ImportFailedException("File not found "+ path, e);
         }
+        log.info(" register new Import path={} processId={} {}", path, indexProcessId, parent != null ? ("path="+parent.getPath()) : "");
         ImportRequest newRequest = requestRepository.findByPath(path);
         if (newRequest == null) {
             newRequest = new ImportRequest();
@@ -308,7 +320,8 @@ public class ImportProcessor extends ImportProcessorBase {
             newRequest.setRootId(newRequest.getId());
         }
         requestRepository.save(newRequest);
-        log.info("ImportRequest status changed id={} status={} path={}", newRequest.getId(), newRequest.getStatus(), newRequest.getPath());
+        log.info("    registered as id={} status={} path={} processid={} {}", newRequest.getId(), newRequest.getStatus(), newRequest.getPath(),
+                indexProcessId, parent != null ? ("path="+parent.getPath()) : "");
 
         return newRequest;
     }

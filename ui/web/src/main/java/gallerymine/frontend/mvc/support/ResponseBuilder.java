@@ -1,6 +1,7 @@
 package gallerymine.frontend.mvc.support;
 
 import gallerymine.model.Process;
+import org.springframework.data.domain.Page;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.*;
@@ -141,6 +142,11 @@ public class ResponseBuilder {
         List results = new ArrayList();
         processes.forEach(result -> results.add(result));
         map.put("list", results);
+        return this;
+    }
+
+    public ResponseBuilder results(Page paged) {
+        map.put("list", paged);
         return this;
     }
 

@@ -58,6 +58,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
     }
 
     public void requestProcessing(ImportRequest request, Process process) throws ImportFailedException {
+        log.warn("   matching processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         Path path = appConfig.getImportRootFolderPath().resolve(request.getPath());
 
         if (!validateImportRequest(process, path))
@@ -69,7 +70,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
         stats.setFolders(statsEnum.getFolders());
         stats.setFiles(statsEnum.getFilesDone());
         requestRepository.save(request);
-        log.info(this.getClass().getSimpleName()+" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info(" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         try {
             int filesCount = 0;
             int filesSucceedCount = 0;
@@ -96,14 +97,17 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                             .incFilesDone();
                 } catch (Exception e) {
                     request.getStats(processType).incFailed();
-                    log.error(this.getClass().getSimpleName()+" Failed processing info id=%s path=%s", info.getId(), info.getFileName());
+                    log.error("   matching processing failed: Failed processing info id={} path={}", info.getId(), info.getFileName());
                 }
+                log.info("   matching processing done {} or {} succeeded. id={} status={} path={}",
+                        filesCount, filesSucceedCount,
+                        request.getId(), request.getStatus(), request.getPath());
                 requestRepository.save(request);
             }
 
             String info = request.addNote("Matching info gathered for id=%s files %d of %d. Failed:%d",
                     request.getId(), filesSucceedCount, filesCount, filesCount-filesSucceedCount);
-            log.info(this.getClass().getSimpleName()+" "+info);
+            log.info(" "+info);
 
             request.setStatus(statusHolder.getProcessingDone());
             request.getStats(processType).setAllFilesProcessed(true);
@@ -111,8 +115,9 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
         } catch (Exception e) {
             request.addError("Matching info analysing failed for indexRequest id=%s", request.getId());
             requestRepository.save(request);
-            log.error(this.getClass().getSimpleName()+" Matching info analysing failed for indexRequest id=%s {}. Reason: {}", path, e.getMessage());
+            log.error("   matching processing failed: Matching info analysing failed for indexRequest id=%s {}. Reason: {}", path, e.getMessage());
         }
+        log.warn("   matching processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
     }
 
 }

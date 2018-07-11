@@ -56,26 +56,26 @@ public class ThumbRequestProcessor implements Runnable {
     @Override
     public void run() {
         try {
-            log.info("ThumbRequest processing started path={}", request.getId(), request.getFilePath());
+            log.info(" processing started path={}", request.getId(), request.getFilePath());
             processRequest(request);
-            log.info("ThumbRequest processing succeed path={}", request.getId(), request.getFilePath());
+            log.info(" processing succeed path={}", request.getId(), request.getFilePath());
         } catch (Exception e){
-            log.error("ThumbRequest processing failed path={}", request.getId(), request.getFilePath(), e);
+            log.error(" processing failed path={}", request.getId(), request.getFilePath(), e);
         }
     }
 
     private void processRequest(ThumbRequest requestSrc) {
-        log.info("ThumbRequest processing started path={}", requestSrc.getId(), requestSrc.getFilePath());
+        log.info(" processing started path={}", requestSrc.getId(), requestSrc.getFilePath());
         if (requestSrc == null) {
-            log.info("ThumbRequest processing skipped path={}", requestSrc.getId(), requestSrc.getFilePath());
+            log.info(" processing skipped path={}", requestSrc.getId(), requestSrc.getFilePath());
             return;
         }
         ThumbRequest request = thumbRequestRepository.findOne(requestSrc.getId());
         if (request == null) {
-            log.info("ThumbRequest already processed path={}", requestSrc.getId(), requestSrc.getFilePath());
+            log.info(" already processed path={}", requestSrc.getId(), requestSrc.getFilePath());
             return;
         }
-        log.info("ThumbRequest started processing id={} path={}", request.getId(), request.getFilePath());
+        log.info(" started processing id={} path={}", request.getId(), request.getFilePath());
         try {
             File imageFile = new File(request.getFilePath());
 
@@ -88,13 +88,13 @@ public class ThumbRequestProcessor implements Runnable {
             }
 
             if (!imageFile.exists()) {
-                log.info("ThumbRequest source image not found id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
+                log.info(" source image not found id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
                 return;
             }
 
             File thumbFile = new File(appConfig.getThumbsRootFolder(), request.getThumbName()).getAbsoluteFile();
             if (thumbFile.exists()) {
-                log.info("ThumbRequest thumb already exists id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
+                log.info(" thumb already exists id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
                 return;
             }
 
@@ -104,13 +104,13 @@ public class ThumbRequestProcessor implements Runnable {
             if (img != null) {
                 BufferedImage scaledImage = Scalr.resize(img, 200);
                 ImageIO.write(scaledImage, "jpg", thumbFile);
-                log.info("ThumbRequest processed and removed id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
+                log.info(" processed and removed id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
                 thumbRequestRepository.delete(request.getId());
                 if (source != null) {
                     source.setThumbPath(request.getThumbName());
                 }
             } else {
-                log.info("ThumbRequest failed id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
+                log.info(" failed id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
                 request.setError("Image cannot be read");
                 thumbRequestRepository.save(request);
             }
@@ -119,7 +119,7 @@ public class ThumbRequestProcessor implements Runnable {
                 uniSourceRepository.saveByGrade(source);
             }
         } catch (Exception e) {
-            log.error("ThumbRequest processing failed id={} path={}", requestSrc.getId(), requestSrc.getFilePath(), e);
+            log.error(" processing failed id={} path={}", requestSrc.getId(), requestSrc.getFilePath(), e);
             thumbRequestRepository.save(request);
         }
     }

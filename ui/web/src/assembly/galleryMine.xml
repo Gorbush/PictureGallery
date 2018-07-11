@@ -7,7 +7,7 @@
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
-        <dependencySet>
+        <!-- dependencySet>
             <outputDirectory>lib</outputDirectory>
             <unpack>false</unpack>
             <excludes>
@@ -21,7 +21,7 @@
             <includes>
                 <exclude>project:module:zip:misc</exclude>
             </includes>
-        </dependencySet>
+        </dependencySet -->
     </dependencySets>
     <fileSets>
         <!-- fileSet>

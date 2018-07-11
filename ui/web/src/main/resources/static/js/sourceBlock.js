@@ -95,6 +95,7 @@ var DecisionButtonBlock = {
                    var block = SourceList.getBlockById(response.result.id);
                    if (block) {
                        block.markDecision(response.result.grade, response.result.status);
+                       ImportRequestsTree.refresh();
                    }
                });
             },
@@ -291,7 +292,8 @@ var SourceBlock = {
                     this.sourceBlockElement.addClass("source-block-primary");
                 }
                 */
-                return this.decisionButtons.markDecision(grade, status);
+                this.decisionButtons.markDecision(grade, status);
+                return false;
             },
 
             failFolderStats: function (message) {

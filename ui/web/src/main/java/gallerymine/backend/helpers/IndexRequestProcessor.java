@@ -71,13 +71,13 @@ public class IndexRequestProcessor implements Runnable {
     }
 
     public void processRequest(IndexRequest requestSrc) {
-        log.info("IndexRequest picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
+        log.info(" picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
         IndexRequest request = checkRequest(requestSrc);
         if (request == null) {
-            log.info("IndexRequest skipped id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
+            log.info(" skipped id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
             return;
         }
-        log.info("IndexRequest started processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info(" started processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         try {
             Path path = Paths.get(appConfig.getSourcesRootFolder(), request.getPath());
@@ -91,7 +91,7 @@ public class IndexRequestProcessor implements Runnable {
                 }
                 request.setFoldersCount(foldersCount);
                 requestRepository.save(request);
-                log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+                log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             } catch (IOException e) {
                 request.setFoldersCount(-1);
                 request.addError("indexing failed for folder "+enumeratingDir);
@@ -102,7 +102,7 @@ public class IndexRequestProcessor implements Runnable {
             try {
                 request.setStatus(IndexRequest.IndexStatus.FILES_PROCESSING);
                 requestRepository.save(request);
-                log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+                log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
                 int filesCount = 0;
                 int filesIgnoredCount = 0;
@@ -145,7 +145,7 @@ public class IndexRequestProcessor implements Runnable {
             request.setError(e.getMessage());
             requestRepository.save(request);
 //            importService.finishRequestProcessing(request);
-            log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         } finally {
             pool.checkForAwaitingRequests();
         }
@@ -189,7 +189,7 @@ public class IndexRequestProcessor implements Runnable {
             request.setStatus(IndexRequest.IndexStatus.SUB);
         }
         requestRepository.save(request);
-        log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         if (allDone && request.getParent() != null) {
             checkSubsAndDone(request.getParent());
@@ -199,17 +199,17 @@ public class IndexRequestProcessor implements Runnable {
     private IndexRequest checkRequest(IndexRequest requestSrc) {
         IndexRequest request = requestRepository.findOne(requestSrc.getId());
         if (request == null) {
-            log.info("IndexRequest not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
+            log.info(" not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
             return null;
         }
         if (!request.isProcessable()) {
-            log.info("IndexRequest status is not processable id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.info(" status is not processable id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             return null;
         }
 
         request.setStatus(IndexRequest.IndexStatus.ENUMERATING);
         requestRepository.save(request);
-        log.info("IndexRequest status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         return request;
     }
@@ -228,7 +228,7 @@ public class IndexRequestProcessor implements Runnable {
         newRequest.setPath(path);
 
         requestRepository.save(newRequest);
-        log.info("IndexRequest status changed id={} status={} path={}", newRequest.getId(), newRequest.getStatus(), newRequest.getPath());
+        log.info(" status changed id={} status={} path={}", newRequest.getId(), newRequest.getStatus(), newRequest.getPath());
 
         return newRequest;
     }
@@ -264,7 +264,7 @@ public class IndexRequestProcessor implements Runnable {
             sourceRepository.save(pictureSource);
 
             if (!pictureSource.hasThumb()) {
-                log.warn(" No thumbnail injected - need to generate one for {} in {}", pictureSource.getFileName(), pictureSource.getFilePath());
+                log.warn("     No thumbnail injected - need to generate one for {} in {}", pictureSource.getFileName(), pictureSource.getFilePath());
                 File thumbStoredFile = generatePicThumbName(pictureSource);
                 String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.getAbsolutePath());
                 ThumbRequest request = new ThumbRequest(pictureSource.getFullFilePath(), relativeStoredPath);
@@ -297,11 +297,11 @@ public class IndexRequestProcessor implements Runnable {
     @Override
     public void run() {
         try {
-            log.info("IndexRequest processing started for {}", request.getPath());
+            log.info(" processing started for {}", request.getPath());
             processRequest(request);
-            log.info("IndexRequest processing succeed for {}", request.getPath());
+            log.info(" processing succeed for {}", request.getPath());
         } catch (Exception e){
-            log.error("IndexRequest processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
+            log.error(" processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
         }
     }
 }

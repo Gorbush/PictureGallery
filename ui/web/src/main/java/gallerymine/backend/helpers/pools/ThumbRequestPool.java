@@ -1,7 +1,8 @@
-package gallerymine.backend.helpers;
+package gallerymine.backend.helpers.pools;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
+import gallerymine.backend.helpers.ThumbRequestProcessor;
 import gallerymine.model.importer.ThumbRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

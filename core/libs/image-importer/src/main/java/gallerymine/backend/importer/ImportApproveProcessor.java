@@ -48,7 +48,7 @@ public class ImportApproveProcessor extends ImportProcessorBase {
     }
 
     public void requestProcessing(ImportRequest request, Process process) throws ImportFailedException {
-        log.warn(this.getClass().getSimpleName()+" approve processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.warn("   approve processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         ImportRequest.ImportStats stats = request.getStats(processType);
         ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.MATCHING);
         stats.setFolders(statsEnum.getFolders());
@@ -65,7 +65,7 @@ public class ImportApproveProcessor extends ImportProcessorBase {
             requestRepository.save(request);
         }
 
-        log.info(this.getClass().getSimpleName()+" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("   approve processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
     }
 
 }

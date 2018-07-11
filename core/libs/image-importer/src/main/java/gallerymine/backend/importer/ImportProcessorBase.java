@@ -72,7 +72,7 @@ public abstract class ImportProcessorBase implements Runnable {
     protected boolean validateImportRequest(Process process, Path path) {
         if (!path.toFile().exists()) {
             String error = request.addError("Path not found for request : %s", path.toFile().getAbsolutePath());
-            log.error(this.getClass().getSimpleName()+" "+error);
+            log.error(" "+error);
 
             request.setStatus(statusHolder.getProcessingDone());
             requestRepository.save(request);
@@ -87,7 +87,7 @@ public abstract class ImportProcessorBase implements Runnable {
     public void run() {
         Process process = null;
         try {
-            log.info(this.getClass().getSimpleName()+" processing started for {}", request.getPath());
+            log.info(" processing started for {}", request.getPath());
             process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
             if (process == null) {
                 process = new Process();
@@ -100,26 +100,26 @@ public abstract class ImportProcessorBase implements Runnable {
 
             processRequest(request, process);
 
-            log.info(this.getClass().getSimpleName()+" processing started successfuly for {}", request.getPath());
+            log.info(" processing started successfuly for {}", request.getPath());
         } catch (Exception e){
-            log.error(this.getClass().getSimpleName()+" processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
+            log.error(" processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
         }
     }
 
     protected ImportRequest checkRequest(ImportRequest requestSrc) {
         ImportRequest request = requestRepository.findOne(requestSrc.getId());
         if (request == null) {
-            log.info(this.getClass().getSimpleName()+" not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
+            log.info(" not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
             return null;
         }
         if (!statusHolder.getAwaitingProcessing().equals(request.getStatus())) {
-            log.info(this.getClass().getSimpleName()+" status is not processable id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.info(" status is not processable id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             return null;
         }
 
 //        request.setStatus(statusHolder.getAwaitingProcessing());
 //        requestRepository.save(request);
-//        log.info(this.getClass().getSimpleName()+" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+//        log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         return request;
     }
@@ -127,13 +127,13 @@ public abstract class ImportProcessorBase implements Runnable {
     public abstract void requestProcessing(ImportRequest requestSrc, Process process) throws ImportFailedException;
 
     public void processRequest(ImportRequest requestSrc, Process process) {
-        log.info(this.getClass().getSimpleName()+" picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
+        log.info(" picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
         ImportRequest request = checkRequest(requestSrc);
         if (request == null) {
-            log.info(this.getClass().getSimpleName()+" skipped id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
+            log.info(" skipped id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
             return;
         }
-        log.info(this.getClass().getSimpleName()+" started processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("  processing started id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         try {
             requestProcessing(requestSrc, process);
@@ -144,8 +144,9 @@ public abstract class ImportProcessorBase implements Runnable {
             request.addError(e.getMessage());
             requestRepository.save(request);
             importService.finishRequestProcessing(request);
-            log.info(this.getClass().getSimpleName()+" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.info("   status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         } finally {
+            log.info("  processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             pool.checkForAwaitingRequests();
         }
     }

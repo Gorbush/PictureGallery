@@ -99,6 +99,36 @@
 		</encoder>
 	</appender>
 
+	<appender name="POOLS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/pools.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/pools.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="THUMBS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Append>true</Append>
+		<File>logs/thumbs.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/thumbs.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
     <appender name="INDEX_FILE_FAILED" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Append>true</Append>
         <File>logs/indexer_error.log</File>
@@ -224,6 +254,14 @@
 
 	<logger name="gallerymine.backend.helpers.analyzer" level="WARN" additivity="false">
 		<appender-ref ref="ANALYSER_FILE" />
+	</logger>
+
+	<logger name="gallerymine.backend.helpers.pools" level="INFO" additivity="false">
+		<appender-ref ref="POOLS_FILE" />
+	</logger>
+
+	<logger name="gallerymine.backend.helpers.ThumbRequestProcessor" level="INFO" additivity="false">
+		<appender-ref ref="THUMBS_FILE" />
 	</logger>
 
 	<logger name="org.thymeleaf.standard.expression" level="DEBUG" additivity="true">
