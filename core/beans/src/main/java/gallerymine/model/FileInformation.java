@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -64,9 +65,12 @@ public class FileInformation implements Comparable<FileInformation> {
     private Set<String> indexProcessIds = new HashSet<>();
 
     @CreatedDate
-    private DateTime indexed;
+    private DateTime created;
     @LastModifiedDate
     private DateTime updated;
+
+    @Version
+    private long version = 0;
 
     public void updateTimestamp() {
         if (CollectionUtils.isEmpty(timestamps)) {
@@ -134,7 +138,7 @@ public class FileInformation implements Comparable<FileInformation> {
         indexProcessIds = new HashSet<>();
         indexProcessIds.addAll(sourceToMatch.getIndexProcessIds());
 
-        indexed = sourceToMatch.getIndexed();
+        created = sourceToMatch.getCreated();
         updated = sourceToMatch.getUpdated();
     }
 

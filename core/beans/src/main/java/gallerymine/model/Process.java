@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
@@ -40,6 +41,9 @@ public class Process {
     private DateTime created;
     @LastModifiedDate
     private DateTime updated;
+
+    @Version
+    private long version = 0;
 
 
     public String addError(String error, Object... params) {
