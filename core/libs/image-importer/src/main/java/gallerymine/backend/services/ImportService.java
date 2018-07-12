@@ -178,7 +178,7 @@ public class ImportService {
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public void checkSubsAndDone(String requestId, ImportRequest child, ProcessType processType, ImportRequest.ImportStatus processingDoneStatus) throws ImportFailedException {
         if (requestId == null) {
-            log.error(" checkSubsAndDone failed: Failed to check subs for request id={}", requestId);
+            log.error(" checkSubsAndDone failed: Failed to check subs for request null");
             return;
         }
 
