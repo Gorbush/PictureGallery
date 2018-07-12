@@ -188,9 +188,8 @@ var ImportRequestsTree = {
         ImportRequestsTree.autoRefreshCheck.prop('checked', false);
     },
     updateProgress: function (stats) {
-        ImportRequestsTree.progress.folders.setProgress(stats.folders, stats.foldersDone,
-            stats.foldersDone + " of " + stats.folders);
-        ImportRequestsTree.progress.files.setProgress(stats.files, 0,stats.files+" files");
+        ImportRequestsTree.progress.folders.setProgress(stats.foldersDone, stats.folders, stats.foldersDone + " of " + stats.folders);
+        ImportRequestsTree.progress.files.setProgress(stats.files, stats.files >= 0 ? stats.files : 0,stats.files+" files");
     },
     refresh: function() {
         var id = ImportRequestsTree.getActiveProcessId();
