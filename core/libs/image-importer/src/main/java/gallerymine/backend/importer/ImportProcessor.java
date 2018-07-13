@@ -1,11 +1,13 @@
 package gallerymine.backend.importer;
 
 import gallerymine.backend.beans.repository.ImportSourceRepository;
+import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
+import gallerymine.backend.helpers.analyzer.IgnorableFileAnayser;
 import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
@@ -13,6 +15,7 @@ import gallerymine.backend.services.ImportService;
 import gallerymine.backend.services.UniSourceService;
 import gallerymine.model.FileInformation;
 import gallerymine.model.ImportSource;
+import gallerymine.model.Picture;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.ThumbRequest;
@@ -32,6 +35,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
@@ -47,6 +51,8 @@ public class ImportProcessor extends ImportProcessorBase {
                     .processing(TO_ENUMERATE)
                     .abandoned(ENUMERATING_AWAIT, ENUMERATING, ENUMERATED);
 
+    public static final String KIND_THUMB = "Thumb";
+
     @Autowired
     private ThumbRequestRepository thumbRequestRepository;
 
@@ -58,6 +64,9 @@ public class ImportProcessor extends ImportProcessorBase {
 
     @Autowired
     private ImageFormatAnalyser imageAnalyzer;
+
+    @Autowired
+    private IgnorableFileAnayser ignorableFileAnayser;
 
     @Autowired
     private GenericFileAnalyser fileAnalyzer;
@@ -77,6 +86,9 @@ public class ImportProcessor extends ImportProcessorBase {
     public ImportProcessor() {
         super(STATUSES, ProcessType.IMPORT);
     }
+
+    @Autowired
+    private PictureRepository pictureRepository;
 
     /*
     public ImportRequest registerImport(Path originalPath, boolean enforceImport) {
@@ -187,8 +199,8 @@ public class ImportProcessor extends ImportProcessorBase {
                     info.setImportRequestRootId(request.getRootId());
                     fileAnalyzer.gatherFileInformation(file, importRootFolder, info);
 
+                    filesCount++;
                     if (imageAnalyzer.acceptsExtension(fileExt)) {
-                        filesCount++;
                         processPictureFile(file, importRootFolder, info);
 
                         if (!info.isFailed()) {
@@ -196,8 +208,8 @@ public class ImportProcessor extends ImportProcessorBase {
                                 Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 info.setStatus(InfoStatus.ANALYSING);
-                                filesCountSucceed++;
                             }
+                            filesCountSucceed++;
                         } else {
                             filesCountFailed++;
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
@@ -206,10 +218,17 @@ public class ImportProcessor extends ImportProcessorBase {
                             logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
                         }
                     } else {
-                        Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                        info.setRootPath(targetFolder.toFile().getAbsolutePath());
-                        filesCountIgnored++;
-                        info.setStatus(InfoStatus.FAILED);
+                        if (ignorableFileAnayser.accepts(file.toFile().getName())) {
+                            Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
+                            info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                            filesCountIgnored++;
+                            info.setStatus(InfoStatus.SKIPPED);
+                        } else {
+                            Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
+                            info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                            filesCountFailed++;
+                            info.setStatus(InfoStatus.FAILED);
+                        }
                     }
                     importSourceRepository.saveByGrade(info);
                     if (!InfoStatus.FAILED.equals(info.getStatus()) && !info.hasThumb()) {
@@ -266,11 +285,16 @@ public class ImportProcessor extends ImportProcessorBase {
 //            info.setStatus(InfoStatus.DUPLICATE);
 //            return true;
 //        }
-        boolean similarFound = importUtils.findSimilar(file.toFile().getName(), file.toFile().length());
-        if (similarFound) {
+        Collection<Picture> picturesDuplicates = pictureRepository.findByFileNameAndSize(file.toFile().getName(), file.toFile().length());
+        if (picturesDuplicates.size() > 0) {
+            Picture pic = picturesDuplicates.iterator().next();
             Path targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
             info.setRootPath(targetFolder.toFile().getAbsolutePath());
             info.setStatus(InfoStatus.DUPLICATE);
+            if (pic.getThumbPath() != null) {
+                info.setThumbPath(pic.getThumbPath());
+                info.getPopulatedBy().add(KIND_THUMB);
+            }
             return true;
         }
         return false;

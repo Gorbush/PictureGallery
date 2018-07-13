@@ -110,6 +110,15 @@ public class ImportRequest {
         private Boolean allFilesProcessed = false;
         private Boolean allFoldersProcessed = false;
 
+        public boolean checkAllFilesProcessed() {
+            long countDone = getFilesProcessed();
+            return files.get() <= countDone;
+        }
+
+        public long getFilesProcessed() {
+            return (failed.get() + skipped.get() + movedToApprove.get() + duplicates.get());
+        }
+
         public ImportStats append(ImportStats subStats) {
             processed.addAndGet(subStats.processed.get());
             movedToApprove.addAndGet(subStats.movedToApprove.get());

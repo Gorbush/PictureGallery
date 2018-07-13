@@ -61,8 +61,15 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                     request.setStatus(statusHolder.getInProcessing());
                     ImportRequest.ImportStats stats = request.getStats(processType);
                     ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.IMPORT);
-                    stats.setFolders(statsEnum.getFolders());
-                    stats.setFiles(statsEnum.getFilesDone());
+
+                    stats.getFolders().set(statsEnum.getFolders().get());
+                    stats.getFiles().set(statsEnum.getFiles().get());
+
+                    stats.getDuplicates().set(statsEnum.getDuplicates().get());
+                    stats.getFailed().set(statsEnum.getFailed().get());
+                    stats.getSkipped().set(statsEnum.getSkipped().get());
+
+                    stats.setAllFilesProcessed(stats.checkAllFilesProcessed());
                     return true;
                 });
         updateMarker();
@@ -72,6 +79,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             int filesCount = 0;
             int filesSucceedCount = 0;
             int filesFailedCount = 0;
+            int filesSkippedCount = 0;
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
             criteria.setStatus(InfoStatus.ANALYSING);
@@ -83,6 +91,18 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                 filesCount++;
                 ImportSource infoImg = importSources.next();
                 try {
+                    if (InfoStatus.FAILED.equals(infoImg.getStatus())) {
+                        filesFailedCount++;
+                        continue;
+                    }
+//                    if (InfoStatus.DUPLICATE.equals(infoImg.getStatus())) {
+//                        filesSucceedCount++;
+//                        continue;
+//                    }
+//                    if (InfoStatus.SKIPPED.equals(infoImg.getStatus())) {
+//                        filesSkippedCount++;
+//                        continue;
+//                    }
                     SourceMatchReport matchReport = sourceFilesMatcher.matchSourceTo(infoImg);
 
                     infoImg = uniSourceService.retrySave(infoImg.getId(), ImportSource.class, info -> {
@@ -96,10 +116,10 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                     filesFailedCount++;
                     log.error("   matching processing failed: Failed processing info id={} path={}", infoImg.getId(), infoImg.getFileName());
                 }
-                log.info("   matching processing done {} or {} succeeded. id={} status={} path={}",
-                        filesCount, filesSucceedCount,
-                        request.getId(), request.getStatus(), request.getPath());
             }
+            log.info("   matching processing done {} or {} succeeded. id={} status={} path={}",
+                    filesCount, filesSucceedCount,
+                    request.getId(), request.getStatus(), request.getPath());
 
             String info = String.format("Matching info gathered for id=%s files %d of %d. Failed:%d", request.getId(), filesSucceedCount, filesCount, filesCount-filesSucceedCount);
             log.info(" "+info);
@@ -107,12 +127,14 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             final int doneFilesCount = filesCount;
             final int doneFilesSucceedCount = filesSucceedCount;
             final int doneFilesFailedCount = filesFailedCount;
+//            final int doneFilesSkippedCount = filesSkippedCount;
 
             request = requestService.retrySave(request.getId(), request -> {
                 request.addNote(info);
-                request.getStats(processType).getMovedToApprove().set(doneFilesSucceedCount);
-                request.getStats(processType).getFilesDone().set(doneFilesCount);
-                request.getStats(processType).getFailed().set(doneFilesFailedCount);
+                request.getStats(processType).getMovedToApprove().addAndGet(doneFilesSucceedCount);
+                request.getStats(processType).getFilesDone().addAndGet(doneFilesCount);
+                request.getStats(processType).getFailed().addAndGet(doneFilesFailedCount);
+//                request.getStats(processType).getSkipped().set(doneFilesSkippedCount);
                 request.setStatus(statusHolder.getProcessingDone());
                 request.getStats(processType).setAllFilesProcessed(true);
                 return true;

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.List;
 
 /**
  * Creates thumbnail of image
@@ -85,9 +86,9 @@ public class ThumbRequestProcessor implements Runnable {
 
             if (!imageFile.exists()) {
                 // look for source in Imports
-                PictureInformation info = uniSourceRepository.findInfo(request.getSource());
-                if (info != null) {
-                    imageFile = new File(info.getFullFilePath());
+                List<PictureInformation> info = uniSourceRepository.findInfo(request.getSource());
+                if (info != null && info.size() > 0) {
+                    imageFile = new File(info.get(0).getFullFilePath());
                 }
             }
 
@@ -104,25 +105,32 @@ public class ThumbRequestProcessor implements Runnable {
 
             BufferedImage img = ImageIO.read(imageFile);
 
-            PictureInformation source = uniSourceRepository.findInfo(request.getSource());
             if (img != null) {
                 BufferedImage scaledImage = Scalr.resize(img, 200);
                 ImageIO.write(scaledImage, "jpg", thumbFile);
                 log.info(" processed and removed id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
                 thumbRequestRepository.delete(request.getId());
-                if (source != null) {
-                    source.setThumbPath(request.getThumbName());
-                }
             } else {
                 log.info(" failed id={} path={} image={}", request.getId(), request.getFilePath(), imageFile.getAbsolutePath());
                 request.setError("Image cannot be read");
                 thumbRequestRepository.save(request);
             }
-            if (source != null) {
-                uniSourceService.addPopulatedBy(source.getId(), source.getClass(), KIND_THUMB);
+            List<PictureInformation> pictures = uniSourceRepository.findInfo(request.getSource());
+            if (pictures != null && pictures.size() > 0) {
+                log.info("   going to update {} pictures with thumbnail", pictures.size());
+                for(PictureInformation pic: pictures) {
+                    uniSourceService.retrySave(pic.getId(), pic.getClass(), picture -> {
+                        picture.setThumbPath(request.getThumbName());
+                        picture.getPopulatedBy().add(KIND_THUMB);
+                        return true;
+                    });
+                }
+            } else {
+                log.warn("   going to update no pictures with thumbnail, as {} not found ", request.getSource());
             }
         } catch (Exception e) {
             log.error(" processing failed id={} path={}", requestSrc.getId(), requestSrc.getFilePath(), e);
+            request.setError(" processing failed. Reason: " + e.getMessage());
             thumbRequestRepository.save(request);
         }
     }

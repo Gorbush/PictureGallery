@@ -53,10 +53,15 @@ public class ImportApproveProcessor extends ImportProcessorBase {
         request = requestService.retrySave(request.getId(), request -> {
             ImportRequest.ImportStats stats = request.getStats(processType);
             ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.MATCHING);
-            stats.setFolders(statsEnum.getFolders());
-            stats.setFiles(statsEnum.getFiles());
 
-            stats.setAllFilesProcessed(stats.getFiles().get() == 0L);
+            stats.getFolders().set(statsEnum.getFolders().get());
+            stats.getFiles().set(statsEnum.getFiles().get());
+
+            stats.getDuplicates().set(statsEnum.getDuplicates().get());
+            stats.getFailed().set(statsEnum.getFailed().get());
+            stats.getSkipped().set(statsEnum.getSkipped().get());
+
+            stats.setAllFilesProcessed(stats.checkAllFilesProcessed());
             stats.setAllFoldersProcessed(stats.getFolders().get() == 0L);
 
             return true;

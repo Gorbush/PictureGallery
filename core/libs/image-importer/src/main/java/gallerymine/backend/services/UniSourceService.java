@@ -25,12 +25,7 @@ public class UniSourceService {
 
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public <T extends PictureInformation> T retrySave(String entityId,  Class<T> clazz, RetryRunner<T> runner) {
-        T entity;
-        if (clazz == null) {
-            entity = uniSourceRepository.findInfo(entityId);
-        } else {
-            entity = uniSourceRepository.fetchOne(entityId, clazz);
-        }
+        T entity = uniSourceRepository.fetchOne(entityId, clazz);
         if (runner.run(entity)) {
             uniSourceRepository.saveByGrade(entity);
         }
@@ -39,7 +34,7 @@ public class UniSourceService {
 
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public <T extends PictureInformation> void addPopulatedBy(String entityId, Class<T> clazz, String kind) {
-        PictureInformation entity = uniSourceRepository.findInfo(entityId);
+        PictureInformation entity = uniSourceRepository.fetchOne(entityId, clazz);
         if (entity != null) {
             entity.getPopulatedBy().add(kind);
             uniSourceRepository.saveByGrade(entity);
@@ -49,7 +44,7 @@ public class UniSourceService {
 
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public <T extends PictureInformation> T updateStatus(String requestId, Class<T> clazz, InfoStatus newStatus) {
-        T entity = uniSourceRepository.findInfo(requestId);
+        T entity = uniSourceRepository.fetchOne(requestId, clazz);
         InfoStatus status = entity.getStatus();
         if (!status.equals(newStatus)) {
             entity.setStatus(newStatus);

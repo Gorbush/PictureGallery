@@ -6,6 +6,7 @@ public enum InfoStatus {
 
     APPROVED(true),
     FAILED(true),
+    SKIPPED(true),
     DUPLICATE(true);
 
     boolean finalStatus = false;

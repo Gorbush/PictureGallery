@@ -91,15 +91,21 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
     }
 
     @Override
-    public PictureInformation findInfo(String id) {
+    public List<PictureInformation> findInfo(String id) {
+        List<PictureInformation> infos = new ArrayList<>();
         PictureInformation info = fetchOne(id, PictureGrade.GALLERY.getEntityClass());
-        if (info == null) {
-            info = fetchOne(id, PictureGrade.IMPORT.getEntityClass());
+        if (info != null) {
+            infos.add(info);
         }
-        if (info == null) {
-            info = fetchOne(id, PictureGrade.SOURCE.getEntityClass());
+        info = fetchOne(id, PictureGrade.IMPORT.getEntityClass());
+        if (info != null) {
+            infos.add(info);
         }
-        return info;
+        info = fetchOne(id, PictureGrade.SOURCE.getEntityClass());
+        if (info != null) {
+            infos.add(info);
+        }
+        return infos;
     }
 
     @Override
