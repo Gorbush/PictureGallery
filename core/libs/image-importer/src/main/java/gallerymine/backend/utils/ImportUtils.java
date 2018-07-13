@@ -6,6 +6,7 @@ import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
+import gallerymine.backend.services.ProcessService;
 import gallerymine.model.ImportSource;
 import gallerymine.model.Picture;
 import gallerymine.model.Process;
@@ -24,8 +25,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -46,6 +49,9 @@ public class ImportUtils {
 
     @Autowired
     private ProcessRepository processRepository;
+
+    @Autowired
+    private ProcessService processService;
 
     @Autowired
     private ImportRequestRepository requestRepository;
@@ -215,32 +221,37 @@ public class ImportUtils {
             try {
                 moveFileStructure(pathExposed, pathToImportSource, files, folders);
 
+
+                List<String> notes = new ArrayList<>();
                 process.setStatus(ProcessStatus.STARTING);
-                process.addNote("Prepared for import:");
+
+                notes.add("Prepared for import:");
                 if (files.get() > 0) {
-                    process.addNote("  Files  : %5d", files.get());
+                    notes.add(String.format("  Files  : %5d", files.get()));
                 }
                 if (folders.get() > 0) {
-                    process.addNote("  Folders: %5d", folders.get());
+                    notes.add(String.format("  Folders: %5d", folders.get()));
                 }
                 if (files.get() == 0 && folders.get() == 0) {
-                    process.addNote("  None");
+                    notes.add("  None");
                 }
-                processRepository.save(process);
+                process = processService.addNotes(process.getId(), ProcessStatus.STARTING, notes);
             } catch (Exception e) {
-                process.setStatus(ProcessStatus.FAILED);
-                process.addError("Failed to move data into internal folder. Reason: %s", e.getMessage());
-                process.addNote("Prepared for import:");
-                if (files.get() > 0) {
-                    process.addNote("  Files  : %5d", files.get());
-                }
-                if (folders.get() > 0) {
-                    process.addNote("  Folders: %5d", folders.get());
-                }
-                if (files.get() == 0 && folders.get() == 0) {
-                    process.addNote("  None");
-                }
-                processRepository.save(process);
+                process = processService.retrySave(process.getId(), processEntity -> {
+                    processEntity.setStatus(ProcessStatus.FAILED);
+                    processEntity.addError("Failed to move data into internal folder. Reason: %s", e.getMessage());
+                    processEntity.addNote("Prepared for import:");
+                    if (files.get() > 0) {
+                        processEntity.addNote("  Files  : %5d", files.get());
+                    }
+                    if (folders.get() > 0) {
+                        processEntity.addNote("  Folders: %5d", folders.get());
+                    }
+                    if (files.get() == 0 && folders.get() == 0) {
+                        processEntity.addNote("  None");
+                    }
+                    return true;
+                });
                 throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: "+e.getMessage(), e);
             }
 

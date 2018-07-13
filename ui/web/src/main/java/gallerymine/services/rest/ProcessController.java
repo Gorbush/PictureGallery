@@ -118,11 +118,10 @@ public class ProcessController {
                     .put("status", status)
                     .build();
         }
-        process.setStatus(newStatus);
-        Process processSaved = processRepository.save(process);
+        process = processService.updateStatus(process.getId(), newStatus);
 
         return responseOk()
-                .result(processSaved)
+                .result(process)
                 .op("statusChange")
                 .put("status", newStatus)
                 .put("oldStatus", oldStatus)
@@ -148,16 +147,15 @@ public class ProcessController {
                     .put("oldStatus", oldStatus)
                     .build();
         }
-        process.setStatus(ProcessStatus.RESTARTING);
-        Process processSaved = processRepository.save(process);
-        ProcessDetails processDetails = processService.populateDetails(processSaved);
+        process = processService.updateStatus(process.getId(), ProcessStatus.RESTARTING);
+        ProcessDetails processDetails = processService.populateDetails(process);
 
         String importFolder = null;
         if (processDetails.getDetails() != null && processDetails.getDetails() instanceof ImportRequest) {
             importFolder = ((ImportRequest)processDetails.getDetails()).getPath();
         }
         return responseOk()
-                .result(processSaved)
+                .result(process)
                 .op("restart")
                 .put("status", ProcessStatus.RESTARTING)
                 .put("oldStatus", oldStatus)

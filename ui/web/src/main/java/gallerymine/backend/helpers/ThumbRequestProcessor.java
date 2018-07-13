@@ -4,6 +4,7 @@ import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
+import gallerymine.backend.services.UniSourceService;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 import gallerymine.model.importer.ThumbRequest;
@@ -44,6 +45,9 @@ public class ThumbRequestProcessor implements Runnable {
 
     @Autowired
     private ImportSourceRepository uniSourceRepository;
+
+    @Autowired
+    private UniSourceService uniSourceService;
 
     public ThumbRequest getRequest() {
         return request;
@@ -115,8 +119,7 @@ public class ThumbRequestProcessor implements Runnable {
                 thumbRequestRepository.save(request);
             }
             if (source != null) {
-                source.getPopulatedBy().add(KIND_THUMB);
-                uniSourceRepository.saveByGrade(source);
+                uniSourceService.addPopulatedBy(source.getId(), source.getClass(), KIND_THUMB);
             }
         } catch (Exception e) {
             log.error(" processing failed id={} path={}", requestSrc.getId(), requestSrc.getFilePath(), e);

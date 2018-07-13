@@ -120,28 +120,28 @@ public class ImportRequestsController {
 			page = requestRepository.findSubRootIndexes(processId,
 					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
 		}
-		long tm = System.currentTimeMillis();
-		page.getContent().forEach(p -> {
-			p.getStats(ProcessType.APPROVAL).getFailed().set(tm);
-			p.setName(p.getName() + tm);
-		});
+//		long tm = System.currentTimeMillis();
+//		page.getContent().forEach(p -> {
+//			p.getStats(ProcessType.APPROVAL).getFailed().set(tm);
+//			p.setName(p.getName() + tm);
+//		});
 
 		ImportRequest request = null;
 		if (parentId.isPresent()) {
 			request = requestRepository.findOne(parentId.get());
-			if (request != null) {
-				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
-				request.setName(request.getName() + tm);
-			} else {
-				log.warn("Request not found");
-			}
+//			if (request != null) {
+//				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
+//				request.setName(request.getName() + tm);
+//			} else {
+//				log.warn("Request not found");
+//			}
 		} else {
 			Page<ImportRequest> pageOfRoots = requestRepository.findRootIndexes(processId,
 					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
 			if (pageOfRoots != null && pageOfRoots.getTotalElements() > 0) {
 				request = pageOfRoots.getContent().get(0);
-				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
-				request.setName(request.getName() + tm);
+//				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
+//				request.setName(request.getName() + tm);
 			} else {
 				log.warn("RootRequest not found");
 			}

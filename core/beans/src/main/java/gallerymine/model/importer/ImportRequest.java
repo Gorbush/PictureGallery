@@ -29,49 +29,51 @@ public class ImportRequest {
     public enum ImportStatus {
         /* Name (isFinal, isInProgress) */
 
-        INIT(false, true),
-        START(false, false),
-        AWAITING(false, true),
+        INIT(false, true, "init"),
+        START(false, false, "start"),
+        AWAITING(false, true, "await"),
 
         /** File analysing statuses start */
-        TO_ENUMERATE(false, false),
-        ENUMERATING_AWAIT(false, true),
-        ENUMERATING(false, true),
-        ENUMERATED(true, false),
-        ENUMERATION_COMPLETE(true, false),
+        TO_ENUMERATE(false, false, "to_enum"),
+        ENUMERATING_AWAIT(false, true, "enum_awt"),
+        ENUMERATING(false, true, "enuming"),
+        ENUMERATED(true, false, "enumed"),
+        ENUMERATION_COMPLETE(true, false, "enum_don"),
         /** File analysing statuses end */
 
         /** Repository matching statuses start */
-        TO_MATCH(false, false),
-        MATCHING_AWAIT(false, true),
-        MATCHING(false, true),
-        MATCHED(true, false),
-        MATCHING_COMPLETE(true, false),
+        TO_MATCH(false, false, "to_mtch"),
+        MATCHING_AWAIT(false, true, "mtch_awt"),
+        MATCHING(false, true, "mtching"),
+        MATCHED(true, false, "mtched"),
+        MATCHING_COMPLETE(true, false, "mtch_don"),
         /** Repository matching statuses end */
 
         /** User approval statuses start */
-        TO_APPROVE(false, false),
-        APPROVING_AWAIT(false, true),
-        APPROVING(false, true),
-        APPROVED(true, false),
-        APPROVAL_COMPLETE(true, false),
+        TO_APPROVE(false, false,"to_aprv"),
+        APPROVING_AWAIT(false, true,"aprv_awt"),
+        APPROVING(false, true,"aprving"),
+        APPROVED(true, false,"aprved"),
+        APPROVAL_COMPLETE(true, false,"aprv_cpl"),
         /** User approval statuses end */
 
-        RESTART(false, false),
-        FAILED(true, false),
-        ABANDONED(true, false),
-        DONE(true, false);
+        RESTART(false, false,"restart"),
+        FAILED(true, false,"failed"),
+        ABANDONED(true, false,"abnd"),
+        DONE(true, false,"done");
 
         private boolean aFinal;
         private boolean inProgress;
+        private String label;
 
         /** Status which might mean the import is abandoned */
         static Collection<ImportStatus> inProgressStatuses =
                 ImmutableSet.of(INIT, AWAITING, ENUMERATING, ENUMERATED);
 
-        ImportStatus(boolean aFinal, boolean inProgress) {
+        ImportStatus(boolean aFinal, boolean inProgress, String label) {
             this.aFinal = aFinal;
             this.inProgress = inProgress;
+            this.label = label;
         }
 
         public boolean isFinal() {
@@ -80,6 +82,10 @@ public class ImportRequest {
 
         public boolean isInProgress() {
             return inProgress;
+        }
+
+        public String getLabel() {
+            return label;
         }
 
         public static Collection<ImportStatus> getInProgress() {
@@ -212,6 +218,7 @@ public class ImportRequest {
     private Map<ProcessType, ImportStats> subStats = new HashMap<>();
     private Map<ProcessType, Set<String>> statsAppended = new HashMap<>();
 
+    private String activeProcessId;
     private ProcessType activeProcessType = null;
 
     @CreatedDate
@@ -220,7 +227,7 @@ public class ImportRequest {
     private DateTime updated;
 
     @Version
-    private long version = 0;
+    private Long version;
 
     public ImportRequest() {
     }
@@ -320,5 +327,28 @@ public class ImportRequest {
 
     public ImportStats getSubStats(ProcessType processType) {
         return subStats.computeIfAbsent(processType, k -> new ImportStats());
+    }
+
+    public String marker() {
+        StringBuilder res = new StringBuilder();
+        int CUT_PART = 5;
+        if (activeProcessId != null && activeProcessId.length() > CUT_PART) {
+            int len = activeProcessId.length();
+            res.append(activeProcessId, len-CUT_PART, len);
+        }
+        res.append(":");
+        if (rootId != null && rootId.length() > CUT_PART) {
+            int len = rootId.length();
+            res.append(rootId, len-CUT_PART, len);
+        }
+        res.append(":");
+        if (id != null && id.length() > CUT_PART) {
+            int len = id.length();
+            res.append(id, len-CUT_PART, len);
+        }
+        res.append("[");
+        res.append(status.getLabel());
+        res.append("]");
+        return res.toString();
     }
 }

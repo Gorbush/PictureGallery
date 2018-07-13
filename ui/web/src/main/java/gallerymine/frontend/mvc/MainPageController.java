@@ -82,6 +82,15 @@ public class MainPageController {
     public ModelAndView importProgress(Principal principal, @PathVariable("importId") String importProcessId) {
 
         Process process = processRepository.findOne(importProcessId);
+        if (process == null) {
+            ModelAndView model = new ModelAndView("main/missing");
+            model.addObject("timestamp", new Date());
+            model.addObject("path", "");
+            model.addObject("error", "Entity not found");
+            model.addObject("status", "Failed");
+            model.addObject("message", "Import Process not found");
+            return model;
+        }
         ProcessDetails details = process != null ? processService.populateAllDetails(process) : null;
 
         ModelAndView model = new ModelAndView("main/importProgress", "process", process);

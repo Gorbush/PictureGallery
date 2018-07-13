@@ -3,12 +3,14 @@ package gallerymine.backend.importer;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
+import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
 import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
 import gallerymine.backend.services.ImportService;
+import gallerymine.backend.services.UniSourceService;
 import gallerymine.model.FileInformation;
 import gallerymine.model.ImportSource;
 import gallerymine.model.Process;
@@ -18,6 +20,7 @@ import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,6 +64,9 @@ public class ImportProcessor extends ImportProcessorBase {
 
     @Autowired
     private ImportSourceRepository importSourceRepository;
+
+    @Autowired
+    private UniSourceService uniSourceService;
 
     @Autowired
     private ImportService importService;
@@ -121,20 +127,23 @@ public class ImportProcessor extends ImportProcessorBase {
         return request;
     } */
 
-    public void requestProcessing(ImportRequest requestSrc, Process process) throws ImportFailedException {
-        log.warn("   import processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+    public void requestProcessing() throws ImportFailedException {
+        log.info("   import processing start path={}", request.getPath());
         Path path = appConfig.getImportRootFolderPath().resolve(request.getPath());
 
         if (!validateImportRequest(process, path))
             return;
 
-        ImportRequest.ImportStatus oldStatus = request.getStatus();
-        request.setStatus(statusHolder.getInProcessing());
-        request.getStats(processType).getFiles().set(-1);
-        requestRepository.save(request);
+
+        request = requestService.retrySave(request.getId(), requestEntity -> {
+                    requestEntity.setStatus(statusHolder.getInProcessing());
+                    requestEntity.getStats(processType).getFiles().set(-1);
+                    return true;
+                });
+        updateMarker();
 
         Path enumeratingDir = null;
-        log.info("  folders enumerating id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("  folders enumerating path={}", request.getPath());
         try (DirectoryStream<Path> directoryStreamOfFolders = Files.newDirectoryStream(path, file -> file.toFile().isDirectory())) {
             int foldersCount = 0;
             for (Path dir : directoryStreamOfFolders) {
@@ -143,26 +152,26 @@ public class ImportProcessor extends ImportProcessorBase {
                 importService.registerNewImportFolderRequest(relative, request, process.getId());
                 foldersCount++;
             }
-            request.setFoldersCount(foldersCount);
-            request.getStats(processType).incFolders(foldersCount);
-            requestRepository.save(request);
-            log.info("    folders processed {}. id={} status={} path={}",
-                    foldersCount,
-                    request.getId(), request.getStatus(), request.getPath());
+
+            final int doneFoldersCount = foldersCount;
+            request = requestService.retrySave(request.getId(), requestEntity -> {
+                        requestEntity.setFoldersCount(doneFoldersCount);
+                        requestEntity.getStats(processType).getFolders().set(doneFoldersCount);
+                        return true;
+                    });
+            log.info("    folders processed {}. path={}", foldersCount, request.getPath());
         } catch (IOException e) {
-            request.setFoldersCount(-1);
-            request.addError("ImportRequest indexing failed for folder "+enumeratingDir);
-            requestRepository.save(request);
-            log.error(" Failed to index. id={} status={} path={} reason='{}'", request.getId(), request.getStatus(), request.getPath(), e.getMessage(), e);
+            requestService.addError(request.getId(), "ImportRequest indexing failed for folder "+enumeratingDir);
+            log.error(" Failed to index. path={} reason='{}'", request.getPath(), e.getMessage(), e);
         }
 
-        log.info("    files enumerating id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("    files enumerating path={}", request.getPath());
         try {
             Path importRootFolder = Paths.get(request.getRootPath());
             int filesCount = 0;
-            int filesIgnoredCount = 0;
-            int filesSucceedCount = 0;
-            ImportRequest.ImportStats stats = request.getStats(processType);
+            int filesCountIgnored = 0;
+            int filesCountFailed = 0;
+            int filesCountSucceed = 0;
             try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
                 for (Path file : directoryStreamOfFiles) {
                     String fileName = file.toString().toLowerCase();
@@ -180,20 +189,17 @@ public class ImportProcessor extends ImportProcessorBase {
 
                     if (imageAnalyzer.acceptsExtension(fileExt)) {
                         filesCount++;
-                        stats.incFilesDone();
                         processPictureFile(file, importRootFolder, info);
 
                         if (!info.isFailed()) {
                             if (!checkIfDuplicate(file, request, info)) {
                                 Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
-                                stats.incMovedToApprove();
                                 info.setRootPath(targetFolder.toFile().getAbsolutePath());
                                 info.setStatus(InfoStatus.ANALYSING);
-                                filesSucceedCount++;
+                                filesCountSucceed++;
                             }
                         } else {
-                            filesIgnoredCount++;
-                            stats.incFailed();
+                            filesCountFailed++;
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(targetFolder.toFile().getAbsolutePath());
                             info.setStatus(InfoStatus.FAILED);
@@ -202,7 +208,7 @@ public class ImportProcessor extends ImportProcessorBase {
                     } else {
                         Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                         info.setRootPath(targetFolder.toFile().getAbsolutePath());
-                        stats.incFailed();
+                        filesCountIgnored++;
                         info.setStatus(InfoStatus.FAILED);
                     }
                     importSourceRepository.saveByGrade(info);
@@ -217,28 +223,35 @@ public class ImportProcessor extends ImportProcessorBase {
                 }
             }
 
-            request.setFilesCount(filesCount);
-            request.setFilesIgnoredCount(filesIgnoredCount);
-            stats.setAllFilesProcessed(true);
-            stats.getFiles().set(filesCount);
-            if (stats.getFilesDone().get() != filesCount) {
-                log.warn("     Count Mismatch for ImportRequest id={} done={} <> {}",
-                        request.getId(), stats.getFilesDone().get() , filesCount);
-            }
-            stats.getFilesDone().set(filesCount);
-            requestRepository.save(request);
-            log.info("     files processing done {} or {} succeeded ({} ignored). id={} status={} path={}",
-                    filesCount, filesSucceedCount, filesIgnoredCount,
-                    request.getId(), request.getStatus(), request.getPath());
+            final int doneFilesCount = filesCount;
+            final int doneFilesCountIgnored = filesCountIgnored;
+            final int doneFilesCountFailed = filesCountFailed;
+            final int doneFilesCountSucceed = filesCountSucceed;
+            request = requestService.retrySave(request.getId(), requestEntity -> {
+                        requestEntity.setFilesCount(doneFilesCount);
+                        requestEntity.setFilesIgnoredCount(doneFilesCountIgnored+doneFilesCountFailed);
+                        ImportRequest.ImportStats stats = requestEntity.getStats(processType);
+                        stats.setAllFilesProcessed(true);
+                        stats.getMovedToApprove().set(doneFilesCountSucceed);
+                        stats.getFiles().set(doneFilesCount);
+                        stats.getFilesDone().set(doneFilesCountSucceed);
+                        stats.getSkipped().set(doneFilesCountIgnored);
+                        stats.getFailed().set(doneFilesCountFailed);
+                        return true;
+                    });
+            log.info("     files processing done {} or {} succeeded (ignored:{}  failed:{}). path={}",
+                    filesCount, filesCountSucceed, filesCountIgnored, filesCountFailed, request.getPath());
         } catch (IOException e) {
-            request.setFilesCount(-1);
-            request.setFilesIgnoredCount(-1);
-            request.getStats(processType).setAllFilesProcessed(true);
-            request.addError("indexing failed for file "+path);
-            requestRepository.save(request);
+            request = requestService.retrySave(request.getId(), requestEntity -> {
+                    requestEntity.setFilesCount(-1);
+                    requestEntity.setFilesIgnoredCount(-1);
+                    requestEntity.getStats(processType).setAllFilesProcessed(true);
+                    requestEntity.addError("indexing failed for file " + path);
+                    return true;
+                    });
             log.error("     import processing failed for file {}. Reason: {}", path, e.getMessage());
         }
-        log.warn("   import processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("   import processing done path={}", request.getPath());
     }
 
     /**
@@ -290,6 +303,7 @@ public class ImportProcessor extends ImportProcessorBase {
         }
     }
 
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public ImportRequest registerNewImportFolderRequest(String path, ImportRequest parent, String indexProcessId) throws ImportFailedException {
         try {
             path = appConfig.relativizePathToImport(path);
@@ -308,13 +322,16 @@ public class ImportProcessor extends ImportProcessorBase {
         } else {
             newRequest.setRootPath(path);
         }
-        newRequest.addIndexProcessId(indexProcessId);
         newRequest.setStatus(INIT);
         newRequest.setPath(path);
+
+        newRequest.addIndexProcessId(indexProcessId);
         newRequest.setActiveProcessType(ProcessType.IMPORT);
+        newRequest.setActiveProcessId(indexProcessId);
         newRequest.setName(Paths.get(path).toFile().getName());
 
         requestRepository.save(newRequest);
+
         newRequest.setStatus(TO_ENUMERATE);
         if (parent == null) {
             newRequest.setRootId(newRequest.getId());

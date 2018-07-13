@@ -6,6 +6,7 @@ import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.importer.ImportProcessorBase;
+import gallerymine.backend.services.ImportRequestService;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessType;
@@ -43,6 +44,9 @@ public abstract class ImportPoolManagerBase {
 
     @Autowired
     protected ImportRequestRepository requestRepository;
+
+    @Autowired
+    protected ImportRequestService requestService;
 
     @Autowired
     protected ProcessRepository processRepository;
@@ -134,9 +138,7 @@ public abstract class ImportPoolManagerBase {
         }
         log.info(beanName+" request execution id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
-        request.setStatus(statusHolder.awaitingProcessing);
-        log.info(beanName+" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-        requestRepository.save(request);
+        request = requestService.updateStatus(request.getId(), statusHolder.awaitingProcessing);
 
         bean.setRequest(request);
         bean.setPool(this);
@@ -196,9 +198,8 @@ public abstract class ImportPoolManagerBase {
                 }
                 ImportRequest lastUpdated = requestRepository.findLastUpdated(process.getId(), new Sort(new Sort.Order(Sort.Direction.DESC, "updated")));
                 if (lastUpdated != null && now.getMillis() - appConfig.getAbandonedTimoutMs() > lastUpdated.getUpdated().getMillis() ) {
-                    request.setStatus(ABANDONED);
                     logPools.info(beanName+" Marked abandoned id:%d", request.getId());
-                    requestRepository.save(request);
+                    requestService.updateStatus(request.getId(), ABANDONED);
                 }
             }
             logPools.info(beanName+" potentially abandoned validation done tested:%d marked:%d", tested, marked);

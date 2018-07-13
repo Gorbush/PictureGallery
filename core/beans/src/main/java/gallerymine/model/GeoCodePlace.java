@@ -39,7 +39,7 @@ public class GeoCodePlace {
     private DateTime updated;
 
     @Version
-    private long version = 0;
+    private Long version;
 
     public GeoCodePlace() {
 

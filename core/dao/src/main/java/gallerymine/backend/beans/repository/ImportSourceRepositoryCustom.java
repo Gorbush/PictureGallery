@@ -25,6 +25,7 @@ public interface ImportSourceRepositoryCustom {
 
     <T extends PictureInformation> T fetchOne(String id, Class<T> clazz);
     <T extends PictureInformation> T saveByGrade(T entity);
+    <T extends PictureInformation> boolean deleteByGrade(String id, Class<T> clazz);
 
     <T extends PictureInformation> T findInfo(String id);
 

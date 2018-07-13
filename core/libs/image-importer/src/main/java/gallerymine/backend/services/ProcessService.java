@@ -19,20 +19,28 @@ package gallerymine.backend.services;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
+import gallerymine.backend.data.RetryRunner;
+import gallerymine.backend.data.RetryVersion;
 import gallerymine.model.Process;
 import gallerymine.model.QProcess;
+import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessDetails;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
 public class ProcessService {
+
+    private static Logger log = LoggerFactory.getLogger(ImportRequestService.class);
 
     @Autowired
     private ProcessRepository processRepository;
@@ -100,5 +108,60 @@ public class ProcessService {
 
         }
         return details;
+    }
+
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public Process retrySave(String entityId, RetryRunner<Process> runner) {
+        Process request = processRepository.findOne(entityId);
+        if (runner.run(request)) {
+            processRepository.save(request);
+        }
+        return request;
+    }
+
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public Process updateStatus(String requestId, ProcessStatus newStatus) {
+        Process request = processRepository.findOne(requestId);
+        ProcessStatus status = request.getStatus();
+        if (!status.equals(newStatus)) {
+            request.setStatus(newStatus);
+            processRepository.save(request);
+            log.info(" process status changed new={} old={} name={}", newStatus, status, request.getName());
+        }
+        return request;
+    }
+
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public Process addError(String requestId, String error, Object... params) {
+        Process request = processRepository.findOne(requestId);
+        request.addError(error, params);
+        processRepository.save(request);
+        return request;
+    }
+
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public Process addError(String requestId, ProcessStatus status, String error, Object... params) {
+        Process request = processRepository.findOne(requestId);
+        request.setStatus(status);
+        request.addError(error, params);
+        processRepository.save(request);
+        return request;
+    }
+
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public Process addNotes(String requestId, ProcessStatus status, Collection<String> notes) {
+        Process request = processRepository.findOne(requestId);
+        request.setStatus(status);
+        request.getNotes().addAll(notes);
+        processRepository.save(request);
+        return request;
+    }
+
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public Process addNote(String requestId, String note, Object... params) {
+        Process request = processRepository.findOne(requestId);
+        request.addNote(note, params);
+        processRepository.save(request);
+        return request;
     }
 }

@@ -70,7 +70,7 @@ public class FileInformation implements Comparable<FileInformation> {
     private DateTime updated;
 
     @Version
-    private long version = 0;
+    private Long version;
 
     public void updateTimestamp() {
         if (CollectionUtils.isEmpty(timestamps)) {

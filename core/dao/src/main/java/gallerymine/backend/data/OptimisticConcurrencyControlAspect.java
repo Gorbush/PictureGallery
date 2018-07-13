@@ -39,7 +39,9 @@ public class OptimisticConcurrencyControlAspect {
         Class<? extends Throwable>[] retryOn = retryAnnotation.on();
         Assert.isTrue(times > 0, "@Retry{times} should be greater than 0!");
         Assert.isTrue(retryOn.length > 0, "@Retry{on} should have at least one Throwable!");
-        LOGGER.info("Proceed with {} retries on {} in {}", times, Arrays.toString(retryOn),pjp.toShortString());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Proceed with {} retries on {} in {}", times, Arrays.toString(retryOn), pjp.toShortString());
+        }
         return tryProceeding(pjp, times, retryOn);
     }
 
@@ -51,6 +53,7 @@ public class OptimisticConcurrencyControlAspect {
                 LOGGER.info("Optimistic locking detected, {} remaining retries on {} in {}", times, Arrays.toString(retryOn), pjp.toShortString());
                 return tryProceeding(pjp, times, retryOn);
             }
+            LOGGER.error("Optimistic locking detected, all retries failed on {} in {}", Arrays.toString(retryOn), pjp.toShortString());
             throw throwable;
         }
     }

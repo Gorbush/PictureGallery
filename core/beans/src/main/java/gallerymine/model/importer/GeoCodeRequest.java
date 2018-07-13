@@ -40,7 +40,7 @@ public class GeoCodeRequest {
     private DateTime updated;
 
     @Version
-    private long version = 0;
+    private Long version;
 
     public GeoCodeRequest() {
 

@@ -22,6 +22,7 @@ import gallerymine.model.support.ProcessType;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 import static gallerymine.model.support.InfoStatus.APPROVED;
 import static gallerymine.model.support.InfoStatus.DUPLICATE;
 import static gallerymine.model.support.PictureGrade.GALLERY;
+import static gallerymine.model.support.PictureGrade.IMPORT;
 
 @Service
 public class ImportService {
@@ -63,7 +65,16 @@ public class ImportService {
     private ImportSourceRepository uniSourceRepository;
 
     @Autowired
+    private UniSourceService uniSourceService;
+
+    @Autowired
+    private ProcessService processService;
+
+    @Autowired
     protected ImportRequestRepository requestRepository;
+
+    @Autowired
+    protected ImportRequestService requestService;
 
     private Map<String, ImportRequest> requestsCache = new HashMap<>();
 
@@ -96,12 +107,9 @@ public class ImportService {
 
             importRequest = registerNewImportFolderRequest(importInternalPath, null, process.getId());
         } catch (ImportFailedException e) {
-            process.setStatus(ProcessStatus.FAILED);
-            processRepository.save(process);
+            process = processService.addError(process.getId(), ProcessStatus.FAILED, "Failed, reason: %s", e.getMessage());
         } catch (Exception e) {
-            process.setStatus(ProcessStatus.FAILED);
-            process.addError("Failed, reason: %s", e.getMessage());
-            processRepository.save(process);
+            process = processService.addError(process.getId(), ProcessStatus.FAILED, "Failed, reason: %s", e.getMessage());
         }
         if (importRequest != null) {
             requestImportPool.executeRequest(importRequest);
@@ -110,9 +118,9 @@ public class ImportService {
         return importRequest;
     }
 
-    public void checkIfMatchNeeded(ImportRequest rootImportRequest, Process process) {
+    public void checkIfMatchNeeded(ImportRequest request, Process process) {
         if (process != null) {
-            long toMatch = rootImportRequest.getTotalStats(process.getType()).getMovedToApprove().get();
+            long toMatch = request.getTotalStats(process.getType()).getMovedToApprove().get();
             Process processOfMatching = null;
             if (toMatch > 0) {
                 log.info("Matching is needed for {} images for id={}", toMatch, process.getId());
@@ -125,26 +133,25 @@ public class ImportService {
 
                 processRepository.save(processOfMatching);
 
-                process.addNote("Matching process initiated %s", processOfMatching.getId());
-                processRepository.save(process);
+                process = processService.addNote(process.getId(), "Matching process initiated %s", processOfMatching.getId());
+
                 // update ImportRequests to TO_MATCH with processOfMatching
                 uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), processOfMatching.getId(), ENUMERATION_COMPLETE, TO_MATCH, ProcessType.MATCHING);
 
-                requestMatchPool.executeRequest(rootImportRequest);
+                requestMatchPool.executeRequest(request);
                 log.info(" initiated Matching id={} from Import id={}", processOfMatching.getId(), process.getId());
             } else {
-                process.addNote("Matching process not required");
-                processRepository.save(process);
+                process = processService.addNote(process.getId(), "Matching process not required");
             }
 
         } else {
-            log.info("Process not found imports={} importRequest={}", rootImportRequest.getIndexProcessIds(), rootImportRequest.getId());
+            log.info("Process not found imports={} importRequest={}", request.getIndexProcessIds(), request.getId());
         }
     }
 
-    public void checkIfApproveNeeded(ImportRequest rootImportRequest, Process process) {
+    public void checkIfApproveNeeded(ImportRequest request, Process process) {
         if (process != null) {
-            long toApprove = rootImportRequest.getTotalStats(process.getType()).getMovedToApprove().get();
+            long toApprove = request.getTotalStats(process.getType()).getMovedToApprove().get();
             Process processOfApprove = null;
             if (toApprove > 0) {
                 log.info("Approve is needed for {} images for id={}", toApprove, process.getId());
@@ -157,21 +164,20 @@ public class ImportService {
 
                 processRepository.save(processOfApprove);
 
-                process.addNote("Approve process initiated %s", processOfApprove.getId());
-                processRepository.save(process);
+                process = processService.addNote(process.getId(), "Approve process initiated %s", processOfApprove.getId());
+
                 // update ImportRequests to TO_APPROVE with processOfApprove
                 uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), processOfApprove.getId(), MATCHING_COMPLETE, TO_APPROVE, ProcessType.APPROVAL);
 
-                requestApprovePool.executeRequest(rootImportRequest);
+                requestApprovePool.executeRequest(request);
 
                 log.info(" initiated Approve id={} from Matching id={}", processOfApprove.getId(), process.getId());
             } else {
-                process.addNote("Approve process not required");
-                processRepository.save(process);
+                process = processService.addNote(process.getId(), "Approve process  not required");
             }
 
         } else {
-            log.info(" Process not found id={} importRequest={}", process.getId(), rootImportRequest.getId());
+            log.info(" Process not found id={} importRequest={}", process.getId(), request.getId());
         }
     }
 
@@ -190,16 +196,7 @@ public class ImportService {
         log.info(" checkSubsAndDone for id={} path={}", requestId, request.getPath());
         if (child != null) {
             if (child.getStatus().isFinal()) {
-                if (request.appendSubStats(processType, child)) {
-                    ImportRequest.ImportStats stats = request.getStats(processType);
-                    stats.incFoldersDone();
-                    log.info("  Adding child substats folders={} of {} from type={} id={} child={} path={} ",
-                            stats.getFoldersDone().get(), stats.getFolders().get(), processType,
-                            request.getId(), child.getId(), child.getPath());
-                    requestRepository.save(request);
-                } else {
-                    log.info("  Already added child substats from id={} path={}", child.getId(), child.getPath());
-                }
+                request = requestService.appendSubStats(requestId, processType, child);
             } else {
                 log.error("  Adding child substats from id={} path={} to parent={} while child is not FINISHED", child.getId(), child.getPath(), requestId);
             }
@@ -211,18 +208,14 @@ public class ImportService {
             log.info(" checkSubsAndDone exit id={} path={} Not all subtasks are done", requestId, request.getPath());
             return;
         } else {
-            if (!stats.getAllFoldersProcessed()) {
-                stats.setAllFoldersProcessed(true);
-                requestRepository.save(request);
-            }
+            request = requestService.markAllFoldersProcessed(requestId, processType);
         }
 
         boolean isAllFilesProcessed = stats.getAllFilesProcessed();
         if (!isAllFilesProcessed && stats.getFiles().get() >= 0) {
             isAllFilesProcessed = stats.getFiles().get() == stats.getFilesDone().get();
             if (isAllFilesProcessed) {
-                stats.setAllFilesProcessed(true);
-                requestRepository.save(request);
+                request = requestService.markAllFilesProcessed(requestId, processType);
             }
         }
 
@@ -234,10 +227,8 @@ public class ImportService {
         log.info("  checkSubsAndDone passes id={} path={} could be marked as done", requestId, request.getPath());
 
         ImportRequest.ImportStatus currentStatus = request.getStatus();
+        request = requestService.updateStatus(requestId, processingDoneStatus);
 
-        request.setStatus(processingDoneStatus);
-
-        requestRepository.save(request);
         log.info("   status changed id={} path={} oldStatus={} status={}",
                 request.getId(), request.getPath(), currentStatus, request.getStatus());
         if (StringUtils.isNotBlank(request.getParent())) {
@@ -255,10 +246,14 @@ public class ImportService {
             Process process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
             log.info("   finishing process id={} path={} processId={} processType={}",
                     requestId, request.getPath(), process.getId(), process.getType());
-            finishProcess(request, process);
+            process = finishProcess(request, process);
             onRootImportFinished(request, process);
         }
         log.info(" checkSubsAndDone complete for id={} path={}", requestId, request.getPath());
+    }
+
+    private void updateMarker(ImportRequest request) {
+        MDC.put("marker", request.marker());
     }
 
     private void onRootImportFinished(ImportRequest request, Process process) throws ImportFailedException {
@@ -283,25 +278,29 @@ public class ImportService {
         }
     }
 
-    protected void finishProcess(ImportRequest rootImportRequest, Process process) {
+    protected Process finishProcess(ImportRequest request, Process process) {
         ProcessStatus oldStatus = process.getStatus();
         log.info(" updating process of id={} process={} oldStatus={} rootImportStatus={}",
-                rootImportRequest.getId(), process.getId(), oldStatus, rootImportRequest.getStatus());
-        if (rootImportRequest.getStatus().isInProgress()) {
-            process.addError("Import failed");
-            process.setStatus(ProcessStatus.FAILED);
-        } else {
-            process.addNote("Import finished");
-            process.setStatus(ProcessStatus.FINISHED);
-        }
-        addImportStats(process, rootImportRequest);
+                request.getId(), process.getId(), oldStatus, request.getStatus());
+        process = processService.retrySave(process.getId(), progressEntity -> {
+            if (request.getStatus().isInProgress()) {
+                progressEntity.addError("Import failed");
+                progressEntity.setStatus(ProcessStatus.FAILED);
+            } else {
+                progressEntity.addNote("Import finished");
+                progressEntity.setStatus(ProcessStatus.FINISHED);
+            }
+            addImportStats(progressEntity, request);
+            return true;
+        });
         log.info(" Process finished of id={} process={} oldStatus={} status={}",
-                rootImportRequest.getId(), process.getId(), oldStatus, process.getStatus());
+                request.getId(), process.getId(), oldStatus, process.getStatus());
+        return process;
     }
 
-    private void addImportStats(Process process, ImportRequest rootImportRequest) {
+    private void addImportStats(Process process, ImportRequest request) {
         try {
-            ImportRequest.ImportStats stats = rootImportRequest.getTotalStats(process.getType());
+            ImportRequest.ImportStats stats = request.getTotalStats(process.getType());
             process.addNote("Import statistics:");
             process.addNote(" Folders %d of %d", stats.getFoldersDone().get(), stats.getFolders().get());
             process.addNote(" Files in total %7d", stats.getFiles().get());
@@ -314,9 +313,10 @@ public class ImportService {
         }
     }
 
-    public Boolean actionApprove(PictureInformation source) throws Exception {
+    public boolean actionApprove(PictureInformation source) throws Exception {
         log.info("approve for image id={} status={}", source.getId(), source.getStatus());
 
+        String pictureId;
         PictureInformation picture = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
         if (picture == null) {
             log.info("  source id={} is getting approved", source.getId());
@@ -324,10 +324,13 @@ public class ImportService {
             picture.copyFrom(source);
             picture.setGrade(PictureGrade.GALLERY);
             picture.addSource(source.getId(), source.getGrade());
+            picture.setStatus(APPROVED);
 
             uniSourceRepository.saveByGrade(picture);
+            pictureId = picture.getId();
         } else {
-            log.info("  source id={} is already approved", source.getId());
+            log.info("  source id={} was already saved as picture", source.getId());
+            pictureId = picture.getId();
         }
 
         InfoStatus oldStatus = source.getStatus();
@@ -335,10 +338,13 @@ public class ImportService {
             log.info("  source id={} is already approved", source.getId());
             return true;
         }
-        source.setStatus(APPROVED);
-        source.setAssignedToPicture(true);
-        source.addSource(picture.getId(), picture.getGrade());
-        uniSourceRepository.saveByGrade(source);
+
+        source = uniSourceService.retrySave(source.getId(), IMPORT.getEntityClass(), info -> {
+            info.setStatus(APPROVED);
+            info.setAssignedToPicture(true);
+            info.addSource(pictureId, GALLERY);
+            return true;
+        });
 
         log.info("  source id={} is approved", source.getId());
         ImportRequest request = requestRepository.findOne(source.getImportRequestId());
@@ -352,15 +358,17 @@ public class ImportService {
             throw new Exception("Import Process not found for this picture");
         }
 
-        // Updating stats for Import Request and propagate to parent
-        if (!oldStatus.isFinalStatus()) {
-            request.getStats(ProcessType.APPROVAL).incFilesDone();
-        }
-        request.getStats(ProcessType.APPROVAL).incMovedToApprove();
-        if (DUPLICATE.equals(oldStatus)) {
-            request.getStats(ProcessType.APPROVAL).getDuplicates().decrementAndGet();
-        }
-        requestRepository.save(request);
+        request = requestService.retrySave(request.getId(), requestEntity -> {
+                    // Updating stats for Import Request and propagate to parent
+                    if (!oldStatus.isFinalStatus()) {
+                        requestEntity.getStats(ProcessType.APPROVAL).incFilesDone();
+                    }
+                    requestEntity.getStats(ProcessType.APPROVAL).incMovedToApprove();
+                    if (DUPLICATE.equals(oldStatus)) {
+                        requestEntity.getStats(ProcessType.APPROVAL).getDuplicates().decrementAndGet();
+                    }
+                    return true;
+                });
 
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);
 
@@ -371,7 +379,7 @@ public class ImportService {
         PictureInformation target = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
         if (target != null) {
             log.info("  source id={} was approved - removing", source.getId());
-            uniSourceRepository.delete(target);
+            uniSourceRepository.deleteByGrade(target.getId(), GALLERY.getEntityClass());
         }
         InfoStatus oldStatus = source.getStatus();
 
@@ -380,8 +388,7 @@ public class ImportService {
             return true;
         }
 
-        source.setStatus(DUPLICATE);
-        uniSourceRepository.saveByGrade(source);
+        uniSourceService.updateStatus(source.getId(), IMPORT.getEntityClass(), DUPLICATE);
         log.info("  source id={} marked as Duplicate", source.getId());
 
         ImportRequest request = requestRepository.findOne(source.getImportRequestId());
@@ -395,18 +402,20 @@ public class ImportService {
             throw new Exception("Import Process not found for this picture");
         }
 
-        // Updating stats for Import Request and propagate to parent
-        if (!oldStatus.isFinalStatus()) {
-            request.getStats(ProcessType.APPROVAL).incFilesDone();
-        }
-        request.getStats(ProcessType.APPROVAL).incDuplicates();
-        if (APPROVED.equals(oldStatus)) {
-            request.getStats(ProcessType.APPROVAL).getMovedToApprove().decrementAndGet();
-        }
-
-        requestRepository.save(request);
+        request = requestService.retrySave(request.getId(), requestEntity -> {
+            // Updating stats for Import Request and propagate to parent
+            if (!oldStatus.isFinalStatus()) {
+                requestEntity.getStats(ProcessType.APPROVAL).incFilesDone();
+            }
+            requestEntity.getStats(ProcessType.APPROVAL).incDuplicates();
+            if (APPROVED.equals(oldStatus)) {
+                requestEntity.getStats(ProcessType.APPROVAL).getMovedToApprove().decrementAndGet();
+            }
+            return true;
+        });
 
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);
+
         return true;
     }
 }

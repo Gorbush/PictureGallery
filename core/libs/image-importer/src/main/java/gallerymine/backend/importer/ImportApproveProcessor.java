@@ -47,22 +47,25 @@ public class ImportApproveProcessor extends ImportProcessorBase {
         super(STATUSES, ProcessType.APPROVAL);
     }
 
-    public void requestProcessing(ImportRequest request, Process process) throws ImportFailedException {
+    public void requestProcessing() throws ImportFailedException {
         log.warn("   approve processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+
+        request = requestService.retrySave(request.getId(), request -> {
+            ImportRequest.ImportStats stats = request.getStats(processType);
+            ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.MATCHING);
+            stats.setFolders(statsEnum.getFolders());
+            stats.setFiles(statsEnum.getFiles());
+
+            stats.setAllFilesProcessed(stats.getFiles().get() == 0L);
+            stats.setAllFoldersProcessed(stats.getFolders().get() == 0L);
+
+            return true;
+        });
         ImportRequest.ImportStats stats = request.getStats(processType);
-        ImportRequest.ImportStats statsEnum = request.getStats(ProcessType.MATCHING);
-        stats.setFolders(statsEnum.getFolders());
-        stats.setFiles(statsEnum.getFiles());
-
-        stats.setAllFilesProcessed(stats.getFiles().get() == 0L);
-        stats.setAllFoldersProcessed(stats.getFolders().get() == 0L);
-
         if (stats.getAllFilesProcessed() && stats.getAllFoldersProcessed()) {
-            requestRepository.save(request);
             importService.checkSubsAndDone(request.getId(), null, processType, statusHolder.getProcessingDone());
         } else {
-            request.setStatus(statusHolder.getInProcessing());
-            requestRepository.save(request);
+            requestService.updateStatus(request.getId(), statusHolder.getInProcessing());
         }
 
         log.info("   approve processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());

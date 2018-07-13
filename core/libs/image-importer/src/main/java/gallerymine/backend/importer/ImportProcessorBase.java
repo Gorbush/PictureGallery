@@ -10,7 +10,9 @@ import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
 import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
+import gallerymine.backend.services.ImportRequestService;
 import gallerymine.backend.services.ImportService;
+import gallerymine.backend.services.ProcessService;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
@@ -20,7 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.nio.file.Path;
 
@@ -45,7 +49,13 @@ public abstract class ImportProcessorBase implements Runnable {
     protected ImportRequestRepository requestRepository;
 
     @Autowired
+    protected ImportRequestService requestService;
+
+    @Autowired
     protected ProcessRepository processRepository;
+
+    @Autowired
+    protected ProcessService processService;
 
     @Autowired
     protected ImportSourceRepository sourceRepository;
@@ -60,6 +70,7 @@ public abstract class ImportProcessorBase implements Runnable {
     protected ImportService importService;
 
     protected ImportRequest request;
+    protected Process process;
     protected ImportPoolManagerBase pool;
 
     protected ProcessType processType;
@@ -74,18 +85,21 @@ public abstract class ImportProcessorBase implements Runnable {
             String error = request.addError("Path not found for request : %s", path.toFile().getAbsolutePath());
             log.error(" "+error);
 
-            request.setStatus(statusHolder.getProcessingDone());
-            requestRepository.save(request);
-            process.addError(error);
-            processRepository.save(process);
+            request = requestService.updateStatus(request.getId(), statusHolder.getProcessingDone());
+
+            processService.addError(process.getId(), error);
 
             return false;
         }
         return true;
     }
 
+    protected void updateMarker() {
+        MDC.put("marker", request.marker());
+    }
+
     public void run() {
-        Process process = null;
+        updateMarker();
         try {
             log.info(" processing started for {}", request.getPath());
             process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
@@ -94,22 +108,26 @@ public abstract class ImportProcessorBase implements Runnable {
                 process.setName("Pictures Folder Import ? "+this.getClass().getSimpleName());
                 process.setType(processType);
             }
-            process.setStatus(ProcessStatus.STARTED);
-            process.setStarted(DateTime.now());
-            processRepository.save(process);
+            processService.retrySave(process.getId(), process -> {
+                process.setStatus(ProcessStatus.STARTED);
+                process.setStarted(DateTime.now());
+                return true;
+            });
+            updateMarker();
+            processRequest();
 
-            processRequest(request, process);
-
-            log.info(" processing started successfuly for {}", request.getPath());
+            log.info(" processing finished successfuly for {}", request.getPath());
         } catch (Exception e){
             log.error(" processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
+        } finally {
+            MDC.remove("marker");
         }
     }
 
-    protected ImportRequest checkRequest(ImportRequest requestSrc) {
-        ImportRequest request = requestRepository.findOne(requestSrc.getId());
+    protected ImportRequest checkRequest() {
+        request = requestRepository.findOne(request.getId());
         if (request == null) {
-            log.info(" not found for id={} and path={}", requestSrc.getId(), requestSrc.getPath());
+            log.info(" not found for id={} and path={}", request.getId(), request.getPath());
             return null;
         }
         if (!statusHolder.getAwaitingProcessing().equals(request.getStatus())) {
@@ -117,34 +135,31 @@ public abstract class ImportProcessorBase implements Runnable {
             return null;
         }
 
-//        request.setStatus(statusHolder.getAwaitingProcessing());
-//        requestRepository.save(request);
-//        log.info(" status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-
         return request;
     }
 
-    public abstract void requestProcessing(ImportRequest requestSrc, Process process) throws ImportFailedException;
+    public abstract void requestProcessing() throws ImportFailedException;
 
-    public void processRequest(ImportRequest requestSrc, Process process) {
-        log.info(" picked up id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
-        ImportRequest request = checkRequest(requestSrc);
-        if (request == null) {
-            log.info(" skipped id={} status={} path={}", requestSrc.getId(), requestSrc.getStatus(), requestSrc.getPath());
+    public void processRequest() {
+        log.info(" picked up path={}", request.getPath());
+        if (checkRequest() == null) {
+            log.info(" skipped id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             return;
         }
         log.info("  processing started id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         try {
-            requestProcessing(requestSrc, process);
+            requestProcessing();
 
             importService.checkSubsAndDone(request.getId(), null, process.getType(), statusHolder.getProcessingDone());
-        } catch (Exception e) {
-            request.setStatus(statusHolder.getFinished());
-            request.addError(e.getMessage());
-            requestRepository.save(request);
+        } catch (OptimisticLockingFailureException e) {
+            requestService.addError(request.getId(), statusHolder.getFinished(), e.getMessage());
             importService.finishRequestProcessing(request);
-            log.info("   status changed id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+            log.error("   processing failed OptimisticLockingFailureException path={}", request.getPath(), e);
+        } catch (Exception e) {
+            requestService.addError(request.getId(), statusHolder.getFinished(), e.getMessage());
+            importService.finishRequestProcessing(request);
+            log.error("   processing failed path={}", request.getPath(), e);
         } finally {
             log.info("  processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
             pool.checkForAwaitingRequests();

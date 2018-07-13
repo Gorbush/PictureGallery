@@ -43,7 +43,7 @@ public class Process {
     private DateTime updated;
 
     @Version
-    private long version = 0;
+    private Long version;
 
 
     public String addError(String error, Object... params) {

@@ -108,6 +108,13 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
     }
 
     @Override
+    public <T extends PictureInformation> boolean deleteByGrade(String id, Class<T> clazz) {
+        Query query = Query.query(Criteria.where("_id").is(id));
+        WriteResult remove = template.remove(query, clazz);
+        return remove.getN() == 1;
+    }
+
+    @Override
     public <T extends PictureInformation> T saveByGrade(T entity) {
         String collection = entity.getGrade().getCollectionName();
         if (StringUtils.isBlank(collection)) {
@@ -364,6 +371,7 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
         }
         if (newProcessId != null) {
             update.addToSet("indexProcessIds", newProcessId);
+            update.set("activeProcessId", newProcessId);
         }
 
         WriteResult writeResult = template.updateMulti(query, update, ImportRequest.class);
