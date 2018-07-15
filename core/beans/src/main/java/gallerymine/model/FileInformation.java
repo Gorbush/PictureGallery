@@ -34,6 +34,8 @@ public class FileInformation implements Comparable<FileInformation> {
     private String filePath;
     @Indexed
     private String fileName;
+    @Indexed
+    private String originalFileName;
     /** This should be a path to the original root folder */
     private String rootPath;
     private String source;
@@ -95,7 +97,12 @@ public class FileInformation implements Comparable<FileInformation> {
     }
 
     public String getFullFilePath() {
-        Path path = Paths.get(rootPath, filePath);
+        Path path;
+        if (rootPath != null) {
+            path = Paths.get(rootPath, filePath, fileName);
+        } else {
+            path = Paths.get(filePath, fileName);
+        }
         return path.toString();
     }
 
@@ -110,9 +117,10 @@ public class FileInformation implements Comparable<FileInformation> {
         id = sourceToMatch.getId();
         storage = sourceToMatch.getStorage();
 
+        rootPath = sourceToMatch.getRootPath();
         filePath = sourceToMatch.getFilePath();
         fileName = sourceToMatch.getFileName();
-        rootPath = sourceToMatch.getRootPath();
+        originalFileName = sourceToMatch.getOriginalFileName();
 
         source = sourceToMatch.getSource();
         filled = sourceToMatch.isFilled();

@@ -228,11 +228,22 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
         List<Criteria> criteria = new ArrayList<>();
 
         if (isNotBlank(sourceCriteria.getFileName())) {
+            Criteria byFileName;
             if (RegExpHelper.isMask(sourceCriteria.getFileName())) {
-                criteria.add(Criteria.where("fileName").regex(RegExpHelper.convertToRegExp(sourceCriteria.getFileName())));
+                byFileName = Criteria.where("fileName").regex(RegExpHelper.convertToRegExp(sourceCriteria.getFileName()));
             } else {
-                criteria.add(Criteria.where("fileName").is(sourceCriteria.getFileName()));
+                byFileName = Criteria.where("fileName").is(sourceCriteria.getFileName());
             }
+            Criteria byOrgFileName;
+            if (RegExpHelper.isMask(sourceCriteria.getFileName())) {
+                byOrgFileName = Criteria.where("originalFileName").regex(RegExpHelper.convertToRegExp(sourceCriteria.getFileName()));
+            } else {
+                byOrgFileName = Criteria.where("originalFileName").is(sourceCriteria.getFileName());
+            }
+            criteria.add(new Criteria().orOperator(
+                    byFileName,
+                    byOrgFileName
+            ));
         }
         if (isNotBlank(sourceCriteria.getPath())) {
             if (RegExpHelper.isMask(sourceCriteria.getPath())) {

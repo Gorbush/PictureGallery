@@ -1,11 +1,9 @@
 package gallerymine.backend.importer;
 
 import com.google.common.collect.Sets;
-import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.matchers.SourceFilesMatcher;
 import gallerymine.backend.pool.ImportPoolManagerBase;
-import gallerymine.backend.services.UniSourceService;
 import gallerymine.model.ImportSource;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.SourceCriteria;
@@ -22,7 +20,6 @@ import java.nio.file.Path;
 import java.util.Iterator;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
-import static gallerymine.model.support.PictureGrade.IMPORT;
 
 @Component
 @Scope("prototype")
@@ -36,12 +33,6 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             ImportPoolManagerBase.StatusHolder.define(MATCHING_AWAIT, MATCHING, MATCHED, MATCHING_COMPLETE)
                     .processing(TO_MATCH)
                     .abandoned(MATCHING_AWAIT, MATCHING, MATCHED);
-
-    @Autowired
-    private ImportSourceRepository importSourceRepository;
-
-    @Autowired
-    private UniSourceService uniSourceService;
 
     @Autowired
     private SourceFilesMatcher sourceFilesMatcher;
@@ -85,7 +76,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             criteria.setStatus(InfoStatus.ANALYSING);
             criteria.setPopulatedNotBy(Sets.newHashSet(KIND_MATCHING));
 
-            Iterator<ImportSource> importSources = sourceRepository.fetchCustomStream(criteria, ImportSource.class);
+            Iterator<ImportSource> importSources = uniSourceRepository.fetchCustomStream(criteria, ImportSource.class);
 
             while (importSources.hasNext()) {
                 filesCount++;

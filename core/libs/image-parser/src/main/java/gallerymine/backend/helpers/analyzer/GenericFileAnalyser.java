@@ -89,8 +89,9 @@ public class GenericFileAnalyser {
             // preset some properties to avoid re-population
             Path fullImportPath = appConfig.getImportRootFolderPath().resolve(importRootFolder);
             info.setRootPath(fullImportPath.toString());
-            info.setFilePath(appConfig.relativizePath(file, fullImportPath));
+            info.setFilePath(appConfig.relativizePath(file.getParent(), fullImportPath));
             info.setFileName(file.toFile().getName());
+            info.setOriginalFileName(file.toFile().getName());
             info.setSize(file.toFile().length());
             info.setStatus(InfoStatus.ANALYSING);
 

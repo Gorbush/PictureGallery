@@ -1,18 +1,12 @@
 package gallerymine.backend.importer;
 
-import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
-import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
-import gallerymine.backend.matchers.SourceFilesMatcher;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
-import gallerymine.backend.services.ImportService;
-import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -30,18 +24,6 @@ public class ImportApproveProcessor extends ImportProcessorBase {
             ImportApproveRequestPoolManager.StatusHolder.define(APPROVING_AWAIT, APPROVING, APPROVED, APPROVAL_COMPLETE)
                     .processing(TO_APPROVE)
                     .abandoned();
-
-    @Autowired
-    private GenericFileAnalyser fileAnalyzer;
-
-    @Autowired
-    private ImportSourceRepository uniSourceRepository;
-
-    @Autowired
-    private SourceFilesMatcher sourceFilesMatcher;
-
-    @Autowired
-    private ImportService importService;
 
     public ImportApproveProcessor() {
         super(STATUSES, ProcessType.APPROVAL);

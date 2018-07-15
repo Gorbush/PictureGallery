@@ -13,12 +13,12 @@ import gallerymine.backend.pool.ImportPoolManagerBase;
 import gallerymine.backend.services.ImportRequestService;
 import gallerymine.backend.services.ImportService;
 import gallerymine.backend.services.ProcessService;
+import gallerymine.backend.services.UniSourceService;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,10 @@ public abstract class ImportProcessorBase implements Runnable {
     protected ProcessService processService;
 
     @Autowired
-    protected ImportSourceRepository sourceRepository;
+    protected ImportSourceRepository uniSourceRepository;
+
+    @Autowired
+    protected UniSourceService uniSourceService;
 
     @Autowired
     protected ImageFormatAnalyser imageAnalyzer;

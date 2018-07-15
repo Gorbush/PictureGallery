@@ -34,4 +34,5 @@ public interface PictureRepository extends MongoRepository<Picture, String> {
 	Collection<Picture> findBySourcesIdIn(HashSet<String> sourceIds);
 
 	Collection<Picture> findByFileNameAndSize(String fileName, long size);
+	Collection<Picture> findByOriginalFileNameAndSize(String fileName, long size);
 }

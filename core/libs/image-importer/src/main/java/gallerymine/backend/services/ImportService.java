@@ -1,10 +1,12 @@
 package gallerymine.backend.services;
 
+import com.drew.tools.FileUtil;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.data.RetryVersion;
+import gallerymine.backend.exceptions.ImageApproveException;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
@@ -19,13 +21,20 @@ import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -313,6 +322,47 @@ public class ImportService {
         }
     }
 
+    /** Check if file exists - and if it is - add hash and index like
+     * <b>filename#1.ext</b> */
+    public Path indexateFileIfNeeded(Path file) {
+        int index = 0;
+        Path folder = file.getParent();
+        String fileName = FilenameUtils.getBaseName(file.toFile().getName());
+        String fileExt = FilenameUtils.getExtension(file.toFile().getName());
+        while(file.toFile().exists()) {
+            file = folder.resolve(fileName+"#"+index+"."+fileExt);
+            index++;
+        }
+        return file;
+    }
+
+    public PictureInformation settlePicture(PictureInformation source) throws ImageApproveException {
+        try {
+            log.info("  source id={} is getting approved", source.getId());
+            Picture picture = new Picture();
+            picture.copyFrom(source);
+            picture.setGrade(PictureGrade.GALLERY);
+            picture.addSource(source.getId(), source.getGrade());
+            picture.setStatus(APPROVED);
+            picture.setRootPath(null);
+
+            Path importImage = Paths.get(source.getFullFilePath());
+            Path galleryImagePath = Paths.get(appConfig.getGalleryRootFolder(), picture.getFullFilePath());
+
+            galleryImagePath.getParent().toFile().mkdirs();
+
+            galleryImagePath = indexateFileIfNeeded(galleryImagePath);
+
+            FileUtils.copyFile(importImage.toFile(), galleryImagePath.toFile(), true);
+
+            uniSourceRepository.saveByGrade(picture);
+
+            return picture;
+        } catch (Exception e) {
+            throw new ImageApproveException("Failed to copy file");
+        }
+    }
+
     public boolean actionApprove(PictureInformation source) throws Exception {
         log.info("approve for image id={} status={}", source.getId(), source.getStatus());
 
@@ -320,13 +370,7 @@ public class ImportService {
         PictureInformation picture = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
         if (picture == null) {
             log.info("  source id={} is getting approved", source.getId());
-            picture = new Picture();
-            picture.copyFrom(source);
-            picture.setGrade(PictureGrade.GALLERY);
-            picture.addSource(source.getId(), source.getGrade());
-            picture.setStatus(APPROVED);
-
-            uniSourceRepository.saveByGrade(picture);
+            picture = settlePicture(source);
             pictureId = picture.getId();
         } else {
             log.info("  source id={} was already saved as picture", source.getId());

@@ -1,29 +1,21 @@
 package gallerymine.backend.importer;
 
-import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.PictureRepository;
-import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
 import gallerymine.backend.helpers.analyzer.IgnorableFileAnayser;
-import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
-import gallerymine.backend.services.ImportService;
-import gallerymine.backend.services.UniSourceService;
-import gallerymine.model.FileInformation;
-import gallerymine.model.ImportSource;
-import gallerymine.model.Picture;
-import gallerymine.model.Process;
+import gallerymine.model.*;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.ThumbRequest;
+import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.ProcessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -35,8 +27,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -57,31 +47,10 @@ public class ImportProcessor extends ImportProcessorBase {
     private ThumbRequestRepository thumbRequestRepository;
 
     @Autowired
-    protected ProcessRepository processRepository;
-
-    @Autowired
-    protected ImportSourceRepository sourceRepository;
-
-    @Autowired
-    private ImageFormatAnalyser imageAnalyzer;
-
-    @Autowired
     private IgnorableFileAnayser ignorableFileAnayser;
 
     @Autowired
     private GenericFileAnalyser fileAnalyzer;
-
-    @Autowired
-    private ImportSourceRepository importSourceRepository;
-
-    @Autowired
-    private UniSourceService uniSourceService;
-
-    @Autowired
-    private ImportService importService;
-
-    @Autowired
-    private ImportSourceRepository uniSourceRepository;
 
     public ImportProcessor() {
         super(STATUSES, ProcessType.IMPORT);
@@ -230,7 +199,7 @@ public class ImportProcessor extends ImportProcessorBase {
                             info.setStatus(InfoStatus.FAILED);
                         }
                     }
-                    importSourceRepository.saveByGrade(info);
+                    uniSourceRepository.saveByGrade(info);
                     if (!InfoStatus.FAILED.equals(info.getStatus()) && !info.hasThumb()) {
                         log.warn("     No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
                         Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
@@ -278,26 +247,25 @@ public class ImportProcessor extends ImportProcessorBase {
      * match - similar or duplicate and moves the file to the right import subfolder
      * */
     private boolean checkIfDuplicate(Path file, ImportRequest request, FileInformation info) throws IOException {
-        // TODO make better check for duplicates, disable for now as it is equal to similar
-//        boolean duplicatesFound = importUtils.findDuplicates(file.toFile().getName(), file.toFile().length());
-//        if (duplicatesFound) {
-//            importUtils.moveToDuplicates(file, request.getRootPath());
-//            info.setStatus(InfoStatus.DUPLICATE);
-//            return true;
-//        }
-        Collection<Picture> picturesDuplicates = pictureRepository.findByFileNameAndSize(file.toFile().getName(), file.toFile().length());
-        if (picturesDuplicates.size() > 0) {
-            Picture pic = picturesDuplicates.iterator().next();
-            Path targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
+        SourceCriteria criteria = new SourceCriteria();
+        criteria.setFileName(file.toFile().getName());
+        criteria.setFileSize(file.toFile().length());
+
+        uniSourceRepository.fetchCustomStream(criteria, Picture.class).forEachRemaining( pic -> {
+            Path targetFolder = null;
+            try {
+                targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
+            } catch (IOException e) {
+                log.warn("Failed to move to Similar file={}", info.getFullFilePath());
+            }
             info.setRootPath(targetFolder.toFile().getAbsolutePath());
             info.setStatus(InfoStatus.DUPLICATE);
             if (pic.getThumbPath() != null) {
                 info.setThumbPath(pic.getThumbPath());
                 info.getPopulatedBy().add(KIND_THUMB);
             }
-            return true;
-        }
-        return false;
+        });
+        return InfoStatus.DUPLICATE.equals(info.getStatus());
     }
 
     private void processPictureFile(Path file, Path importRootFolder, ImportSource info) {

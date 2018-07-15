@@ -117,7 +117,7 @@ public class ImportUtils {
 
     public Path generatePicThumbName(String fileName, DateTime timestamp) {
         if (timestamp == null) {
-            timestamp = new DateTime();
+            timestamp = DateTime.now();
         }
 
         String picFolderName = timestamp.toString("/yyyy/MM/dd/SSSSSSSSS"); //SSSSSSSSS
@@ -269,20 +269,6 @@ public class ImportUtils {
         } catch (Exception e) {
             throw new ImportFailedException("Failed to index. Reason: "+e.getMessage(), e);
         }
-    }
-
-    public boolean findSimilar(String fileName, Long fileSize) {
-//        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
-        Collection<ImportSource> foundImports = Collections.emptyList();
-        Collection<Picture> foundPictures = pictureRepository.findByFileNameAndSize(fileName, fileSize);
-        return !foundPictures.isEmpty() || !foundImports.isEmpty();
-    }
-
-    public boolean findDuplicates(String fileName, Long fileSize) {
-//        Collection<ImportSource> foundImports = importSourceRepository.findByFileNameAndSize(fileName, fileSize);
-        Collection<ImportSource> foundImports = Collections.emptyList();
-        Collection<Picture> foundPictures = pictureRepository.findByFileNameAndSize(fileName, fileSize);
-        return !foundPictures.isEmpty() || !foundImports.isEmpty();
     }
 
     public Path moveToSimilar(Path file, String importPath) throws IOException {
