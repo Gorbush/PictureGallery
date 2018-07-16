@@ -236,9 +236,9 @@ public class ImportSourceRepositoryImpl implements ImportSourceRepositoryCustom 
             }
             Criteria byOrgFileName;
             if (RegExpHelper.isMask(sourceCriteria.getFileName())) {
-                byOrgFileName = Criteria.where("originalFileName").regex(RegExpHelper.convertToRegExp(sourceCriteria.getFileName()));
+                byOrgFileName = Criteria.where("fileNameOriginal").regex(RegExpHelper.convertToRegExp(sourceCriteria.getFileName()));
             } else {
-                byOrgFileName = Criteria.where("originalFileName").is(sourceCriteria.getFileName());
+                byOrgFileName = Criteria.where("fileNameOriginal").is(sourceCriteria.getFileName());
             }
             criteria.add(new Criteria().orOperator(
                     byFileName,

@@ -91,7 +91,7 @@ public class GenericFileAnalyser {
             info.setRootPath(importRootFolder.toString());
             info.setFilePath(appConfig.relativizePath(file.getParent(), fullImportPath));
             info.setFileName(file.toFile().getName());
-            info.setOriginalFileName(file.toFile().getName());
+            info.setFileNameOriginal(file.toFile().getName());
             info.setSize(file.toFile().length());
             info.setStatus(InfoStatus.ANALYSING);
 

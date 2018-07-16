@@ -10,7 +10,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -35,7 +34,7 @@ public class FileInformation implements Comparable<FileInformation> {
     @Indexed
     private String fileName;
     @Indexed
-    private String originalFileName;
+    private String fileNameOriginal;
     /** This should be a path to the original root folder */
     private String rootPath;
     private String source;
@@ -127,7 +126,7 @@ public class FileInformation implements Comparable<FileInformation> {
         rootPath = sourceToMatch.getRootPath();
         filePath = sourceToMatch.getFilePath();
         fileName = sourceToMatch.getFileName();
-        originalFileName = sourceToMatch.getOriginalFileName();
+        fileNameOriginal = sourceToMatch.getFileNameOriginal();
 
         source = sourceToMatch.getSource();
         filled = sourceToMatch.isFilled();

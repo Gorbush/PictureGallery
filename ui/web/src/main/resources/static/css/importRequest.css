@@ -31,6 +31,9 @@ div#pageContentScroller {
     right: 0;
     height: 100%;
 }
+#importDetailsBrowsingArea.bottomMatch {
+    bottom: 100px;
+}
 #importDetailsBrowsingArea {
     border: 1px solid blue;
     position: absolute;
@@ -39,11 +42,16 @@ div#pageContentScroller {
     left: 0;
     right: 15px;
 }
+.heightHalf {
+    height: 50%;
+}
+.heightThird {
+    height: 30%;
+}
 #indexRequestsTreeScroller {
     position: relative;
     border: 1px solid green;
     overflow: auto;
-    height: 50%;
     width: 100%;
     top: 0;
     left: 0;
@@ -56,7 +64,6 @@ div#pageContentScroller {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 50%;
 }
 #importImagesList {
     border: 1px solid cyan;
