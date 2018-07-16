@@ -96,6 +96,7 @@ public class FileInformation implements Comparable<FileInformation> {
         return StringUtils.isNotBlank(thumbPath);
     }
 
+    /** Returns file path with <b>rootPath</b>*/
     public String getFullFilePath() {
         Path path;
         if (rootPath != null) {
@@ -103,6 +104,12 @@ public class FileInformation implements Comparable<FileInformation> {
         } else {
             path = Paths.get(filePath, fileName);
         }
+        return path.toString();
+    }
+
+    /** Returns file path without <b>rootPath</b>*/
+    public String getFilePath() {
+        Path path = Paths.get(filePath, fileName);
         return path.toString();
     }
 

@@ -26,7 +26,8 @@ public class ImportRequestService {
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public ImportRequest retrySave(String entityId, RetryRunner<ImportRequest> runner) {
         ImportRequest request = requestRepository.findOne(entityId);
-        if (runner.run(request)) {
+        request = runner.run(request);
+        if (request != null) {
             requestRepository.save(request);
             updateMarker(request);
         }

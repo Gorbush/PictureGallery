@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 
 public interface RetryRunner<T> {
 
-    boolean run(T entity) throws OptimisticLockingFailureException;
+    T run(T entity) throws OptimisticLockingFailureException;
 }

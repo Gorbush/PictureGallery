@@ -91,13 +91,13 @@ public class MainPageController {
             model.addObject("message", "Import Process not found");
             return model;
         }
-        ProcessDetails details = process != null ? processService.populateAllDetails(process) : null;
+        ProcessDetails details = processService.populateAllDetails(process);
 
         ModelAndView model = new ModelAndView("main/importProgress", "process", process);
         model.addObject("details", details==null ? null : details.getDetails());
-        model.addObject("latestDetail", (details==null || details.getLastDetail() == null) ? null : details.getLastDetail());
+        model.addObject("lastDetail", (details==null || details.getLastDetail() == null) ? null : details.getLastDetail());
         try {
-            model.addObject("latestDetailJSON", (details == null || details.getLastDetail() == null) ? null :
+            model.addObject("lastDetailJSON", (details == null || details.getLastDetail() == null) ? null :
                     jacksonObjectMapper.writeValueAsString(details.getLastDetail()));
         } catch (Exception e) {
             e.printStackTrace();

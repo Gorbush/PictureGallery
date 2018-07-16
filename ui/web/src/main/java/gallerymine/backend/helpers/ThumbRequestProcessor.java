@@ -118,11 +118,11 @@ public class ThumbRequestProcessor implements Runnable {
             List<PictureInformation> pictures = uniSourceRepository.findInfo(request.getSource());
             if (pictures != null && pictures.size() > 0) {
                 log.info("   going to update {} pictures with thumbnail", pictures.size());
-                for(PictureInformation pic: pictures) {
-                    uniSourceService.retrySave(pic.getId(), pic.getClass(), picture -> {
-                        picture.setThumbPath(request.getThumbName());
-                        picture.getPopulatedBy().add(KIND_THUMB);
-                        return true;
+                for(PictureInformation picture: pictures) {
+                    uniSourceService.retrySave(picture.getId(), picture.getClass(), pic -> {
+                        pic.setThumbPath(request.getThumbName());
+                        pic.getPopulatedBy().add(KIND_THUMB);
+                        return pic;
                     });
                 }
             } else {

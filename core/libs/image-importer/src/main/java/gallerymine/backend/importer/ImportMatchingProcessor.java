@@ -61,7 +61,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                     stats.getSkipped().set(statsEnum.getSkipped().get());
 
                     stats.setAllFilesProcessed(stats.checkAllFilesProcessed());
-                    return true;
+                    return request;
                 });
         updateMarker();
 
@@ -100,7 +100,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                         info.setMatchReport(matchReport);
                         info.getPopulatedBy().add(KIND_MATCHING);
                         info.setStatus(InfoStatus.APPROVING);
-                        return true;
+                        return info;
                     });
                     filesSucceedCount++;
                 } catch (Exception e) {
@@ -128,7 +128,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
 //                request.getStats(processType).getSkipped().set(doneFilesSkippedCount);
                 request.setStatus(statusHolder.getProcessingDone());
                 request.getStats(processType).setAllFilesProcessed(true);
-                return true;
+                return request;
             });
             updateMarker();
         } catch (Exception e) {

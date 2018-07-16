@@ -119,7 +119,7 @@ public class ImportProcessor extends ImportProcessorBase {
         request = requestService.retrySave(request.getId(), requestEntity -> {
                     requestEntity.setStatus(statusHolder.getInProcessing());
                     requestEntity.getStats(processType).getFiles().set(-1);
-                    return true;
+                    return requestEntity;
                 });
         updateMarker();
 
@@ -138,7 +138,7 @@ public class ImportProcessor extends ImportProcessorBase {
             request = requestService.retrySave(request.getId(), requestEntity -> {
                         requestEntity.setFoldersCount(doneFoldersCount);
                         requestEntity.getStats(processType).getFolders().set(doneFoldersCount);
-                        return true;
+                        return requestEntity;
                     });
             log.info("    folders processed {}. path={}", foldersCount, request.getPath());
         } catch (IOException e) {
@@ -175,26 +175,26 @@ public class ImportProcessor extends ImportProcessorBase {
                         if (!info.isFailed()) {
                             if (!checkIfDuplicate(file, request, info)) {
                                 Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
-                                info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                                info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
                                 info.setStatus(InfoStatus.ANALYSING);
                             }
                             filesCountSucceed++;
                         } else {
                             filesCountFailed++;
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                            info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                            info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
                             info.setStatus(InfoStatus.FAILED);
                             logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
                         }
                     } else {
                         if (ignorableFileAnayser.accepts(file.toFile().getName())) {
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                            info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                            info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
                             filesCountIgnored++;
                             info.setStatus(InfoStatus.SKIPPED);
                         } else {
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                            info.setRootPath(targetFolder.toFile().getAbsolutePath());
+                            info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
                             filesCountFailed++;
                             info.setStatus(InfoStatus.FAILED);
                         }
@@ -225,7 +225,7 @@ public class ImportProcessor extends ImportProcessorBase {
                         stats.getFilesDone().set(doneFilesCountSucceed);
                         stats.getSkipped().set(doneFilesCountIgnored);
                         stats.getFailed().set(doneFilesCountFailed);
-                        return true;
+                        return requestEntity;
                     });
             log.info("     files processing done {} or {} succeeded (ignored:{}  failed:{}). path={}",
                     filesCount, filesCountSucceed, filesCountIgnored, filesCountFailed, request.getPath());
@@ -235,7 +235,7 @@ public class ImportProcessor extends ImportProcessorBase {
                     requestEntity.setFilesIgnoredCount(-1);
                     requestEntity.getStats(processType).setAllFilesProcessed(true);
                     requestEntity.addError("indexing failed for file " + path);
-                    return true;
+                    return requestEntity;
                     });
             log.error("     import processing failed for file {}. Reason: {}", path, e.getMessage());
         }
@@ -254,11 +254,11 @@ public class ImportProcessor extends ImportProcessorBase {
         uniSourceRepository.fetchCustomStream(criteria, Picture.class).forEachRemaining( pic -> {
             Path targetFolder = null;
             try {
-                targetFolder = importUtils.moveToSimilar(file, request.getRootPath());
+                targetFolder = importUtils.moveToDuplicates(file, request.getRootPath());
+                info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
             } catch (IOException e) {
-                log.warn("Failed to move to Similar file={}", info.getFullFilePath());
+                log.warn("Failed to move to Duplicates file={}", info.getFullFilePath());
             }
-            info.setRootPath(targetFolder.toFile().getAbsolutePath());
             info.setStatus(InfoStatus.DUPLICATE);
             if (pic.getThumbPath() != null) {
                 info.setThumbPath(pic.getThumbPath());

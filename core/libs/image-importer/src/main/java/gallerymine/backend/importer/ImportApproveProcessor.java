@@ -46,7 +46,7 @@ public class ImportApproveProcessor extends ImportProcessorBase {
             stats.setAllFilesProcessed(stats.checkAllFilesProcessed());
             stats.setAllFoldersProcessed(stats.getFolders().get() == 0L);
 
-            return true;
+            return request;
         });
         ImportRequest.ImportStats stats = request.getStats(processType);
         if (stats.getAllFilesProcessed() && stats.getAllFoldersProcessed()) {

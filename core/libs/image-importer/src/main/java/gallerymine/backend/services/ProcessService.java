@@ -85,7 +85,16 @@ public class ProcessService {
                     details.setDetail(importRepository.findByIndexProcessIdsContains(process.getId()));
                     break;
                 }
+                case MATCHING: {
+                    details.setDetail(importRepository.findByIndexProcessIdsContains(process.getId()));
+                    break;
+                }
+                case APPROVAL: {
+                    details.setDetail(importRepository.findByIndexProcessIdsContains(process.getId()));
+                    break;
+                }
                 default: {
+                    details.setDetail(importRepository.findByIndexProcessIdsContains(process.getId()));
                     break;
                 }
             }
@@ -102,7 +111,16 @@ public class ProcessService {
                 details.setDetails(importRepository.findAllByIndexProcessIdsIsContainingAndParentIsNullOrderByCreatedAsc(process.getId()));
                 break;
             }
+            case MATCHING: {
+                details.setDetails(importRepository.findAllByIndexProcessIdsIsContainingAndParentIsNullOrderByCreatedAsc(process.getId()));
+                break;
+            }
+            case APPROVAL: {
+                details.setDetails(importRepository.findAllByIndexProcessIdsIsContainingAndParentIsNullOrderByCreatedAsc(process.getId()));
+                break;
+            }
             default: {
+                details.setDetails(importRepository.findAllByIndexProcessIdsIsContainingAndParentIsNullOrderByCreatedAsc(process.getId()));
                 break;
             }
 
@@ -113,7 +131,8 @@ public class ProcessService {
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public Process retrySave(String entityId, RetryRunner<Process> runner) {
         Process request = processRepository.findOne(entityId);
-        if (runner.run(request)) {
+        request = runner.run(request);
+        if (request != null) {
             processRepository.save(request);
         }
         return request;

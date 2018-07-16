@@ -250,7 +250,7 @@ public class ImportUtils {
                     if (files.get() == 0 && folders.get() == 0) {
                         processEntity.addNote("  None");
                     }
-                    return true;
+                    return processEntity;
                 });
                 throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: "+e.getMessage(), e);
             }

@@ -300,7 +300,7 @@ public class ImportService {
                 progressEntity.setStatus(ProcessStatus.FINISHED);
             }
             addImportStats(progressEntity, request);
-            return true;
+            return progressEntity;
         });
         log.info(" Process finished of id={} process={} oldStatus={} status={}",
                 request.getId(), process.getId(), oldStatus, process.getStatus());
@@ -339,23 +339,26 @@ public class ImportService {
     public PictureInformation settlePicture(PictureInformation source) throws ImageApproveException {
         try {
             log.info("  source id={} is getting approved", source.getId());
-            Picture picture = new Picture();
-            picture.copyFrom(source);
-            picture.setGrade(PictureGrade.GALLERY);
-            picture.addSource(source.getId(), source.getGrade());
-            picture.setStatus(APPROVED);
-            picture.setRootPath(null);
 
-            Path importImage = Paths.get(source.getFullFilePath());
-            Path galleryImagePath = Paths.get(appConfig.getGalleryRootFolder(), picture.getFullFilePath());
+            Path importImage = calcCompleteFilePath(source);
+            Path galleryImagePath = indexateFileIfNeeded(calcCompleteFilePath(GALLERY, source.getFilePath()));
 
             galleryImagePath.getParent().toFile().mkdirs();
 
-            galleryImagePath = indexateFileIfNeeded(galleryImagePath);
-
             FileUtils.copyFile(importImage.toFile(), galleryImagePath.toFile(), true);
 
-            uniSourceRepository.saveByGrade(picture);
+            Picture picture = uniSourceService.retrySave(source.getId(), Picture.class, pic -> {
+                if (pic == null) {
+                    pic = new Picture();
+                    pic.copyFrom(source);
+                    pic.setStatus(APPROVED);
+                }
+                pic.setGrade(PictureGrade.GALLERY);
+                pic.addSource(source.getId(), source.getGrade());
+                pic.setRootPath(null);
+                pic.setFileName(galleryImagePath.toFile().getName());
+                return pic;
+            });
 
             return picture;
         } catch (Exception e) {
@@ -387,7 +390,7 @@ public class ImportService {
             info.setStatus(APPROVED);
             info.setAssignedToPicture(true);
             info.addSource(pictureId, GALLERY);
-            return true;
+            return info;
         });
 
         log.info("  source id={} is approved", source.getId());
@@ -411,7 +414,7 @@ public class ImportService {
                     if (DUPLICATE.equals(oldStatus)) {
                         requestEntity.getStats(ProcessType.APPROVAL).getDuplicates().decrementAndGet();
                     }
-                    return true;
+                    return requestEntity;
                 });
 
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);
@@ -455,11 +458,33 @@ public class ImportService {
             if (APPROVED.equals(oldStatus)) {
                 requestEntity.getStats(ProcessType.APPROVAL).getMovedToApprove().decrementAndGet();
             }
-            return true;
+            return requestEntity;
         });
 
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);
 
         return true;
     }
+
+    public Path calcCompleteFilePath(PictureInformation info) {
+        return calcCompleteFilePath(info.getGrade(), info.getFullFilePath());
+    }
+
+    public Path calcCompleteFilePath(PictureGrade grade, String fullRelativePath) {
+        switch (grade) {
+            case GALLERY: {
+                return Paths.get(appConfig.getGalleryRootFolder()).resolve(fullRelativePath);
+            }
+            case IMPORT: {
+                return Paths.get(appConfig.getImportRootFolder()).resolve(fullRelativePath);
+            }
+            case SOURCE: {
+                return Paths.get(appConfig.getSourcesRootFolder()).resolve(fullRelativePath);
+            }
+            default: {
+                throw new RuntimeException("Grade for Information is not covered grade="+grade+" grade="+fullRelativePath);
+            }
+        }
+    }
+
 }

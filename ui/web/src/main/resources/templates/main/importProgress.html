@@ -18,10 +18,10 @@
     <script type="application/javascript" th:inline="javascript">
 
         $(document).ready(function () {
-            var latestDetailStr = /*[[${latestDetailJSON}]]*/ {};
-            var latestDetail = JSON.parse(latestDetailStr);
+            var lastDetailStr = /*[[${lastDetailJSON}]]*/ {};
+            var lastDetail = JSON.parse(lastDetailStr);
 
-            ImportRequestsTree.updateTotals(latestDetail);
+            ImportRequestsTree.updateTotals(lastDetail);
         });
 
     </script>
@@ -55,7 +55,7 @@
         <div id="importList" class="col-sm-4" >
             <div id="importDetailsListData" >
                 <input type="hidden" id="processId" th:value="${process.id}"></input>
-                <input type="hidden" id="activeDetailId" th:value="${latestDetail?.id}"></input>
+                <input type="hidden" id="activeDetailId" th:value="${lastDetail?.id}"></input>
                 <table class="table table-bordered table-striped">
                     <tr><td> Name </td><td name="process.name" th:text="${process.name}"></td> </tr>
                     <tr><td> Type </td><td name="process.type" th:text="${process.type}"></td> </tr>
@@ -73,8 +73,8 @@
                     </tr>
                     <tr><td> Started </td><td name="process.started" class="date" th:text="${process.started?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
                     <tr><td> Finished </td><td name="process.finished" class="date" th:text="${process.finished?.toString('YYYY-MM-dd HH:mm:ss')}"></td> </tr>
-                    <tr><td> Folder </td><td name="lastDetail.path" th:text="${details[0]?.path}" th:if="${details.size() > 0}"></td> </tr>
-                    <tr><td> Progress: </td><td name="lastDetail.path" th:text="${details[0]?.path}" th:if="${details.size() > 0}"></td> </tr>
+                    <tr><td> Folder </td><td name="lastDetail.path" th:text="${lastDetail.path}" th:if="${lastDetail != null}"></td> </tr>
+                    <tr><td> Progress: </td><td name="lastDetail.path" th:text="${lastDetail.path}" th:if="${lastDetail != null}"></td> </tr>
                     <tr><td class="text-right"> Folders:</td><td><div id="foldersProgress"></div></td></tr>
                     <tr><td class="text-right"> Files:</td><td><div id="filesProgress"></div></td></tr>
                     <!-- tr><td class="text-right"> Sample:</td><td><progress id="allProgress" class="progressbar" max="10" value="3"></progress></td></tr>

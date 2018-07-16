@@ -114,7 +114,7 @@ public abstract class ImportProcessorBase implements Runnable {
             processService.retrySave(process.getId(), process -> {
                 process.setStatus(ProcessStatus.STARTED);
                 process.setStarted(DateTime.now());
-                return true;
+                return process;
             });
             updateMarker();
             processRequest();

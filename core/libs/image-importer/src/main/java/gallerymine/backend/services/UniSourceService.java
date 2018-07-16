@@ -26,7 +26,8 @@ public class UniSourceService {
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public <T extends PictureInformation> T retrySave(String entityId,  Class<T> clazz, RetryRunner<T> runner) {
         T entity = uniSourceRepository.fetchOne(entityId, clazz);
-        if (runner.run(entity)) {
+        entity = runner.run(entity);
+        if (entity != null) {
             uniSourceRepository.saveByGrade(entity);
         }
         return entity;
