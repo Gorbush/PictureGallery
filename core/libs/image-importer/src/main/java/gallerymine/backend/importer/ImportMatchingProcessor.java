@@ -42,7 +42,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
     }
 
     public void requestProcessing() throws ImportFailedException {
-        log.warn("   matching processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("   matching processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         Path path = appConfig.getImportRootFolderPath().resolve(request.getPath());
 
         if (!validateImportRequest(process, path))
@@ -135,7 +135,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             request = requestService.addError(request.getId(), "Matching info analysing failed");
             log.error("   matching processing failed: Matching info analysing failed for indexRequest id=%s {}. Reason: {}", path, e.getMessage());
         }
-        log.warn("   matching processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("   matching processing done id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
     }
 
 }

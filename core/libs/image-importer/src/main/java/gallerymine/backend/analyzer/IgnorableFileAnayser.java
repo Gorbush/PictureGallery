@@ -1,4 +1,4 @@
-package gallerymine.backend.helpers.analyzer;
+package gallerymine.backend.analyzer;
 
 import com.google.common.collect.Sets;
 import org.springframework.stereotype.Component;

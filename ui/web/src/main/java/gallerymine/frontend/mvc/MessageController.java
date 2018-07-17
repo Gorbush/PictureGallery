@@ -22,9 +22,6 @@ import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.CustomerRepository;
 import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.helpers.GeoCodeHelper;
-import gallerymine.backend.helpers.IndexRequestPoolManager;
-import gallerymine.backend.helpers.IndexRequestProcessor;
-import gallerymine.model.importer.IndexRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,12 +60,6 @@ public class MessageController {
 	private PictureRepository pictureRepository;
 
 	private GeoCodeHelper geoCodeHelper;
-
-	@Autowired
-	private IndexRequestProcessor indexRequestProcessor;
-
-	@Autowired
-	private IndexRequestPoolManager indexRequestPool;
 
 	public MessageController() {
 	}
@@ -122,8 +113,6 @@ public class MessageController {
 		Path path = Paths.get(appConfig.getGalleryRootFolder());
 
 		try {
-			IndexRequest request = indexRequestProcessor.registerNewFolderRequest(path.toAbsolutePath().toString(), null);
-			indexRequestPool.executeRequest(request);
 
 			return new ModelAndView("messages/form", "message", responseOk());
 		} catch (Exception e) {

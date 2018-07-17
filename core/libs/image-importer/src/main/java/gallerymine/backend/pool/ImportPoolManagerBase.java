@@ -39,6 +39,8 @@ public abstract class ImportPoolManagerBase {
     private static Logger log = LoggerFactory.getLogger(ImportPoolManagerBase.class);
     private static Logger logPools = LoggerFactory.getLogger("pools");
 
+    private static int IN_MEMORY_POOL_LIMIT = 50;
+
     @Autowired
     protected ApplicationContext context;
 
@@ -137,14 +139,15 @@ public abstract class ImportPoolManagerBase {
             return;
         }
         log.info(beanName+" request execution id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
-
-        request = requestService.updateStatus(request.getId(), statusHolder.awaitingProcessing);
-
-        bean.setRequest(request);
-        bean.setPool(this);
-        pool.execute(bean);
-
-        log.info(beanName+" scheduled id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        if (getInMemoryCount() < IN_MEMORY_POOL_LIMIT) {
+            request = requestService.updateStatus(request.getId(), statusHolder.awaitingProcessing);
+            bean.setRequest(request);
+            bean.setPool(this);
+            pool.execute(bean);
+            log.info(beanName + " scheduled id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        } else {
+            log.info(beanName + " schedule skipped - inMemory queue is full id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        }
     }
 
     public Collection<ImportProcessor> getWorkingProcessors() {
@@ -164,7 +167,7 @@ public abstract class ImportPoolManagerBase {
     @Scheduled(fixedDelay = 60*1000)
     public void checkForAwaitingRequests() {
         Thread.currentThread().setName(beanName+"-Runner");
-        int queued = pool.getThreadPoolExecutor().getQueue().size();
+        int queued = getInMemoryCount();
         logPools.info(beanName+" check queue size={}", queued);
         if (queued < 1) { // No elements are in memory queue - check DB
             Page<ImportRequest> foundRequests = requestRepository.findByStatusIn(
@@ -176,6 +179,11 @@ public abstract class ImportPoolManagerBase {
                 executeRequest(request);
             }
         }
+    }
+
+    public int getInMemoryCount() {
+        int queued = pool.getThreadPoolExecutor().getQueue().size();
+        return queued;
     }
 
     @Scheduled(fixedDelay = 3*60*1000)

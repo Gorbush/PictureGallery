@@ -1,4 +1,4 @@
-package gallerymine.backend.helpers.analyzer;
+package gallerymine.backend.analyzer;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.GeoLocation;
@@ -8,16 +8,20 @@ import com.drew.metadata.bmp.BmpHeaderDirectory;
 import com.drew.metadata.exif.*;
 import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 import com.drew.metadata.exif.makernotes.KodakMakernoteDirectory;
-import com.drew.metadata.file.FileMetadataDirectory;
+//import com.drew.metadata.file.FileMetadataDirectory;
+//import com.drew.metadata.file.FileSystemDirectory;
 import com.drew.metadata.iptc.IptcDirectory;
 import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.photoshop.PsdHeaderDirectory;
 import com.drew.metadata.png.PngDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
 import gallerymine.backend.beans.AppConfig;
+import gallerymine.model.FileInformation;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.support.ImageInformation;
 import gallerymine.model.support.TimestampKind;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -28,6 +32,9 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -35,7 +42,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.regex.Pattern;
 
 
 /**
@@ -43,10 +49,10 @@ import java.util.regex.Pattern;
  * Created by sergii_puliaiev on 6/11/17.
  */
 @Component
-public class ImageFormatAnalyser {
-    private static Logger log = LoggerFactory.getLogger(ImageFormatAnalyser.class);
+public class ImageDrewFormatAnalyser extends BaseAnalyser {
+    private static Logger log = LoggerFactory.getLogger(ImageDrewFormatAnalyser.class);
 //    private static Logger logUnknownDirectory = LogManager.getLogger("unknownDirectory");
-    private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageFormatAnalyser.class);
+    private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageDrewFormatAnalyser.class);
 
     public static final String KIND_PICTURE = "Picture";
 
@@ -67,41 +73,60 @@ public class ImageFormatAnalyser {
     @Autowired
     private AppConfig appConfig;
 
-    public void gatherFileInformation(Path file, PictureInformation source, boolean extractThumb) {
-        try {
-            ImageInformation info = new ImageInformation();
-            // preset some properties to avoid re-population
-            info.extractThumb = extractThumb;
-            info.file = file.toFile();
+    @Override
+    public boolean acceptsFile(String fileName) {
+        return super.acceptsFile(fileName);
+    }
 
-            if (StringUtils.isNotBlank(source.getThumbPath())) {
-                info.thumbFile = new File(source.getThumbPath());
+    @Override
+    public boolean acceptsExtension(String fileExt) {
+        return allowedExtensions.contains(fileExt.toLowerCase());
+    }
+
+    @Override
+    public boolean gatherFileInformation(Path file, FileInformation info) {
+        if (!(info instanceof PictureInformation)) {
+            return false;
+        }
+        PictureInformation source = (PictureInformation)info;
+        try {
+            ImageInformation imageInfo = new ImageInformation();
+            // preset some properties to avoid re-population
+            imageInfo.file = file.toFile();
+
+            if (source.hasThumb()) {
+                imageInfo.thumbFile = new File(source.getThumbPath());
+                imageInfo.extractThumb = false;
+            } else {
+                imageInfo.extractThumb = true;
             }
 
-            info = readImageInformation(info);
+            imageInfo = readImageInformation(imageInfo);
 
-            if (info != null) {
-                source.addStamps(info.timestamps);
+            if (imageInfo != null) {
+                source.addStamps(imageInfo.timestamps);
 
-                source.setHeight(info.height);
-                source.setWidth(info.width);
-                source.setOrientation(info.orientation);
-                if (info.thumbFile != null && !source.hasThumb()) {
-                    source.setThumbPath(info.thumbFile.getAbsolutePath());
+                source.setHeight(imageInfo.height);
+                source.setWidth(imageInfo.width);
+                source.setOrientation(imageInfo.orientation);
+                if (imageInfo.thumbFile != null && !source.hasThumb()) {
+                    source.setThumbPath(imageInfo.thumbFile.getAbsolutePath());
                 }
-                if (info.latitude != null && info.longitude != null) {
-                    source.setGeoLocation(new GeoJsonPoint(info.longitude, info.latitude));
+                if (imageInfo.latitude != null && imageInfo.longitude != null) {
+                    source.setGeoLocation(new GeoJsonPoint(imageInfo.longitude, imageInfo.latitude));
                 } else {
                     source.setGeoLocation(null);
                 }
             }
 
             source.getPopulatedBy().add(KIND_PICTURE);
+            return true;
         } catch (Exception e){
             source.setFilled(true);
             source.setExists(true);
             source.setError("Failed to gather info: "+e.getMessage());
             log.error("Failed to gather info for id={} name={} in path {}. Reason: {}", source.getId(), source.getFileName(), source.getFilePath() ,e.getMessage(), e);
+            return false;
         }
     }
 
@@ -115,15 +140,46 @@ public class ImageFormatAnalyser {
         return info;
     }
 
+    private void writeThumbnail(ImageInformation info, ExifThumbnailDirectory thumbnailDirectory) {
+        // after the extraction process, if we have the correct tags, we may be able to store thumbnail information
+        if (thumbnailDirectory != null && thumbnailDirectory.containsTag(ExifThumbnailDirectory.TAG_COMPRESSION)) {
+            Integer offset = thumbnailDirectory.getInteger(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET);
+            Integer length = thumbnailDirectory.getInteger(ExifThumbnailDirectory.TAG_THUMBNAIL_LENGTH);
+            if (offset != null && length != null) {
+                try (   FileInputStream input = FileUtils.openInputStream(info.file);
+                        FileOutputStream output = FileUtils.openOutputStream(info.thumbFile)){
+                    long tiffHeaderOffset = thumbnailDirectory.getFileDataOffset();
+                    tiffHeaderOffset += ExifReader.JPEG_SEGMENT_PREAMBLE.length();
+                    byte[] buffer = new byte[length];
+                    input.skip(tiffHeaderOffset + offset);
+                    IOUtils.read(input, buffer, 0, length);
+                    IOUtils.write(buffer, output);
+                    output.flush();
+                } catch (IOException ex) {
+                    info.addError("Invalid thumbnail data specification: {}. file={}", ex.getMessage(), info.file.getAbsolutePath());
+                    log.error("Invalid thumbnail data specification: {}. file={}", ex.getMessage(), info.file.getAbsolutePath());
+                }
+            }
+        }
+    }
+
     private void populateDirectoryInfo(ImageInformation info, Directory directory) throws Exception {
         log.info("Found image directory: {} in file {}", directory.getClass().getSimpleName(), info.file.getAbsolutePath());
         try {
             switch (directory.getClass().getSimpleName()) {
                 case "ExifThumbnailDirectory": {
                     if (info.extractThumb) {
-                        info.thumbFile = Files.createTempFile("thumbnail", ".jpg").toFile();
-                        ((ExifThumbnailDirectory) directory).writeThumbnail(info.thumbFile.getAbsolutePath());
-                        log.debug(" thumbnail: {}", info.thumbFile.getAbsolutePath());
+                        Path galleryMine = Files.createTempDirectory("GalleryMine");
+                        info.thumbFile = Files.createTempFile(galleryMine,"thumbnail", ".jpg").toFile();
+//                        ((ExifThumbnailDirectory) directory).writeThumbnail(info.thumbFile.getAbsolutePath());
+                        writeThumbnail(info, (ExifThumbnailDirectory)directory);
+                        if (info.thumbFile.exists() && info.thumbFile.length() == 0) {
+                            log.warn(" Failed to write thumbnail, removing zero file: {}", info.thumbFile.getAbsolutePath());
+                            info.thumbFile.delete();
+                            info.thumbFile = null;
+                        } else {
+                            log.debug(" thumbnail: {}", info.thumbFile.getAbsolutePath());
+                        }
                     } else {
                         log.debug("Thumbnail is not requested");
                     }
@@ -142,10 +198,19 @@ public class ImageFormatAnalyser {
                     }
                     break;
                 }
+                case "FileSystemDirectory": {
+                    // get FileMetadata
+                    int TAG_FILE_MODIFIED_DATE = 3; // FileSystemDirectory.TAG_FILE_MODIFIED_DATE
+                    if (directory.containsTag(TAG_FILE_MODIFIED_DATE)) {
+                        info.addStamp(TimestampKind.TS_FILE_MODIFY.create(directory.getDate(TAG_FILE_MODIFIED_DATE)));
+                    }
+                    break;
+                }
                 case "FileMetadataDirectory": {
                     // get FileMetadata
-                    if (directory.containsTag(FileMetadataDirectory.TAG_FILE_MODIFIED_DATE)) {
-                        info.addStamp(TimestampKind.TS_FILE_MODIFY.create(directory.getDate(FileMetadataDirectory.TAG_FILE_MODIFIED_DATE)));
+                    int TAG_FILE_MODIFIED_DATE = 3; // FileMetadataDirectory.TAG_FILE_MODIFIED_DATE
+                    if (directory.containsTag(TAG_FILE_MODIFIED_DATE)) {
+                        info.addStamp(TimestampKind.TS_FILE_MODIFY.create(directory.getDate(TAG_FILE_MODIFIED_DATE)));
                     }
                     break;
                 }
@@ -407,7 +472,4 @@ public class ImageFormatAnalyser {
         }
     }
 
-    public boolean acceptsExtension(String fileExt) {
-        return allowedExtensions.contains(fileExt.toLowerCase());
-    }
 }

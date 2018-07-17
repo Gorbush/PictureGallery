@@ -1,7 +1,6 @@
-package gallerymine.backend.helpers;
+package gallerymine.backend.pool;
 
 import gallerymine.backend.beans.repository.PoolRepository;
-import gallerymine.model.importer.IndexRequest;
 import gallerymine.model.support.PoolableEntity;
 import gallerymine.model.support.PoolableEntityStatus;
 import org.slf4j.Logger;
@@ -11,10 +10,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.stereotype.Component;
 
 /**
  * Pool manager for IndexRequets and processors
@@ -22,7 +19,7 @@ import org.springframework.stereotype.Component;
  */
 public class AbstractPoolManager<Entity extends PoolableEntity> {
 
-    private static Logger log = LoggerFactory.getLogger(IndexRequestProcessor.class);
+    private static Logger log = LoggerFactory.getLogger(AbstractPoolManager.class);
 
     @Autowired
     private ApplicationContext context;

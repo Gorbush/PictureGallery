@@ -1,8 +1,7 @@
-package gallerymine.backend.helpers.pools;
+package gallerymine.backend.pool;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
-import gallerymine.backend.helpers.ThumbRequestProcessor;
 import gallerymine.model.importer.ThumbRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,8 @@ import org.springframework.stereotype.Component;
 public class ThumbRequestPool {
 
     private static Logger log = LoggerFactory.getLogger(ThumbRequestPool.class);
+
+    private static int IN_MEMORY_POOL_LIMIT = 50;
 
     @Autowired
     private ApplicationContext context;
@@ -55,7 +56,7 @@ public class ThumbRequestPool {
         }
 
         request.setInProgress(true);
-        log.info("ThumbRequest status changed id={} and path={}", requestSrc.getId(), requestSrc.getFilePath());
+        log.info("ThumbRequest set in progress id={} and path={}", requestSrc.getId(), requestSrc.getFilePath());
         requestRepository.save(request);
 
         return request;
@@ -68,10 +69,19 @@ public class ThumbRequestPool {
         if (request == null) {
             return;
         }
-        log.info("ThumbRequest status changed id={} and path={}", request.getId(), request.getFilePath());
-        bean.setRequest(request);
-        pool.execute(bean);
-        log.info("ThumbRequest scheduled id={} and path={}", request.getId(), request.getFilePath());
+        log.info(" ThumbRequest request execution id={} and path={}", request.getId(), request.getFilePath());
+        if (getInMemoryCount() < IN_MEMORY_POOL_LIMIT) {
+            bean.setRequest(request);
+            pool.execute(bean);
+            log.info("  ThumbRequest scheduled id={} and path={}", request.getId(), request.getFilePath());
+        } else {
+            log.info("  ThumbRequest schedule skipped - inMemory queue is full. id={} path={}", request.getId(), request.getFilePath());
+        }
+    }
+
+    public int getInMemoryCount() {
+        int queued = pool.getThreadPoolExecutor().getQueue().size();
+        return queued;
     }
 
     @Scheduled(fixedDelay = 10*1000)
@@ -80,7 +90,7 @@ public class ThumbRequestPool {
         if (appConfig.isDisableThumbs()) {
             return;
         }
-        int queued = pool.getThreadPoolExecutor().getQueue().size();
+        int queued = getInMemoryCount();
         if (queued < 1) { // No elements are in memory queue - check DB
             Page<ThumbRequest> foundRequests = requestRepository.findByInProgress(false,
                     new PageRequest(0, 5, new Sort(new Sort.Order(Sort.Direction.DESC, "updated"))));

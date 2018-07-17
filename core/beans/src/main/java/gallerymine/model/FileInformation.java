@@ -107,7 +107,7 @@ public class FileInformation implements Comparable<FileInformation> {
     }
 
     /** Returns file path without <b>rootPath</b>*/
-    public String getFilePath() {
+    public String getFileWithPath() {
         Path path = Paths.get(filePath, fileName);
         return path.toString();
     }

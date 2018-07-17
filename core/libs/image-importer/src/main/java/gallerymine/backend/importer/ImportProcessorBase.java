@@ -6,8 +6,8 @@ import gallerymine.backend.beans.repository.ImportSourceRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
-import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
-import gallerymine.backend.helpers.analyzer.ImageFormatAnalyser;
+import gallerymine.backend.analyzer.GenericFileAnalyser;
+import gallerymine.backend.analyzer.ImageDrewFormatAnalyser;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
 import gallerymine.backend.services.ImportRequestService;
@@ -62,12 +62,6 @@ public abstract class ImportProcessorBase implements Runnable {
 
     @Autowired
     protected UniSourceService uniSourceService;
-
-    @Autowired
-    protected ImageFormatAnalyser imageAnalyzer;
-
-    @Autowired
-    protected GenericFileAnalyser fileAnalyzer;
 
     @Autowired
     protected ImportService importService;

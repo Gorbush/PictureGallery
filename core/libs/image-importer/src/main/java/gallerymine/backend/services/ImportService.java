@@ -229,7 +229,7 @@ public class ImportService {
         }
 
         if (!isAllFilesProcessed)  {
-            log.warn(" checkSubsAndDone exit id={} path={} Not all files are processed", requestId, request.getPath());
+            log.info(" checkSubsAndDone exit id={} path={} Not all files are processed", requestId, request.getPath());
             return;
         }
 
@@ -340,8 +340,8 @@ public class ImportService {
         try {
             log.info("  source id={} is getting approved", source.getId());
 
-            Path importImage = calcCompleteFilePath(source);
-            Path galleryImagePath = indexateFileIfNeeded(calcCompleteFilePath(GALLERY, source.getFilePath()));
+            Path importImage = importUtils.calcCompleteFilePath(source);
+            Path galleryImagePath = indexateFileIfNeeded(importUtils.calcCompleteFilePath(GALLERY, source.getFileWithPath()));
 
             galleryImagePath.getParent().toFile().mkdirs();
 
@@ -464,27 +464,6 @@ public class ImportService {
         checkSubsAndDone(request.getId(), null, ProcessType.APPROVAL, ImportRequest.ImportStatus.APPROVED);
 
         return true;
-    }
-
-    public Path calcCompleteFilePath(PictureInformation info) {
-        return calcCompleteFilePath(info.getGrade(), info.getFullFilePath());
-    }
-
-    public Path calcCompleteFilePath(PictureGrade grade, String fullRelativePath) {
-        switch (grade) {
-            case GALLERY: {
-                return Paths.get(appConfig.getGalleryRootFolder()).resolve(fullRelativePath);
-            }
-            case IMPORT: {
-                return Paths.get(appConfig.getImportRootFolder()).resolve(fullRelativePath);
-            }
-            case SOURCE: {
-                return Paths.get(appConfig.getSourcesRootFolder()).resolve(fullRelativePath);
-            }
-            default: {
-                throw new RuntimeException("Grade for Information is not covered grade="+grade+" grade="+fullRelativePath);
-            }
-        }
     }
 
 }

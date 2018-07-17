@@ -1,13 +1,12 @@
 package gallerymine.backend.importer;
 
-import gallerymine.backend.beans.repository.PictureRepository;
+import gallerymine.backend.analyzer.*;
 import gallerymine.backend.beans.repository.ThumbRequestRepository;
 import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImportFailedException;
-import gallerymine.backend.helpers.analyzer.GenericFileAnalyser;
-import gallerymine.backend.helpers.analyzer.IgnorableFileAnayser;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportPoolManagerBase;
+import gallerymine.backend.pool.ThumbRequestPool;
 import gallerymine.model.*;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.importer.ThumbRequest;
@@ -20,13 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 
@@ -42,22 +42,53 @@ public class ImportProcessor extends ImportProcessorBase {
                     .abandoned(ENUMERATING_AWAIT, ENUMERATING, ENUMERATED);
 
     public static final String KIND_THUMB = "Thumb";
+    public static final String KIND_PICTURE = "Picture";
 
     @Autowired
     private ThumbRequestRepository thumbRequestRepository;
 
     @Autowired
+    private ThumbRequestPool thumbRequestPool;
+
+    @Autowired
     private IgnorableFileAnayser ignorableFileAnayser;
 
     @Autowired
-    private GenericFileAnalyser fileAnalyzer;
+    protected GenericFileAnalyser fileAnalyzer;
+
+    @Autowired
+    protected ImageDrewFormatAnalyser imageDrewAnalyzer;
+
+    @Autowired
+    private ImageIOFormatAnalyser imageIOFormatAnalyser;
+
+    @Autowired
+    private VideoMP4ParserFormatAnalyser videoMP4ParserFormatAnalyser;
+
+    private List<BaseAnalyser> analysers;
 
     public ImportProcessor() {
         super(STATUSES, ProcessType.IMPORT);
     }
 
-    @Autowired
-    private PictureRepository pictureRepository;
+    public List<BaseAnalyser> getAnalysers() {
+        if (analysers == null) {
+            synchronized (this) {
+                if (analysers == null) {
+                    analysers = Arrays.asList(
+                            fileAnalyzer,
+
+                            // Image parsers
+                            imageDrewAnalyzer,
+                            imageIOFormatAnalyser,
+
+                            // Video parsers
+                            videoMP4ParserFormatAnalyser);
+                }
+            }
+        }
+        return analysers;
+    }
 
     /*
     public ImportRequest registerImport(Path originalPath, boolean enforceImport) {
@@ -148,7 +179,7 @@ public class ImportProcessor extends ImportProcessorBase {
 
         log.info("    files enumerating path={}", request.getPath());
         try {
-            Path importRootFolder = Paths.get(request.getRootPath());
+            Path importRootFullFolder = Paths.get(appConfig.getImportRootFolder(), request.getRootPath());
             int filesCount = 0;
             int filesCountIgnored = 0;
             int filesCountFailed = 0;
@@ -166,47 +197,68 @@ public class ImportProcessor extends ImportProcessorBase {
                     info.setImportRequestId(request.getId());
                     info.addIndexProcessId(process.getId());
                     info.setImportRequestRootId(request.getRootId());
-                    fileAnalyzer.gatherFileInformation(file, importRootFolder, info);
+
+                    info.setRootPath(request.getRootPath());
+                    info.setFilePath(appConfig.relativizePath(file.getParent(), importRootFullFolder));
+                    info.setFileName(file.toFile().getName());
+                    info.setFileNameOriginal(file.toFile().getName());
 
                     filesCount++;
-                    if (imageAnalyzer.acceptsExtension(fileExt)) {
-                        processPictureFile(file, importRootFolder, info);
 
-                        if (!info.isFailed()) {
-                            if (!checkIfDuplicate(file, request, info)) {
-                                Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
-                                info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
-                                info.setStatus(InfoStatus.ANALYSING);
-                            }
-                            filesCountSucceed++;
-                        } else {
-                            filesCountFailed++;
-                            Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                            info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
-                            info.setStatus(InfoStatus.FAILED);
-                            logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
-                        }
+                    if (ignorableFileAnayser.accepts(file.toFile().getName())) {
+                        log.debug("    file ignored {}", info.getFileWithPath());
+                        Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
+                        info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
+                        filesCountIgnored++;
+                        info.setStatus(InfoStatus.SKIPPED);
                     } else {
-                        if (ignorableFileAnayser.accepts(file.toFile().getName())) {
-                            Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                            info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
-                            filesCountIgnored++;
-                            info.setStatus(InfoStatus.SKIPPED);
+                        log.debug("    file parsing {}", info.getFileWithPath());
+                        List<BaseAnalyser> analysers = getAnalysers();
+
+                        for (BaseAnalyser analyser : analysers) {
+                            if (analyser.acceptsFile(info.getFileName())) {
+                                processPictureFile(file, info, analyser);
+                            }
+                        }
+                        if (info.getPopulatedBy().contains(KIND_PICTURE)) {
+                            if (!info.isFailed()) {
+                                if (!checkIfDuplicate(file, request, info)) {
+                                    Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
+                                    info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
+                                    info.setStatus(InfoStatus.ANALYSING);
+                                }
+                                filesCountSucceed++;
+                            } else {
+                                filesCountFailed++;
+                                Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
+                                info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
+                                info.setStatus(InfoStatus.FAILED);
+                                info.addError(" Wrong format of file");
+                                logUnknownFormats.error(" Wrong format of file {}", file.toAbsolutePath().toString());
+                            }
                         } else {
                             Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
                             info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
                             filesCountFailed++;
                             info.setStatus(InfoStatus.FAILED);
+                            info.addError(" Unknown format of file");
+                            logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
                         }
                     }
                     uniSourceRepository.saveByGrade(info);
-                    if (!InfoStatus.FAILED.equals(info.getStatus()) && !info.hasThumb()) {
-                        log.warn("     No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
+                    if (!info.hasThumb() && !
+                            (
+                                    InfoStatus.FAILED.equals(info.getStatus())
+                            ||
+                                    InfoStatus.SKIPPED.equals(info.getStatus())
+                            )
+                       ) {
+                        log.info("     No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
                         Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
-                        String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
-                        ThumbRequest request = new ThumbRequest(info.getFullFilePath(), relativeStoredPath);
+                        ThumbRequest request = new ThumbRequest(info.getFullFilePath(), thumbStoredFile.toString());
                         request.setSource(info.getId());
                         thumbRequestRepository.save(request);
+                        thumbRequestPool.executeRequest(request);
                     }
                 }
             }
@@ -268,26 +320,28 @@ public class ImportProcessor extends ImportProcessorBase {
         return InfoStatus.DUPLICATE.equals(info.getStatus());
     }
 
-    private void processPictureFile(Path file, Path importRootFolder, ImportSource info) {
+    private void processPictureFile(Path file, ImportSource info, BaseAnalyser analyser) {
         try {
             log.debug("  Visiting file {}", file.toAbsolutePath());
 
-            boolean hadThumb = info.hasThumb();
+            analyser.gatherFileInformation(file, info);
 
-            imageAnalyzer.gatherFileInformation(file, info, !hadThumb);
-
-            if (info.hasThumb() && !hadThumb) {
+            // If Thumb was generated during Image Information extraction - move it to the right location
+            if (info.hasThumb() && !info.getThumbPath().startsWith(appConfig.getThumbsRootFolder())) {
                 Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
-                File thumbGeneratedFile = new File(info.getThumbPath());
-                if (thumbGeneratedFile.exists()) {
-                    String relativeStoredPath = appConfig.relativizePathToThumb(thumbStoredFile.toFile().getAbsolutePath());
-                    if (!thumbGeneratedFile.renameTo(thumbStoredFile.toFile())) {
-                        log.warn("Thumb file renaming for %s is failed", file.toFile().getAbsolutePath());
+                Path thumbGeneratedFile = Paths.get(appConfig.getThumbsRootFolder()).resolve(info.getThumbPath());
+                if (thumbGeneratedFile.toFile().exists()) {
+                    Path thumbStoredPath = Paths.get(appConfig.getThumbsRootFolder()).resolve(thumbStoredFile);
+                    if (!thumbGeneratedFile.toFile().renameTo(thumbStoredPath.toFile())) {
+                        log.warn("    Thumb file renaming for %s is failed", info.getFileWithPath());
                     };
-                    info.setThumbPath(relativeStoredPath);
+                    log.info("    Thumb was moved to the right location for path={}", info.getFileWithPath());
+                    info.setThumbPath(thumbStoredFile.toString());
+                } else {
+                    log.warn("    Thumb path present, but file not found for path={}", info.getFileWithPath());
+                    info.setThumbPath(null);
                 }
             }
-
         } catch (Exception e) {
             info.addError("Failed: "+e.getMessage());
             log.error("   Failed to process {}. Reason: {}", file.toAbsolutePath(), e.getMessage(), e);

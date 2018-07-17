@@ -23,7 +23,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-//@RepositoryRestResource(collectionResourceRel = "thumbRequest", path = "thumbRequest")
 @Repository()
 public interface ThumbRequestRepository extends MongoRepository<ThumbRequest, String> {
 

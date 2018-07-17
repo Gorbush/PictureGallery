@@ -190,7 +190,7 @@
 		<!--<appender-ref ref="INDEX_FILE" />-->
 	</logger>
 
-	<logger name="gallerymine.backend.helpers.analyzer" level="INFO" additivity="true">
+	<logger name="gallerymine.backend.analyzer" level="INFO" additivity="true">
 		<!--<appender-ref ref="" />-->
 	</logger>
 
@@ -252,7 +252,7 @@
 		<appender-ref ref="SPRING_WEB_FILE" />
 	</logger>
 
-	<logger name="gallerymine.backend.helpers.analyzer" level="WARN" additivity="false">
+	<logger name="gallerymine.backend.analyzer" level="WARN" additivity="false">
 		<appender-ref ref="ANALYSER_FILE" />
 	</logger>
 
@@ -260,7 +260,7 @@
 		<appender-ref ref="POOLS_FILE" />
 	</logger>
 
-	<logger name="gallerymine.backend.helpers.ThumbRequestProcessor" level="INFO" additivity="false">
+	<logger name="gallerymine.backend.pool.ThumbRequestProcessor" level="INFO" additivity="false">
 		<appender-ref ref="THUMBS_FILE" />
 	</logger>
 

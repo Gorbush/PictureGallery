@@ -7,10 +7,10 @@ import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.services.ProcessService;
-import gallerymine.model.ImportSource;
-import gallerymine.model.Picture;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import org.apache.commons.io.FileUtils;
@@ -20,15 +20,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -62,13 +65,17 @@ public class ImportUtils {
     @Autowired
     private PictureRepository pictureRepository;
 
+    public interface ImageProcessor {
+        void processImage(ImageReader reader, BufferedImage imageInfo);
+    }
+
     public Path makeNewImportStamp(DateTime importStamp) {
         String stamp = importStamp.toString("yyyy-MM-dd_HH-mm-ss");
         Path importFolder = Paths.get(appConfig.importRootFolder, stamp);
         int index = 0;
         while (importFolder.toFile().exists()) {
             index++;
-            importFolder = Paths.get(appConfig.importRootFolder, stamp+"_"+index);
+            importFolder = Paths.get(appConfig.importRootFolder, stamp + "_" + index);
         }
         return importFolder;
     }
@@ -93,7 +100,7 @@ public class ImportUtils {
         if (!markFile.toFile().exists()) {
             String stamp = importStamp.toString("yyyy-MM-dd HH:mm:ss");
             try {
-                FileUtils.writeStringToFile(markFile.toFile(), stamp+"\n", "UTF-8");
+                FileUtils.writeStringToFile(markFile.toFile(), stamp + "\n", "UTF-8");
             } catch (IOException e) {
                 log.error("Failed to write to Import Mark File %s", markFile.toFile().getAbsolutePath());
             }
@@ -108,7 +115,7 @@ public class ImportUtils {
                 markFile = markFileOrFolder.resolve(IMPORT_FILE_NAME);
             }
             try {
-                FileUtils.writeStringToFile(markFile.toFile(), text+"\n", "UTF-8", true);
+                FileUtils.writeStringToFile(markFile.toFile(), text + "\n", "UTF-8", true);
             } catch (IOException e) {
                 log.error("Failed to append to Import Mark File %s", markFile.toFile().getAbsolutePath());
             }
@@ -120,7 +127,8 @@ public class ImportUtils {
             timestamp = DateTime.now();
         }
 
-        String picFolderName = timestamp.toString("/yyyy/MM/dd/SSSSSSSSS"); //SSSSSSSSS
+        String picFolderName = timestamp.toString("yyyy/MM/dd/SSSSSSSSS");
+        Path picFolder = Paths.get(picFolderName);
         Path thumbFolder = Paths.get(appConfig.getThumbsRootFolder(), picFolderName);
 
         if (!thumbFolder.toFile().exists()) {
@@ -130,15 +138,16 @@ public class ImportUtils {
             }
         }
 
-        String picFileName = timestamp.getMillis()+"_"+fileName;
-
-        Path thumbPath = thumbFolder.resolve(picFileName+".jpg");
+        String picName = timestamp.getMillis() + "_" + fileName;
+        String picFileName = picName + ".jpg";
+        Path thumbPath = thumbFolder.resolve(picFileName);
         int index = 0;
-        while(thumbPath.toFile().exists()) {
+        while (thumbPath.toFile().exists()) {
             index++;
-            thumbPath = thumbFolder.resolve(picFileName+"_"+index+".jpg");
+            picFileName = picName + "_" + index + ".jpg";
+            thumbPath = thumbFolder.resolve(picFileName);
         }
-        return thumbPath;
+        return picFolder.resolve(picFileName);
     }
 
     public Path calcSimilarsPath(Path importPath) {
@@ -209,7 +218,7 @@ public class ImportUtils {
                 log.warn("Failed to create folder for import %s", pathToImportFailed.toFile().getAbsolutePath());
             }
 
-            process.setName("Pictures Folder Import "+pathToImport.getFileName());
+            process.setName("Pictures Folder Import " + pathToImport.getFileName());
             process.setType(ProcessType.IMPORT);
             process.setStarted(DateTime.now());
             process.setStatus(ProcessStatus.PREPARING);
@@ -252,11 +261,11 @@ public class ImportUtils {
                     }
                     return processEntity;
                 });
-                throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: "+e.getMessage(), e);
+                throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: " + e.getMessage(), e);
             }
 
 //            String pathToIndex = appConfig.relativizePathToImport(pathToImport.resolve(FOLDER_SOURCE)).toString();
-            String pathToIndex = pathToImport.getFileName()+"/"+ FOLDER_SOURCE;
+            String pathToIndex = pathToImport.getFileName() + "/" + FOLDER_SOURCE;
             ImportRequest request = requestRepository.findByPath(pathToIndex);
 
             if ((!enforce) && request != null && request.getStatus() != ImportRequest.ImportStatus.DONE) {
@@ -267,7 +276,7 @@ public class ImportUtils {
         } catch (ImportFailedException e) {
             throw e;
         } catch (Exception e) {
-            throw new ImportFailedException("Failed to index. Reason: "+e.getMessage(), e);
+            throw new ImportFailedException("Failed to index. Reason: " + e.getMessage(), e);
         }
     }
 
@@ -314,5 +323,61 @@ public class ImportUtils {
             FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         }
         return targetPath;
+    }
+
+    public Path calcCompleteFilePath(PictureInformation info) {
+        return calcCompleteFilePath(info.getGrade(), info.getFullFilePath());
+    }
+
+    public Path calcCompleteFilePath(PictureGrade grade, String fullRelativePath) {
+        switch (grade) {
+            case GALLERY: {
+                return Paths.get(appConfig.getGalleryRootFolder()).resolve(fullRelativePath);
+            }
+            case IMPORT: {
+                return Paths.get(appConfig.getImportRootFolder()).resolve(fullRelativePath);
+            }
+            case SOURCE: {
+                return Paths.get(appConfig.getSourcesRootFolder()).resolve(fullRelativePath);
+            }
+            default: {
+                throw new RuntimeException("Grade for Information is not covered grade=" + grade + " grade=" + fullRelativePath);
+            }
+        }
+    }
+
+    public BufferedImage readImageByImageIO(Path file, ImageProcessor processor) throws IOException {
+        if (!file.toFile().exists()) {
+            log.error("File doesnt exists! {}", file.toFile().getAbsolutePath());
+            return null;
+        }
+        // Create input stream
+        try (ImageInputStream input = ImageIO.createImageInputStream(file.toFile())) { // ImageIO.getReaderFormatNames
+            // Get the reader
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+            if (!readers.hasNext()) {
+                throw new IllegalArgumentException("No reader for: " + file.toString());
+            }
+
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input);
+                ImageReadParam param = reader.getDefaultReadParam();
+
+                // Finally read the image, using settings from param
+                BufferedImage imageInfo = reader.read(0, param);
+
+                if (processor != null) {
+                    processor.processImage(reader, imageInfo);
+                }
+                return imageInfo;
+            } catch (Throwable e){
+                log.error("Failed to extract thumbnail from {}", file.toFile().toString(), e);
+                throw e;
+            } finally {
+                reader.dispose();
+            }
+        }
     }
 }

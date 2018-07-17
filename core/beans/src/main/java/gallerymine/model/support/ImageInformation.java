@@ -1,9 +1,11 @@
 package gallerymine.model.support;
 
 import lombok.Data;
+import org.joda.time.DateTime;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 public class ImageInformation {
@@ -21,9 +23,36 @@ public class ImageInformation {
     public Double longitude;
     public SortedSet<Timestamp> timestamps = new TreeSet<>();
     public String device;
+    private List<String> errors = new ArrayList<>();
+
+    private List<String> notes = new ArrayList<>();
 
     public String toString() {
         return String.format("%dx%d,%d", this.width, this.height, this.orientation);
+    }
+
+    public String addError(String error, Object... params) {
+        if (params!= null && params.length > 0) {
+            error = String.format(error, params);
+        }
+        errors.add(error);
+        return error;
+    }
+
+    public String addNote(String note, Object... params) {
+        if (params!= null && params.length > 0) {
+            note = String.format(note, params);
+        }
+        notes.add(note);
+        return note;
+    }
+
+    public String notesText() {
+        return notes.stream().collect(Collectors.joining("\n"));
+    }
+
+    public String errorsText() {
+        return errors.stream().collect(Collectors.joining("\n"));
     }
 
     public void addStamp(Timestamp timestamp) {

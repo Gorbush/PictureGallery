@@ -1,4 +1,4 @@
-package gallerymine.backend.helpers;
+package gallerymine.backend.pool;
 
 import gallerymine.model.support.PoolableEntity;
 

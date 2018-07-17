@@ -30,7 +30,7 @@ public class ImportApproveProcessor extends ImportProcessorBase {
     }
 
     public void requestProcessing() throws ImportFailedException {
-        log.warn("   approve processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
+        log.info("   approve processing start id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
 
         request = requestService.retrySave(request.getId(), request -> {
             ImportRequest.ImportStats stats = request.getStats(processType);

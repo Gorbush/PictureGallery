@@ -33,6 +33,8 @@ public class PictureInformation extends FileInformation {
 
     private Set<SourceRef> sources = new HashSet<>();
 
+    private Long durationInSeconds = null;
+
     public void addSource(String id, PictureGrade grade) {
         sources.add(new SourceRef(id, grade));
     }

@@ -108,11 +108,11 @@ var DecisionButtonBlock = {
             },
             markDecision: function (grade, status) {
                 this.resetButton();
-                if (grade === "PICTURE" && status == "APPROVED") {
+                if (grade === "PICTURE" && status === "APPROVED") {
                     this.decisionBlockDiv.addClass("decision_done");
                     this.selectButton(this.buttonApprove);
                 }
-                if (grade === "IMPORT" && status == "APPROVED") {
+                if (grade === "IMPORT" && status === "APPROVED") {
                     this.decisionBlockDiv.addClass("decision_done");
                     this.selectButton(this.buttonApprove);
                 }
@@ -265,6 +265,10 @@ var SourceBlock = {
                 this.fileSize.text(fileSizeSI(this.dataObject.size));
                 var st = formatDate(this.dataObject.timestamp);
                 this.timeStamp.text(st);
+
+                if (this.dataObject.status === "SKIPPED" || this.dataObject.status === "FAILED") {
+                    this.hideDecisionButtons();
+                }
                 if (this.showStats) {
                     initFolderStatsRequest(this);
                 }

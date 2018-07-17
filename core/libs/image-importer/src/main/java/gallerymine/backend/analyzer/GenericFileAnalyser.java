@@ -1,4 +1,4 @@
-package gallerymine.backend.helpers.analyzer;
+package gallerymine.backend.analyzer;
 
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.model.FileInformation;
@@ -29,11 +29,11 @@ import java.util.regex.Pattern;
  * Created by sergii_puliaiev on 6/20/18.
  */
 @Component
-public class GenericFileAnalyser {
+public class GenericFileAnalyser extends BaseAnalyser {
 
-    private static Logger log = LoggerFactory.getLogger(ImageFormatAnalyser.class);
+    private static Logger log = LoggerFactory.getLogger(ImageDrewFormatAnalyser.class);
     //    private static Logger logUnknownDirectory = LogManager.getLogger("unknownDirectory");
-    private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageFormatAnalyser.class);
+    private static Logger logUnknownDirectory = LoggerFactory.getLogger(ImageDrewFormatAnalyser.class);
 
     public static final String KIND_FILE = "File";
 
@@ -84,14 +84,21 @@ public class GenericFileAnalyser {
         this.appConfig = appConfig;
     }
 
-    public void gatherFileInformation(Path file, Path importRootFolder, FileInformation info) {
+    @Override
+    public boolean acceptsFile(String fileName) {
+        return true;
+    }
+
+    @Override
+    public boolean gatherFileInformation(Path file, FileInformation info) {
+//    public void gatherFileInformation(Path file, Path importRootFolder, FileInformation info) {
         try {
             // preset some properties to avoid re-population
-            Path fullImportPath = appConfig.getImportRootFolderPath().resolve(importRootFolder);
-            info.setRootPath(importRootFolder.toString());
-            info.setFilePath(appConfig.relativizePath(file.getParent(), fullImportPath));
-            info.setFileName(file.toFile().getName());
-            info.setFileNameOriginal(file.toFile().getName());
+//            Path fullImportPath = appConfig.getImportRootFolderPath().resolve(info.getFullFilePath());
+//            info.setRootPath(importRootFolder.toString());
+//            info.setFilePath(appConfig.relativizePath(file.getParent(), fullImportPath));
+//            info.setFileName(file.toFile().getName());
+//            info.setFileNameOriginal(file.toFile().getName());
             info.setSize(file.toFile().length());
             info.setStatus(InfoStatus.ANALYSING);
 
@@ -104,11 +111,14 @@ public class GenericFileAnalyser {
             info.updateTimestamp();
 
             info.getPopulatedBy().add(KIND_FILE);
+
+            return true;
         } catch (Exception e){
             info.setFilled(true);
             info.setExists(true);
             info.setError("Failed to gather info: "+e.getMessage());
             log.error("Failed to gather info for name={} in path {}. Reason: {}", file.getFileName(), file.toFile().getPath(), e.getMessage(), e);
+            return false;
         }
     }
 
