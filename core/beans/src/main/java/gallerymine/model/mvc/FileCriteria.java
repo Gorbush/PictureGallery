@@ -48,6 +48,10 @@ public class FileCriteria {
         return pager.getPageSize();
     }
 
+    public void maxSize() {
+        setSize(Integer.MAX_VALUE);
+    }
+
     public void setSize(int size) {
         pager = new PageRequest(pager.getPageNumber(), size);
     }

@@ -75,6 +75,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             criteria.setRequestId(request.getId());
             criteria.setStatus(InfoStatus.ANALYSING);
             criteria.setPopulatedNotBy(Sets.newHashSet(KIND_MATCHING));
+            criteria.maxSize();
 
             Iterator<ImportSource> importSources = uniSourceRepository.fetchCustomStream(criteria, ImportSource.class);
 

@@ -302,6 +302,7 @@ public class ImportProcessor extends ImportProcessorBase {
         SourceCriteria criteria = new SourceCriteria();
         criteria.setFileName(file.toFile().getName());
         criteria.setFileSize(file.toFile().length());
+        criteria.maxSize();
 
         uniSourceRepository.fetchCustomStream(criteria, Picture.class).forEachRemaining( pic -> {
             Path targetFolder = null;

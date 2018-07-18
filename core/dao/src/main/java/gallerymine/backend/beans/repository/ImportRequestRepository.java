@@ -26,8 +26,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
-//@RepositoryRestResource(collectionResourceRel = "importRequests", path = "importRequests")
 @Repository
 public interface ImportRequestRepository extends MongoRepository<ImportRequest, String> {
 
@@ -49,8 +50,6 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
     @Query(value="{indexProcessIds: ?0, $expr:{$eq:[\"$parent\", \"$rootId\"]} }")
     Page<ImportRequest> findSubRootIndexes(String processId, Pageable pageable);
 
-    Collection<ImportRequest> findByParent(String parent);
-
     Page<ImportRequest> findByParentNull(Pageable pageable);
 
     ImportRequest findByIndexProcessIdsContains(@Param("processId") String processId);
@@ -61,4 +60,7 @@ public interface ImportRequestRepository extends MongoRepository<ImportRequest, 
 
     @Query(value="{indexProcessIds: ?0 }", fields="{updated : 0}")
     ImportRequest findLastUpdated(String requestId, Sort sort);
+
+    @Query(value="{parent: ?0, status: 'APPROVING' }")
+    Stream<ImportRequest> findByParentForApprove(String parent);
 }

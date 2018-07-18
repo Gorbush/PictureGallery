@@ -78,6 +78,16 @@ var ImportRequestsTree = {
                                 ImportRequestsTree.analyseNode(ImportRequestsTree.tree.jstree(true), sel);
                             }
                         },
+                        "ApproveAll": {
+                            "label": "Approve all files",
+                            "action": function (obj) {
+                                var ref = $.jstree.reference(obj.reference),
+                                    sel = ref.get_selected(),
+                                    node = ref.get_node(sel);
+                                if(!sel.length) { return false; }
+                                ImportRequestsTree.approveNode(node.original.content, true, false);
+                            }
+                        },
                         "Refresh": {
                             "label": "Refresh",
                             "action": function (obj) {
@@ -231,8 +241,15 @@ var ImportRequestsTree = {
         criteria.requestId = ImportRequestsTree.getActiveImportId();
         criteria.path = "";
         return criteria;
-    }
+    },
 
+    approveNode: function (node, approveOnlyTentative, approveSubNodes) {
+        console.log("ApproveNode "+node.id);
+        AjaxHelper.runGET("/importing/approveImport/"+node.id, function (response) {
+            debugger;
+            ImportRequestsTree.refresh();
+        });
+    }
 };
 $(document).ready(function() {
     LogContainer.init();

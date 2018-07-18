@@ -1,6 +1,7 @@
 package gallerymine.backend.services;
 
 import com.drew.tools.FileUtil;
+import com.google.common.collect.Sets;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
@@ -17,6 +18,7 @@ import gallerymine.model.Picture;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.InfoStatus;
 import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.ProcessStatus;
@@ -35,8 +37,9 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
 import static gallerymine.model.support.InfoStatus.APPROVED;
@@ -381,7 +384,7 @@ public class ImportService {
         }
 
         InfoStatus oldStatus = source.getStatus();
-        if (APPROVED.equals(oldStatus)) {
+            if (APPROVED.equals(oldStatus)) {
             log.info("  source id={} is already approved", source.getId());
             return true;
         }
@@ -466,4 +469,68 @@ public class ImportService {
         return true;
     }
 
+    public boolean approveImportRequest(ImportRequest request, boolean tentativeOnly, boolean subFolders) {
+        if (!request.getStats(ProcessType.APPROVAL).getAllFilesProcessed()) {
+            log.warn("  Approving files for requestId={} status={}", request.getId(), request.getStatus());
+            SourceCriteria criteria = new SourceCriteria();
+            criteria.setRequestId(request.getId());
+            criteria.setStatus(InfoStatus.APPROVING);
+            criteria.maxSize();
+
+            Iterator<PictureInformation> iterator = uniSourceRepository.fetchCustomStream(criteria, IMPORT.getEntityClass());
+            List<String> errors = new ArrayList<>();
+            AtomicLong approved = new AtomicLong();
+            AtomicLong notApproved = new AtomicLong();
+            iterator.forEachRemaining(importSource -> {
+                try {
+                    if (actionApprove(importSource)) {
+                        approved.incrementAndGet();
+                    } else {
+                        notApproved.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to approve import={}", importSource.getId(),e);
+                    errors.add(String.format("Failed to approve image %s", importSource.getFileWithPath()));
+                }
+            });
+            requestService.retrySave(request.getId(), requestEntity -> {
+                requestEntity.addNote("Approved %d files, %d not approved", approved.get(), notApproved.get());
+                if (errors.size() > 20) {
+                    requestEntity.addError("Too many errors occurred during approving: %s. Showing only first 20:", errors.size());
+                    requestEntity.getErrors().addAll(errors.subList(0, 19));
+                }
+                return requestEntity;
+            });
+        }
+        if (subFolders && !request.getStats(ProcessType.APPROVAL).getAllFoldersProcessed()) {
+            log.warn("  Approving folders for requestId={} status={}", request.getId(), request.getStatus());
+            Stream<ImportRequest> iterator = requestRepository.findByParentForApprove(request.getId());
+
+            List<String> errors = new ArrayList<>();
+            AtomicLong approved = new AtomicLong();
+            AtomicLong notApproved = new AtomicLong();
+            iterator.forEach(importRequest -> {
+                try {
+                    if (approveImportRequest(importRequest, tentativeOnly, subFolders)) {
+                        approved.incrementAndGet();
+                    } else {
+                        notApproved.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to approve request={}", importRequest.getId(),e);
+                    errors.add(String.format("Failed to approve sub-request %s", importRequest.getPath()));
+                }
+            });
+            requestService.retrySave(request.getId(), requestEntity -> {
+                requestEntity.addNote("Approved %d sub-requests, %d not approved", approved.get(), notApproved.get());
+                if (errors.size() > 20) {
+                    requestEntity.addError("Too many errors occurred during approving: %s. Showing only first 20:", errors.size());
+                    requestEntity.getErrors().addAll(errors.subList(0, 19));
+                }
+                return requestEntity;
+            });
+        }
+        request = requestRepository.findOne(request.getId());
+        return ImportRequest.ImportStatus.APPROVED.equals(request.getStatus());
+    }
 }

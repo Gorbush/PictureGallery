@@ -25,8 +25,6 @@ import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.services.ImportService;
 import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.importer.ImportRequest;
-import gallerymine.model.support.ProcessType;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +38,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseError;
+import static gallerymine.frontend.mvc.support.ResponseBuilder.responseErrorNotFound;
 import static gallerymine.frontend.mvc.support.ResponseBuilder.responseOk;
 
 /**
@@ -120,28 +119,14 @@ public class ImportRequestsController {
 			page = requestRepository.findSubRootIndexes(processId,
 					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
 		}
-//		long tm = System.currentTimeMillis();
-//		page.getContent().forEach(p -> {
-//			p.getStats(ProcessType.APPROVAL).getFailed().set(tm);
-//			p.setName(p.getName() + tm);
-//		});
-
 		ImportRequest request = null;
 		if (parentId.isPresent()) {
 			request = requestRepository.findOne(parentId.get());
-//			if (request != null) {
-//				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
-//				request.setName(request.getName() + tm);
-//			} else {
-//				log.warn("Request not found");
-//			}
 		} else {
 			Page<ImportRequest> pageOfRoots = requestRepository.findRootIndexes(processId,
 					new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.ASC, "nameL"))));
 			if (pageOfRoots != null && pageOfRoots.getTotalElements() > 0) {
 				request = pageOfRoots.getContent().get(0);
-//				request.getStats(ProcessType.APPROVAL).getFailed().set(tm);
-//				request.setName(request.getName() + tm);
 			} else {
 				log.warn("RootRequest not found");
 			}
@@ -164,4 +149,46 @@ public class ImportRequestsController {
 				.build();
     }
 
+	@GetMapping("/approveImport/{importId}")
+	@ResponseBody
+	public Object approveImport(@PathVariable("importId") String importRequestId,
+									  @RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
+									  @RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
+		boolean tentativeOnly = tentativeOnlyOption.orElse(true);
+		boolean subFolders = subFoldersOption.orElse(true);
+
+		ImportRequest request = requestRepository.findOne(importRequestId);
+		if (request == null) {
+			return responseErrorNotFound("Not found")
+					.op("approveImport")
+					.put("importId", importRequestId)
+					.put("tentativeOnly", tentativeOnly)
+					.put("importId", subFolders)
+					.build();
+		}
+
+		if (
+				request.getStatus().equals(ImportRequest.ImportStatus.APPROVING)
+				||
+				request.getStatus().equals(ImportRequest.ImportStatus.APPROVED)
+		) {
+			log.info("Approving node requestId={} status={}", request.getId(), request.getStatus());
+			importService.approveImportRequest(request, tentativeOnly, subFolders);
+		} else {
+			log.warn("Wrong status - not APPROVING or APPROVED for requestId={} status={}", request.getId(), request.getStatus());
+			return responseError("Wrong status - not APPROVING or APPROVED")
+					.op("approveImport")
+					.put("importId", importRequestId)
+					.put("tentativeOnly", tentativeOnly)
+					.put("importId", subFolders)
+					.build();
+		}
+
+		return responseOk()
+				.op("approveImport")
+				.put("importId", importRequestId)
+				.put("tentativeOnly", tentativeOnly)
+				.put("importId", subFolders)
+				.build();
+	}
 }
