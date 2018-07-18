@@ -225,7 +225,7 @@ public class ImportService {
 
         boolean isAllFilesProcessed = stats.getAllFilesProcessed();
         if (!isAllFilesProcessed && stats.getFiles().get() >= 0) {
-            isAllFilesProcessed = stats.getFiles().get() == stats.getFilesDone().get();
+            isAllFilesProcessed = stats.checkAllFilesProcessed();
             if (isAllFilesProcessed) {
                 request = requestService.markAllFilesProcessed(requestId, processType);
             }
@@ -494,7 +494,8 @@ public class ImportService {
                 }
             });
             requestService.retrySave(request.getId(), requestEntity -> {
-                requestEntity.addNote("Approved %d files, %d not approved", approved.get(), notApproved.get());
+                requestEntity.addNote("Approved %d files%s", approved.get(),
+                        notApproved.get() == 0 ? "" : (", "+notApproved.get()+" not approved"));
                 if (errors.size() > 20) {
                     requestEntity.addError("Too many errors occurred during approving: %s. Showing only first 20:", errors.size());
                     requestEntity.getErrors().addAll(errors.subList(0, 19));
@@ -522,7 +523,8 @@ public class ImportService {
                 }
             });
             requestService.retrySave(request.getId(), requestEntity -> {
-                requestEntity.addNote("Approved %d sub-requests, %d not approved", approved.get(), notApproved.get());
+                requestEntity.addNote("Approved %d sub-requests%s", approved.get(),
+                        notApproved.get() == 0 ? "" : (", "+notApproved.get()+" not approved"));
                 if (errors.size() > 20) {
                     requestEntity.addError("Too many errors occurred during approving: %s. Showing only first 20:", errors.size());
                     requestEntity.getErrors().addAll(errors.subList(0, 19));

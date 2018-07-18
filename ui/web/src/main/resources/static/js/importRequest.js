@@ -131,6 +131,9 @@ var ImportRequestsTree = {
             //     node.parent = '#';
                 // node.id = '#';
             // }
+            if (nodeData.foldersCount > 0) {
+                node.children = true;
+            }
 
             return node;
         }
@@ -246,7 +249,6 @@ var ImportRequestsTree = {
     approveNode: function (node, approveOnlyTentative, approveSubNodes) {
         console.log("ApproveNode "+node.id);
         AjaxHelper.runGET("/importing/approveImport/"+node.id, function (response) {
-            debugger;
             ImportRequestsTree.refresh();
         });
     }
