@@ -4,6 +4,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.GeoLocation;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
 import com.drew.metadata.bmp.BmpHeaderDirectory;
 import com.drew.metadata.exif.*;
 import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
@@ -140,27 +141,39 @@ public class ImageDrewFormatAnalyser extends BaseAnalyser {
         return info;
     }
 
-    private void writeThumbnail(ImageInformation info, ExifThumbnailDirectory thumbnailDirectory) {
+    public boolean writeThumbnail(File imageFile, File thumbTargetFile, ExifThumbnailDirectory thumbnailDirectory) throws MetadataException, IOException {
         // after the extraction process, if we have the correct tags, we may be able to store thumbnail information
         if (thumbnailDirectory != null && thumbnailDirectory.containsTag(ExifThumbnailDirectory.TAG_COMPRESSION)) {
             Integer offset = thumbnailDirectory.getInteger(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET);
             Integer length = thumbnailDirectory.getInteger(ExifThumbnailDirectory.TAG_THUMBNAIL_LENGTH);
             if (offset != null && length != null) {
-                try (   FileInputStream input = FileUtils.openInputStream(info.file);
-                        FileOutputStream output = FileUtils.openOutputStream(info.thumbFile)){
-                    long tiffHeaderOffset = thumbnailDirectory.getFileDataOffset();
-                    tiffHeaderOffset += ExifReader.JPEG_SEGMENT_PREAMBLE.length();
-                    byte[] buffer = new byte[length];
-                    input.skip(tiffHeaderOffset + offset);
-                    IOUtils.read(input, buffer, 0, length);
-                    IOUtils.write(buffer, output);
-                    output.flush();
-                } catch (IOException ex) {
-                    info.addError("Invalid thumbnail data specification: {}. file={}", ex.getMessage(), info.file.getAbsolutePath());
-                    log.error("Invalid thumbnail data specification: {}. file={}", ex.getMessage(), info.file.getAbsolutePath());
+                FileInputStream input = new FileInputStream(imageFile);
+                try {
+                    FileOutputStream output = new FileOutputStream(thumbTargetFile);
+                    try {
+                        long tiffHeaderOffset = thumbnailDirectory.getFileDataOffset();
+                        tiffHeaderOffset += ExifReader.JPEG_SEGMENT_PREAMBLE.length();
+                        byte[] buffer = new byte[length];
+                        if (input.skip(tiffHeaderOffset + offset) < 0) {
+                            throw new MetadataException("Thumbnail offset is beyond the end of file");
+                        }
+                        if (input.read(buffer, 0, length) < length){
+                            throw new MetadataException("Thumbnail content is beyond the end of file");
+                        }
+                        output.write(buffer);
+                        output.flush();
+                        return true;
+                    } finally {
+                        output.flush();
+                        output.close();
+                    }
+                } finally {
+                    input.close();
                 }
             }
+            return false;
         }
+        throw new MetadataException("No thumbnail data exists.");
     }
 
     private void populateDirectoryInfo(ImageInformation info, Directory directory) throws Exception {
@@ -172,7 +185,16 @@ public class ImageDrewFormatAnalyser extends BaseAnalyser {
                         Path galleryMine = Files.createTempDirectory("GalleryMine");
                         info.thumbFile = Files.createTempFile(galleryMine,"thumbnail", ".jpg").toFile();
 //                        ((ExifThumbnailDirectory) directory).writeThumbnail(info.thumbFile.getAbsolutePath());
-                        writeThumbnail(info, (ExifThumbnailDirectory)directory);
+
+//                        File imageFile = info.file;
+//                        File thumbFile = info.thumbFile;
+//                        String error = writeThumbnail(imageFile, thumbFile, (ExifThumbnailDirectory)directory);
+                        try {
+                            ((ExifThumbnailDirectory) directory).writeThumbnail(info.file, info.thumbFile);
+                        } catch (Exception e) {
+                            info.addError("Failed to extract thumbnail. Reason: {}", e.getMessage());
+                        }
+
                         if (info.thumbFile.exists() && info.thumbFile.length() == 0) {
                             log.warn(" Failed to write thumbnail, removing zero file: {}", info.thumbFile.getAbsolutePath());
                             info.thumbFile.delete();

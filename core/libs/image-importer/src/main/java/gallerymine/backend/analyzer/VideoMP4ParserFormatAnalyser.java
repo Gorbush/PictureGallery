@@ -6,7 +6,6 @@ import com.coremedia.iso.boxes.MovieHeaderBox;
 import com.coremedia.iso.boxes.TrackBox;
 import com.coremedia.iso.boxes.TrackHeaderBox;
 import com.google.common.collect.Sets;
-import com.googlecode.mp4parser.BasicContainer;
 import com.googlecode.mp4parser.FileDataSourceImpl;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.utils.ImportUtils;
@@ -57,7 +56,8 @@ public class VideoMP4ParserFormatAnalyser extends BaseAnalyser {
                     "m2v",
                     "m4v",
                     "3gp",
-                    "3g2"
+                    "3g2",
+                    "avi"
             );
         }
         return allowedExtensions.contains(fileExt.toLowerCase());
@@ -74,32 +74,30 @@ public class VideoMP4ParserFormatAnalyser extends BaseAnalyser {
             FileDataSourceImpl fileSource = new FileDataSourceImpl(file.toFile());
             IsoFile fileInfo = new IsoFile(fileSource);
 
-            if (fileInfo != null) {
-                MovieHeaderBox infoBox = fileInfo.getMovieBox().getMovieHeaderBox();
-                source.addStamp(TimestampKind.TS_FILE_EXIF_ORIGINAL.create(infoBox.getCreationTime()));
-                source.addStamp(TimestampKind.TS_FILE_EXIF_MODIFY.create(infoBox.getModificationTime()));
-                long scale = infoBox.getTimescale();
-                long durationVal = infoBox.getDuration();
-                if (scale != 0) {
-                    long duration = durationVal / scale;
-                    source.setDurationInSeconds(duration);
-                }
-
-                List<MovieBox> movieBoxes = fileInfo.getBoxes(MovieBox.class);
-                movieBoxes.forEach(movieBox -> {
-                    List<TrackBox> tracks = movieBox.getBoxes(TrackBox.class);
-                    tracks.forEach( trackBox -> {
-                        TrackHeaderBox trackHeaderBox = trackBox.getTrackHeaderBox();
-                        // TODO: Need to find a way to identify is this track audio or video
-                        if (trackHeaderBox != null && trackHeaderBox.getHeight() > 0) {
-                            source.setHeight((long) trackHeaderBox.getHeight());
-                            source.setWidth((long) trackHeaderBox.getWidth());
-                            trackHeaderBox.getDuration();
-                        }
-                        // TODO: Need to add info about languages
-                    });
-                });
+            MovieHeaderBox infoBox = fileInfo.getMovieBox().getMovieHeaderBox();
+            source.addStamp(TimestampKind.TS_FILE_EXIF_ORIGINAL.create(infoBox.getCreationTime()));
+            source.addStamp(TimestampKind.TS_FILE_EXIF_MODIFY.create(infoBox.getModificationTime()));
+            long scale = infoBox.getTimescale();
+            long durationVal = infoBox.getDuration();
+            if (scale != 0) {
+                long duration = durationVal / scale;
+                source.setDurationInSeconds(duration);
             }
+
+            List<MovieBox> movieBoxes = fileInfo.getBoxes(MovieBox.class);
+            movieBoxes.forEach(movieBox -> {
+                List<TrackBox> tracks = movieBox.getBoxes(TrackBox.class);
+                tracks.forEach( trackBox -> {
+                    TrackHeaderBox trackHeaderBox = trackBox.getTrackHeaderBox();
+                    // TODO: Need to find a way to identify is this track audio or video
+                    if (trackHeaderBox != null && trackHeaderBox.getHeight() > 0) {
+                        source.setHeight((long) trackHeaderBox.getHeight());
+                        source.setWidth((long) trackHeaderBox.getWidth());
+                        trackHeaderBox.getDuration();
+                    }
+                    // TODO: Need to add info about languages
+                });
+            });
 
             source.getPopulatedBy().add(KIND_VIDEO);
             return true;
