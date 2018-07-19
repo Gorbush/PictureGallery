@@ -221,20 +221,33 @@ div.sourceBlock div.fileName {
 }
 div.decisionBlock {
     position: absolute;
-    width: 70px;
+    width: auto;
     right:  0;
     top: 0;
-    height: 22px;
+    height: 20px;
     background-color: #ededed;
     margin-right: 10px;
     text-align: center;
     align-content: center;
 }
 div.decisionBlock .decisionButton{
+    float: right;
     background-color: #add5a5;
     padding: 3px;
     cursor: pointer;
+    width: 19px;
+    height: 19px;
 }
+div.sourceBlock div.sourceBlockBody div.decisionBlock .decisionButton {
+    display: none;
+}
+div.sourceBlock:hover div.sourceBlockBody div.decisionBlock .decisionButton {
+    display: block;
+}
+div.sourceBlock div.sourceBlockBody div.decisionBlock .decisionButton.decision_selected {
+    display: block;
+}
+
 span.btn_LATER {
     /*background-size: 16px 16px;*/
     /*background-repeat: no-repeat;*/

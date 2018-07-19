@@ -139,34 +139,7 @@
             </div>
         </div>
         <div id="templates">
-            <div class="sourceBlock">
-                <div class="sourceBlockBody">
-                    <div class="matchingProperties">
-                        <div class="status"></div>
-                        <div class="filePath"></div>
-                        <div class="folderStats">
-                            <span class="message"></span>
-                            <span class="data">
-                                Files <span class="badge files"></span>
-                                Matched  <span class="badge matched"></span>
-                                Matchable <span class="badge matchable"></span>
-                                Dups <span class="badge duplicates"></span>
-                            </span>
-                        </div>
-                        <div class="fileName"></div>
-                        <div class="fileSize"></div>
-                        <div class="timeStamp"></div>
-                    </div>
-                    <div class="source_image" title="SimpleHint">
-                        <a href="#" class="source_anch"><img class="img-thumbnail" /></a>
-                    </div>
-                    <div class="decisionBlock">
-                        <span class="decisionButton btn_LATER glyphicon glyphicon-time" value="later" ></span>
-                        <span class="decisionButton btn_APPROVE glyphicon glyphicon-star" value="approve" grade="PICTURE"></span>
-                        <span class="decisionButton btn_DUPLICATE glyphicon glyphicon-remove" value="duplicate" grade="IMPORT"></span>
-                    </div>
-                </div>
-            </div>
+            <div th:replace="support/sourceBlock" ></div>
         </div>
     </section>
 </body>
