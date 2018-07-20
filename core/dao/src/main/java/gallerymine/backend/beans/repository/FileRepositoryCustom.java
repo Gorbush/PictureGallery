@@ -17,19 +17,30 @@
 package gallerymine.backend.beans.repository;
 
 import gallerymine.model.FileInformation;
-import gallerymine.model.Source;
+import gallerymine.model.PictureInformation;
 import gallerymine.model.mvc.FileCriteria;
-import gallerymine.model.mvc.SourceCriteria;
+import gallerymine.model.mvc.FolderStats;
+import gallerymine.model.support.DateStats;
+import gallerymine.model.support.SourceFolderStats;
 import org.springframework.data.domain.Page;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 @Repository()
-public interface FileRepositoryCustom<RequestCriteria extends FileCriteria, Information extends FileInformation> {
+public interface FileRepositoryCustom<Information extends FileInformation, RequestCriteria extends FileCriteria> {
 
 	Page<Information> fetchCustom(RequestCriteria criteria);
+	<T extends Information> Page<T> fetchCustom(RequestCriteria searchCriteria, Class<T> clazz);
+	<T extends Information> Iterator<T> fetchCustomStream(RequestCriteria sourceCriteria, Class<T> clazz);
+
+	<T extends Information> Page<FolderStats> fetchPathCustom(RequestCriteria sourceCriteria, Class<T> clazz);
+	<T extends Information> List<DateStats> fetchDatesCustom(RequestCriteria sourceCriteria, Class<T> clazz);
+	<T extends Information> SourceFolderStats getFolderStats(String rootFolder, String folderPath, Class<T> clazz);
+
+	<T extends PictureInformation> T fetchOne(String id, Class<T> clazz);
+	<T extends PictureInformation> boolean deleteByGrade(String id, Class<T> clazz);
 
 }

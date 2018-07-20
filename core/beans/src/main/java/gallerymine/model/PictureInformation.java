@@ -1,15 +1,13 @@
 package gallerymine.model;
 
 import gallerymine.model.support.PictureGrade;
-import gallerymine.model.support.SourceRef;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by sergii_puliaiev on 6/11/17.
@@ -31,12 +29,21 @@ public class PictureInformation extends FileInformation {
 
     private boolean assignedToPicture = false;
 
-    private Set<SourceRef> sources = new HashSet<>();
+    private Set<String> mappedPictures = new HashSet<>();
+    private Set<String> mappedImports = new HashSet<>();
 
     private Long durationInSeconds = null;
 
-    public void addSource(String id, PictureGrade grade) {
-        sources.add(new SourceRef(id, grade));
+    public void addPicture(String sourceId) {
+        mappedPictures.add(sourceId);
+    }
+
+    public void addImport(String sourceId) {
+        mappedImports.add(sourceId);
+    }
+
+    public String getPictureId() {
+        return mappedPictures.stream().findFirst().orElse(null);
     }
 
     public <FI extends PictureInformation> void copyFrom(FI sourceToMatch) {
@@ -56,8 +63,11 @@ public class PictureInformation extends FileInformation {
 
         assignedToPicture = sourceToMatch.isAssignedToPicture();
 
-        sources = new HashSet<>();
-        sources.addAll(sourceToMatch.getSources());
+        mappedPictures = new HashSet<>();
+        mappedPictures.addAll(sourceToMatch.getMappedPictures());
+
+        mappedImports = new HashSet<>();
+        mappedImports.addAll(sourceToMatch.getMappedImports());
     }
 
 }

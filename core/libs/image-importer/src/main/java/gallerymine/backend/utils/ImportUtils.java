@@ -25,7 +25,6 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -132,8 +131,8 @@ public class ImportUtils {
         Path thumbFolder = Paths.get(appConfig.getThumbsRootFolder(), picFolderName);
 
         if (!thumbFolder.toFile().exists()) {
-            boolean created = thumbFolder.toFile().mkdirs();
-            if (!created) {
+            thumbFolder.toFile().mkdirs();
+            if (!thumbFolder.toFile().exists()) {
                 throw new RuntimeException("Failed to create a folder for thumbnail path='" + thumbFolder.toFile().getAbsolutePath() + "'");
             }
         }
@@ -204,19 +203,24 @@ public class ImportUtils {
         Path pathToImportFailed = pathToImport.resolve(FOLDER_FAILED);
 
         try {
-            if (!pathToImportSource.toFile().mkdirs()) {
+            pathToImportSource.toFile().mkdirs();
+            if (!pathToImportSource.toFile().exists()) {
                 log.warn("Failed to create folder for import %s", pathToImportSource.toFile().getAbsolutePath());
             }
-            if (!pathToImportDuplicates.toFile().mkdirs()) {
+            pathToImportDuplicates.toFile().mkdirs();
+            if (!pathToImportDuplicates.toFile().exists()) {
                 log.warn("Failed to create folder for import %s", pathToImportDuplicates.toFile().getAbsolutePath());
             }
-            if (!pathToImportApprove.toFile().mkdirs()) {
+            pathToImportApprove.toFile().mkdirs();
+            if (!pathToImportApprove.toFile().exists()) {
                 log.warn("Failed to create folder for import %s", pathToImportApprove.toFile().getAbsolutePath());
             }
-            if (!pathToImportSimilar.toFile().mkdirs()) {
+            pathToImportSimilar.toFile().mkdirs();
+            if (!pathToImportSimilar.toFile().exists()) {
                 log.warn("Failed to create folder for import %s", pathToImportSimilar.toFile().getAbsolutePath());
             }
-            if (!pathToImportFailed.toFile().mkdirs()) {
+            pathToImportFailed.toFile().mkdirs();
+            if (!pathToImportFailed.toFile().exists()) {
                 log.warn("Failed to create folder for import %s", pathToImportFailed.toFile().getAbsolutePath());
             }
 
@@ -287,9 +291,7 @@ public class ImportUtils {
         Path targetPath = Paths.get(importPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(calcSimilarsPath(targetPath));
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
-            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        }
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         return targetPath;
     }
 
@@ -298,9 +300,7 @@ public class ImportUtils {
         Path targetPath = Paths.get(importPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(calcDuplicatesPath(targetPath));
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
-            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        }
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         return targetPath;
     }
 
@@ -309,9 +309,7 @@ public class ImportUtils {
         Path targetPath = Paths.get(importPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(calcApprovePath(targetPath));
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
-            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        }
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         return targetPath;
     }
 
@@ -321,9 +319,7 @@ public class ImportUtils {
         targetPath = calcFailedPath(targetPath);
         targetPath = appConfig.getImportRootFolderPath().resolve(targetPath);
         Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        if (!appConfig.isDryRunImportMoves() || FileUtils.isSymlink(file.toFile())) {
-            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        }
+        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         return targetPath;
     }
 

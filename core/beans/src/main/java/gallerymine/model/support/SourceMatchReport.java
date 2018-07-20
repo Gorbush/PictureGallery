@@ -16,7 +16,7 @@ import java.util.*;
 @Data
 public class SourceMatchReport {
     
-    Map<String, List<PictureInformation>> pictures = new HashedMap<>();
+    Map<String, List<String>> pictures = new HashedMap<>();
 
     public static class SourceComparator implements Comparator<Source> {
 

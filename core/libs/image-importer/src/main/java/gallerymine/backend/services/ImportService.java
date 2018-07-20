@@ -1,7 +1,5 @@
 package gallerymine.backend.services;
 
-import com.drew.tools.FileUtil;
-import com.google.common.collect.Sets;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
@@ -25,9 +23,7 @@ import gallerymine.model.support.ProcessStatus;
 import gallerymine.model.support.ProcessType;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -35,8 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -161,13 +157,59 @@ public class ImportService {
         }
     }
 
+    public void replaceApprovedFilesWithSymLinks(Process process) {
+        SourceCriteria criteria = new SourceCriteria();
+        criteria.setProcessId(process.getId());
+        criteria.setStatus(InfoStatus.APPROVED);
+        criteria.maxSize();
+
+        Iterator<PictureInformation> iterator = uniSourceRepository.fetchCustomStream(criteria, IMPORT.getEntityClass());
+        iterator.forEachRemaining( importInfo -> {
+            String pictureId = importInfo.getPictureId();
+            if (pictureId == null) {
+                log.error("ImportSource id={} is marked as APPROVED, but no picture mapped in Gallery! path={}", importInfo.getId(), importInfo.getFileWithPath());
+                return;
+            }
+            PictureInformation pictureInfo;
+            try {
+                pictureInfo = uniSourceRepository.fetchOne(pictureId, PictureGrade.GALLERY.getEntityClass());
+                if (pictureId == null) {
+                    log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
+                    return;
+                }
+            } catch (Exception e) {
+                log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
+                return;
+            }
+            Path impPath = importUtils.calcCompleteFilePath(IMPORT, importInfo.getFileWithPath());
+            Path picPath = importUtils.calcCompleteFilePath(GALLERY, pictureInfo.getFileWithPath());
+            if (Files.isSymbolicLink(impPath)) {
+                log.info("ImportSource id={} is marked as APPROVED, and file is symlink. picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
+                return;
+            }
+            if (!picPath.toFile().exists()) {
+                log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
+                return;
+            }
+            if (impPath.toFile().delete()) {
+                log.error("ImportSource id={} is marked as APPROVED, but failed to delete approved file! picId={} path={} piPath={}", importInfo.getId(), pictureId, impPath, picPath);
+                return;
+            }
+            try {
+                Files.createSymbolicLink(impPath, picPath);
+            } catch (IOException e) {
+                log.error("ImportSource id={} is marked as APPROVED, but failed to create symlink! picId={} path={} piPath={}", importInfo.getId(), pictureId, impPath, picPath);
+            }
+        });
+
+    }
+
     public void checkIfApproveNeeded(ImportRequest request, Process process) {
         if (process != null) {
             long toApprove = request.getTotalStats(process.getType()).getMovedToApprove().get();
-            Process processOfApprove = null;
             if (toApprove > 0) {
                 log.info("Approve is needed for {} images for id={}", toApprove, process.getId());
-                processOfApprove = new Process();
+                Process processOfApprove = new Process();
                 processOfApprove.setName("Processing of Approval");
                 processOfApprove.setStatus(ProcessStatus.PREPARING);
                 processOfApprove.setType(ProcessType.APPROVAL);
@@ -185,11 +227,11 @@ public class ImportService {
 
                 log.info(" initiated Approve id={} from Matching id={}", processOfApprove.getId(), process.getId());
             } else {
-                process = processService.addNote(process.getId(), "Approve process  not required");
+                processService.addNote(process.getId(), "Approve process  not required");
             }
 
         } else {
-            log.info(" Process not found id={} importRequest={}", process.getId(), request.getId());
+            log.info(" Process not found id={} importRequest={}", request.getActiveProcessId(), request.getId());
         }
     }
 
@@ -286,6 +328,7 @@ public class ImportService {
             }
             case APPROVAL: {
                 uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), null, ImportRequest.ImportStatus.APPROVED, APPROVAL_COMPLETE, null);
+                replaceApprovedFilesWithSymLinks(process);
                 break;
             }
             default: {
@@ -324,6 +367,7 @@ public class ImportService {
             process.addNote("   Failed       %7d", stats.getFailed().get());
             process.addNote("   Similar      %7d", stats.getSimilar().get());
             process.addNote("   Duplicates   %7d", stats.getDuplicates().get());
+            process.addNote("   Skipped      %7d", stats.getSkipped().get());
         } catch (Exception e) {
             log.error("Failed to add Statistics", e);
         }
@@ -361,7 +405,7 @@ public class ImportService {
                     pic.setStatus(APPROVED);
                 }
                 pic.setGrade(PictureGrade.GALLERY);
-                pic.addSource(source.getId(), source.getGrade());
+                pic.addImport(source.getId());
                 pic.setRootPath(null);
                 pic.setFileName(galleryImagePath.toFile().getName());
                 return pic;
@@ -396,7 +440,7 @@ public class ImportService {
         source = uniSourceService.retrySave(source.getId(), IMPORT.getEntityClass(), info -> {
             info.setStatus(APPROVED);
             info.setAssignedToPicture(true);
-            info.addSource(pictureId, GALLERY);
+            info.addPicture(pictureId);
             return info;
         });
 

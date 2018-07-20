@@ -17,9 +17,7 @@
 package gallerymine.backend.beans.repository;
 
 import com.mongodb.client.model.geojson.Point;
-import gallerymine.model.ImportSource;
 import gallerymine.model.PictureInformation;
-import gallerymine.model.Source;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +29,7 @@ import java.util.Collection;
 
 //@RepositoryRestResource(collectionResourceRel = "source", path = "source")
 @Repository
-public interface ImportSourceRepository extends MongoRepository<PictureInformation, String>, ImportSourceRepositoryCustom {
+public interface ImportSourceRepository extends MongoRepository<PictureInformation, String>, ImportSourceRepositoryCustom<PictureInformation> {
 
     Collection<PictureInformation> findByFilePath(@Param("filePath") String filePath);
 

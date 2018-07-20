@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import static gallerymine.model.importer.ImportRequest.ImportStatus.*;
@@ -187,7 +188,6 @@ public class ImportProcessor extends ImportProcessorBase {
             try (DirectoryStream<Path> directoryStreamOfFiles = Files.newDirectoryStream(path, file -> file.toFile().isFile())) {
                 for (Path file : directoryStreamOfFiles) {
                     String fileName = file.toString().toLowerCase();
-                    String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
                     if (fileName.startsWith(".")) {
                         log.info(" Ignore system file {}", file.toAbsolutePath().toString());
                         continue;
@@ -304,10 +304,10 @@ public class ImportProcessor extends ImportProcessorBase {
         criteria.setFileSize(file.toFile().length());
         criteria.maxSize();
 
-        uniSourceRepository.fetchCustomStream(criteria, Picture.class).forEachRemaining( pic -> {
-            Path targetFolder = null;
+        Iterator<Picture> iterator = uniSourceRepository.fetchCustomStream(criteria, Picture.class);
+        iterator.forEachRemaining( pic -> {
             try {
-                targetFolder = importUtils.moveToDuplicates(file, request.getRootPath());
+                Path targetFolder = importUtils.moveToDuplicates(file, request.getRootPath());
                 info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
             } catch (IOException e) {
                 log.warn("Failed to move to Duplicates file={}", info.getFullFilePath());
@@ -335,7 +335,7 @@ public class ImportProcessor extends ImportProcessorBase {
                     Path thumbStoredPath = Paths.get(appConfig.getThumbsRootFolder()).resolve(thumbStoredFile);
                     if (!thumbGeneratedFile.toFile().renameTo(thumbStoredPath.toFile())) {
                         log.warn("    Thumb file renaming for %s is failed", info.getFileWithPath());
-                    };
+                    }
                     log.info("    Thumb was moved to the right location for path={}", info.getFileWithPath());
                     info.setThumbPath(thumbStoredFile.toString());
                 } else {

@@ -4,7 +4,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +48,14 @@ public class OptimisticConcurrencyControlAspect {
         try {
             return proceed(pjp);
         } catch (Throwable throwable) {
-            if(isRetryThrowable(throwable, retryOn) && times-- > 0) {
-                LOGGER.info("Optimistic locking detected, {} remaining retries on {} in {}", times, Arrays.toString(retryOn), pjp.toShortString());
-                return tryProceeding(pjp, times, retryOn);
+            if(isRetryThrowable(throwable, retryOn)) {
+                if (times-- > 0) {
+                    LOGGER.info("Optimistic locking detected, {} remaining retries on {} in {}", times, Arrays.toString(retryOn), pjp.toShortString());
+                    return tryProceeding(pjp, times, retryOn);
+                } else {
+                    LOGGER.error("Optimistic locking detected, all retries failed on {} in {}", Arrays.toString(retryOn), pjp.toShortString());
+                }
             }
-            LOGGER.error("Optimistic locking detected, all retries failed on {} in {}", Arrays.toString(retryOn), pjp.toShortString());
             throw throwable;
         }
     }

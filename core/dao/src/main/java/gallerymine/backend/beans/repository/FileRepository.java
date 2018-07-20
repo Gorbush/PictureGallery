@@ -17,7 +17,6 @@
 package gallerymine.backend.beans.repository;
 
 import gallerymine.model.FileInformation;
-import gallerymine.model.Picture;
 import gallerymine.model.mvc.FileCriteria;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.repository.query.Param;
@@ -28,7 +27,7 @@ import java.util.HashSet;
 
 //@RepositoryRestResource(collectionResourceRel = "pictures", path = "pictures")
 @Repository()
-public interface FileRepository extends MongoRepository<FileInformation, String>, FileRepositoryCustom<FileCriteria, FileInformation> {
+public interface FileRepository extends MongoRepository<FileInformation, String>, FileRepositoryCustom<FileInformation, FileCriteria> {
 
 	Collection<FileInformation> findByFilePath(@Param("filePath") String filePath);
 	Collection<FileInformation> findByFileName(@Param("fileName") String fileName);

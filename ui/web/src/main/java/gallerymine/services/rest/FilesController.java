@@ -64,7 +64,7 @@ public class FilesController {
     @PostMapping("find")
     @ResponseBody
 	public Object list(@RequestBody FileCriteria criteria) {
-		Page<FileInformation> sources = fileRepository.fetchCustom(criteria);
+		Page<FileInformation> sources = fileRepository.fetchCustom(criteria, null);
 
         return responseOk()
             .put("list", sources)
