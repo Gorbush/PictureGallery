@@ -183,8 +183,10 @@ public class ImportUtils {
                     if (!appConfig.isDryRunImportMoves()) {
                         FileUtils.moveFileToDirectory(srcFile.toFile(), target.toFile(), true);
                     } else {
-                        // Simply create symlynk
-                        Files.createSymbolicLink(target.resolve(srcFile.getFileName()), srcFile);
+                        // Simply create sym-link
+//                        Files.createSymbolicLink(target.resolve(srcFile.getFileName()), srcFile);
+                        // Simply create hard-link
+                        Files.createLink(target.resolve(srcFile.getFileName()), srcFile);
                     }
                 }
             }

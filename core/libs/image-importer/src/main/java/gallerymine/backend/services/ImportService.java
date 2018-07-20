@@ -258,8 +258,12 @@ public class ImportService {
             Process process = processRepository.findByIdInAndTypeIs(request.getIndexProcessIds(), processType);
             log.info("   finishing process id={} path={} processId={} processType={}",
                     requestId, request.getPath(), process.getId(), process.getType());
-            process = finishProcess(request, process);
+            // First do all needed operations
             onRootImportFinished(request, process);
+            // Then - mark as finished.
+            finishProcess(request, process);
+            // TODO: If first failed - we will be able to find abandoned process and finish it
+            // as part of pool job
         }
         log.info(" checkSubsAndDone complete for id={} path={}", requestId, request.getPath());
     }
