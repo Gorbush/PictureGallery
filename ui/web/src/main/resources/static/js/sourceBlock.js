@@ -56,6 +56,7 @@ var DecisionButtonBlock = {
             buttonLater: buttonLater,
             buttonApprove: buttonApprove,
             buttonDuplicate: buttonDuplicate,
+            hideDecisionButtonsRequest: false,
 
             create: function () {
                 this.buttons.on('click', function () {
@@ -91,8 +92,9 @@ var DecisionButtonBlock = {
                 }
             },
             performAction: function (button, action, itemId, itemData) {
+               var blockOriginal = this;
                AjaxHelper.runGET("/sources/approve/"+itemData.grade+"/"+itemId+"/"+action, function (response){
-                   var block = this.sourceList.getBlockById(response.result.id);
+                   var block = blockOriginal.sourceList.getBlockById(response.result.id);
                    if (block) {
                        block.markDecision(response.result.grade, response.result.status);
                        ImportRequestsTree.refresh();
@@ -121,7 +123,10 @@ var DecisionButtonBlock = {
                     this.selectButton(this.buttonDuplicate);
                 }
             },
-            hideDecisionButtons: function () {
+            hideDecisionButtons: function (notMarkHidden) {
+                if (notMarkHidden === false) {
+                    this.hideDecisionButtonsRequest = true;
+                }
                 this.decisionBlockDiv.hide();
             },
             showDecisionButtons: function () {
@@ -205,6 +210,8 @@ var SourceBlock = {
             folderStatsDataMatchable: null,
             folderStatsDataDups: null,
 
+            loading: false,
+
             clone: function () {
                 var self = this;
                 this.sourceBlockElement = getTemplateCopy("sourceBlock");
@@ -241,6 +248,7 @@ var SourceBlock = {
                     return false;
                 });
                 this.matchingImageDiv.on("click", function(event) {
+                    event.preventDefault();
                     if (self.onClick) {
                         self.onClick(block, self);
                     }
@@ -254,10 +262,45 @@ var SourceBlock = {
             getData: function () {
                 return this.dataObject;
             },
+            preload: function () {
+                console.log("Preload data for object with id="+this.dataObject.id+" grade="+this.dataObject.grade);
+                this.matchingImage.attr("src", "/images/ajax-arrows.gif");
+                this.loading = true;
+                var block = this;
+                AjaxHelper.runGET("/sources/get/"+this.dataObject.grade+"/"+this.dataObject.id, function (response) {
+                    console.log("Import loaded for id "+response.result.id);
+                    var dataObject = response.result;
+                    block.dataObject = dataObject;
+                    block.fill();
+                });
+            },
             fill: function () {
-                this.sourceList.loadedIdToBlocks[this.dataObject.id] = this;
+                if (!validValue(this.dataObject.id)) {
+                    console.log("empty data object!");
+                    this.hideDecisionButtons(false);
+                    return;
+                }
+                if (validValue(this.dataObject.id) && !validValue(this.dataObject.fileName)) {
+                    this.hideDecisionButtons(false);
+                    this.preload();
+                    return;
+                }
+                if (this.dataObject.status === "SKIPPED" || this.dataObject.status === "FAILED") {
+                    this.hideDecisionButtons(true);
+                } else {
+                    if (!this.hideDecisionButtonsRequest) {
+                        this.showDecisionButtons();
+                    }
+                }
+                this.loading = false;
+                console.log("Fill data for object with id="+this.dataObject.id);
                 this.sourceBlockElement.attr("data:id", this.dataObject.id);
                 this.matchingImageDiv.attr("title", "id: "+this.dataObject.id);
+
+                if (this.sourceList) {
+                    this.sourceList.loadedIdToBlocks[this.dataObject.id] = this;
+                }
+
                 if (this.dataObject.thumbPath != null && validValue(this.dataObject.thumbPath)) {
                     this.matchingImage.attr("src", "/thumbs/"+encodeURIComponent(this.dataObject.thumbPath).replace(/%2F/g, "/"));
                 } else { // encodeURIComponent
@@ -275,9 +318,6 @@ var SourceBlock = {
                 var st = formatDate(this.dataObject.timestamp);
                 this.timeStamp.text(st);
 
-                if (this.dataObject.status === "SKIPPED" || this.dataObject.status === "FAILED") {
-                    this.hideDecisionButtons();
-                }
                 if (this.showStats) {
                     initFolderStatsRequest(this);
                 }

@@ -38,7 +38,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,16 +87,16 @@ public class SourcesController {
 		    .build();
 	}
 
-    @GetMapping("approve/{kind}/{id}/{action}" )
+    @GetMapping("approve/{grade}/{id}/{action}" )
     @ResponseBody
-    public Object approveAction(@PathVariable("kind") PictureGrade kind, @PathVariable("id") String id, @PathVariable("action") String action) {
-        PictureInformation source = uniSourceRepository.fetchOne(id, kind.getEntityClass());
+    public Object approveAction(@PathVariable("grade") PictureGrade grade, @PathVariable("id") String id, @PathVariable("action") String action) {
+        PictureInformation source = uniSourceRepository.fetchOne(id, grade.getEntityClass());
 
         if (source == null) {
             return responseErrorNotFound("Not found")
                     .put("op", "approve")
                     .put("id", id)
-                    .put("kind", kind)
+                    .put("grade", grade)
                     .put("action", action)
                     .build();
         }
@@ -114,7 +113,7 @@ public class SourcesController {
                     .result(source)
                     .put("op", "approve")
                     .put("id", id)
-                    .put("kind", kind)
+                    .put("grade", grade)
                     .put("action", action)
                     .put("done", done)
                     .build();
@@ -122,9 +121,37 @@ public class SourcesController {
             return responseError("Failed to approve. Reason: "+e.getMessage(), e)
                     .put("op", "approve")
                     .put("id", id)
-                    .put("kind", kind)
+                    .put("grade", grade)
                     .put("action", action)
                     .put("done", done);
+        }
+    }
+
+    @GetMapping("get/{grade}/{id}" )
+    @ResponseBody
+    public Object getOne(@PathVariable("grade") PictureGrade grade, @PathVariable("id") String id) {
+        PictureInformation source = uniSourceRepository.fetchOne(id, grade.getEntityClass());
+
+        if (source == null) {
+            return responseErrorNotFound("Not found")
+                    .put("op", "get")
+                    .put("id", id)
+                    .put("grade", grade)
+                    .build();
+        }
+        try {
+            return responseOk()
+                    .result(source)
+                    .put("op", "get")
+                    .put("id", id)
+                    .put("grade", grade)
+                    .build();
+        } catch (Exception e) {
+            return responseError("Failed to get. Reason: "+e.getMessage(), e)
+                    .put("op", "approve")
+                    .put("id", id)
+                    .put("grade", grade)
+                    .build();
         }
     }
 

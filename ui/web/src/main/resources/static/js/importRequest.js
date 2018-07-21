@@ -42,6 +42,9 @@ var ImportRequestsTree = {
             });
         ImportRequestsTree.viewSwitcher.setSourceList(ImportRequestsTree.sourceList);
 
+        ImportRequestsTree.matchesBlock = $("div#sourcesMatches");
+        ImportRequestsTree.matchesBlockTemplate = $("div#matchBlockTemplate");
+
         ImportRequestsTree.treeComponent =
         ImportRequestsTree.tree.jstree({
             'core': {
@@ -64,8 +67,7 @@ var ImportRequestsTree = {
                         return dataNew;
                     },
                     "renderer" : function (node, obj, settings, jstree, document) {
-                        var row = populateTemplate(ImportRequestsTree.treeColumnsTemplate, obj.original.content);
-                        moveChildren(row[0], node.childNodes[1]);
+                        populateTemplate(ImportRequestsTree.treeColumnsTemplate, obj.original.content, node.childNodes[1]);
                     }
                 }
             },
@@ -259,6 +261,17 @@ var ImportRequestsTree = {
         criteria.path = "";
         return criteria;
     },
+    criteriaContributorMatches: function(sourceList, criteria) {
+        var block = ImportRequestsTree.getSelectedImportSource();
+        if (block) {
+            criteria.matchesOfImportId = block.dataobject.id;
+            criteria.path = "";
+            return criteria;
+        } else {
+            debugger;
+            return null;
+        }
+    },
 
     approveNode: function (node, approveOnlyPending, approveSubNodes) {
         console.log("ApproveNode "+node.id);
@@ -272,9 +285,37 @@ var ImportRequestsTree = {
             ImportRequestsTree.refresh();
         });
     },
-
+    setSelectedImportSource: function (block){
+        ImportRequestsTree.selectedImportSource = block;
+    },
+    getSelectedImportSource: function (block){
+        return ImportRequestsTree.selectedImportSource;
+    },
     onClickImportBlock: function (block) {
-        debugger;
+        ImportRequestsTree.setSelectedImportSource(block);
+        ImportRequestsTree.refreshMatchingReport();
+    },
+    refreshMatchingReport: function () {
+        ImportRequestsTree.matchesBlock.empty();
+        var block = ImportRequestsTree.getSelectedImportSource();
+        var report = block.dataObject.matchReport;
+        var reportImports = report.currentImport;
+        var reportPicture = report.pictures;
+
+        $.each(reportImports, function (indexSource, source) {
+
+        });
+        $.each(reportPicture, function (indexSource, matchIds) {
+            var matches = populateTemplate(ImportRequestsTree.matchesBlockTemplate,{ title: indexSource}, ImportRequestsTree.matchesBlock);
+            $.each(matchIds, function (index, id) {
+                console.log("preloading id="+id+" grade=GALLERY");
+                var matchSources = matches.find(".SourceBlockContainer");
+                var blockMapped = SourceBlock.create({ id: id, grade: "GALLERY"}, matchSources, false, null, null, null).hideDecisionButtons();
+            });
+
+        });
+
+
     }
 };
 $(document).ready(function() {

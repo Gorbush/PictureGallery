@@ -136,9 +136,12 @@ function moveChildren(source, target) {
     sourceNodes.forEach(function(child) {
         nodesList.push(child);
     });
+    var children = [];
     nodesList.forEach(function(child) {
         target.appendChild(child);
+        children.push(child);
     });
+    return children;
 }
 function populateTemplate(template, dataObject, target) {
     template = $(template);
@@ -149,7 +152,7 @@ function populateTemplate(template, dataObject, target) {
     }
 
     if (target) {
-        moveChildren(filledTemplate, target);
+        return $(moveChildren(filledTemplate, target));
     }
     return filledTemplate;
 }
