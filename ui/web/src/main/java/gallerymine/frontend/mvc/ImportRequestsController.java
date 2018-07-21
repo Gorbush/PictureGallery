@@ -191,4 +191,47 @@ public class ImportRequestsController {
 				.put("importId", subFolders)
 				.build();
 	}
+	@GetMapping("/rematchImport/{importId}")
+	@ResponseBody
+	public Object rematchImport(@PathVariable("importId") String importRequestId,
+									  @RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
+									  @RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
+		boolean tentativeOnly = tentativeOnlyOption.orElse(true);
+		boolean subFolders = subFoldersOption.orElse(true);
+
+		ImportRequest request = requestRepository.findOne(importRequestId);
+		if (request == null) {
+			return responseErrorNotFound("Not found")
+					.op("rematchImport")
+					.put("importId", importRequestId)
+					.put("tentativeOnly", tentativeOnly)
+					.put("importId", subFolders)
+					.build();
+		}
+
+		if (
+				request.getStatus().equals(ImportRequest.ImportStatus.APPROVING)
+				||
+				request.getStatus().equals(ImportRequest.ImportStatus.APPROVED)
+		) {
+			log.info("Re-match node requestId={} status={}", request.getId(), request.getStatus());
+			importService.rematchImportRequest(request, tentativeOnly, subFolders);
+			return responseOk()
+					.op("rematchImport")
+					.put("importId", importRequestId)
+					.put("tentativeOnly", tentativeOnly)
+					.put("importId", subFolders)
+					.build();
+
+		} else {
+			log.warn("Wrong status - not APPROVING or APPROVED for requestId={} status={}", request.getId(), request.getStatus());
+			return responseError("Wrong status - not APPROVING or APPROVED")
+					.op("rematchImport")
+					.put("importId", importRequestId)
+					.put("tentativeOnly", tentativeOnly)
+					.put("importId", subFolders)
+					.build();
+		}
+
+	}
 }

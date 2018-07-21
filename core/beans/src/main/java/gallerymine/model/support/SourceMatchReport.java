@@ -1,7 +1,5 @@
 package gallerymine.model.support;
 
-import gallerymine.model.Picture;
-import gallerymine.model.PictureInformation;
 import gallerymine.model.Source;
 import lombok.Data;
 import org.apache.commons.collections4.map.HashedMap;
@@ -18,6 +16,8 @@ public class SourceMatchReport {
     
     Map<String, List<String>> pictures = new HashedMap<>();
 
+    Map<String, List<String>> currentImport = new HashedMap<>();
+
     public static class SourceComparator implements Comparator<Source> {
 
         @Override
@@ -33,8 +33,12 @@ public class SourceMatchReport {
         }
     }
 
-    public Collection<PictureInformation> getKind(String kind) {
+    public Collection<String> getPicturesKind(String kind) {
         return pictures.computeIfAbsent(kind, k -> new ArrayList<>());
+    }
+
+    public Collection<String> getCurrentImportKind(String kind) {
+        return currentImport.computeIfAbsent(kind, k -> new ArrayList<>());
     }
 
 }

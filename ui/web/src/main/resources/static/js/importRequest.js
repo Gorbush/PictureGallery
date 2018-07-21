@@ -79,13 +79,23 @@ var ImportRequestsTree = {
                             }
                         },
                         "ApproveAll": {
-                            "label": "Approve all files",
+                            "label": "Approve pending",
                             "action": function (obj) {
                                 var ref = $.jstree.reference(obj.reference),
                                     sel = ref.get_selected(),
                                     node = ref.get_node(sel);
                                 if(!sel.length) { return false; }
                                 ImportRequestsTree.approveNode(node.original.content, true, false);
+                            }
+                        },
+                        "ReMatchAll": {
+                            "label": "Re-match",
+                            "action": function (obj) {
+                                var ref = $.jstree.reference(obj.reference),
+                                    sel = ref.get_selected(),
+                                    node = ref.get_node(sel);
+                                if(!sel.length) { return false; }
+                                ImportRequestsTree.rematchNode(node.original.content, true, false);
                             }
                         },
                         "Refresh": {
@@ -246,11 +256,21 @@ var ImportRequestsTree = {
         return criteria;
     },
 
-    approveNode: function (node, approveOnlyTentative, approveSubNodes) {
+    approveNode: function (node, approveOnlyPending, approveSubNodes) {
         console.log("ApproveNode "+node.id);
         AjaxHelper.runGET("/importing/approveImport/"+node.id, function (response) {
             ImportRequestsTree.refresh();
         });
+    },
+    rematchNode: function (node, approveOnlyPending, approveSubNodes) {
+        console.log("rematchNode "+node.id);
+        AjaxHelper.runGET("/importing/rematchImport/"+node.id, function (response) {
+            ImportRequestsTree.refresh();
+        });
+    },
+
+    onClickImportBlock: function (block) {
+        debugger;
     }
 };
 $(document).ready(function() {

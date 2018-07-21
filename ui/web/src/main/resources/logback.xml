@@ -263,6 +263,9 @@
 	<logger name="gallerymine.backend.pool.ThumbRequestProcessor" level="INFO" additivity="false">
 		<appender-ref ref="THUMBS_FILE" />
 	</logger>
+	<logger name="gallerymine.backend.pool.ThumbRequestPool" level="INFO" additivity="false">
+		<appender-ref ref="THUMBS_FILE" />
+	</logger>
 
 	<logger name="org.thymeleaf.standard.expression" level="DEBUG" additivity="true">
 	</logger>

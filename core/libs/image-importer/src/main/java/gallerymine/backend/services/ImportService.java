@@ -8,19 +8,18 @@ import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImageApproveException;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.importer.ImportProcessor;
+import gallerymine.backend.matchers.SourceFilesMatcher;
 import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportMatchingRequestPoolManager;
 import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.utils.ImportUtils;
+import gallerymine.model.ImportSource;
 import gallerymine.model.Picture;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.SourceCriteria;
-import gallerymine.model.support.InfoStatus;
-import gallerymine.model.support.PictureGrade;
-import gallerymine.model.support.ProcessStatus;
-import gallerymine.model.support.ProcessType;
+import gallerymine.model.support.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +46,8 @@ import static gallerymine.model.support.PictureGrade.IMPORT;
 public class ImportService {
 
     private static Logger log = LoggerFactory.getLogger(ImportService.class);
+
+    public static final String KIND_MATCHING = "Matching";
 
     @Autowired
     private ImportProcessor importProcessor;
@@ -83,6 +84,9 @@ public class ImportService {
 
     @Autowired
     protected ImportRequestService requestService;
+
+    @Autowired
+    private SourceFilesMatcher sourceFilesMatcher;
 
     private Map<String, ImportRequest> requestsCache = new HashMap<>();
 
@@ -522,7 +526,9 @@ public class ImportService {
             log.warn("  Approving files for requestId={} status={}", request.getId(), request.getStatus());
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
-            criteria.setStatus(InfoStatus.APPROVING);
+            if (tentativeOnly) {
+                criteria.setStatus(InfoStatus.APPROVING);
+            }
             criteria.maxSize();
 
             Iterator<PictureInformation> iterator = uniSourceRepository.fetchCustomStream(criteria, IMPORT.getEntityClass());
@@ -582,5 +588,76 @@ public class ImportService {
         }
         request = requestRepository.findOne(request.getId());
         return ImportRequest.ImportStatus.APPROVED.equals(request.getStatus());
+    }
+
+    public boolean rematchImportRequest(ImportRequest request, boolean tentativeOnly, boolean subFolders) {
+        if (!request.getStats(ProcessType.APPROVAL).getAllFilesProcessed()) {
+            log.warn("  Matching files for requestId={} status={}", request.getId(), request.getStatus());
+            SourceCriteria criteria = new SourceCriteria();
+            criteria.setRequestId(request.getId());
+            if (tentativeOnly) {
+                criteria.setStatus(InfoStatus.APPROVING);
+            }
+            criteria.maxSize();
+
+            Iterator<PictureInformation> iterator = uniSourceRepository.fetchCustomStream(criteria, IMPORT.getEntityClass());
+            List<String> errors = new ArrayList<>();
+            AtomicLong approved = new AtomicLong();
+            AtomicLong notApproved = new AtomicLong();
+            iterator.forEachRemaining(infoImg -> {
+                try {
+                    SourceMatchReport matchReport = sourceFilesMatcher.matchSourceTo(infoImg);
+
+                    infoImg = uniSourceService.retrySave(infoImg.getId(), ImportSource.class, info -> {
+                        info.setMatchReport(matchReport);
+                        info.getPopulatedBy().add(KIND_MATCHING);
+                        info.setStatus(InfoStatus.APPROVING);
+                        return info;
+                    });
+                } catch (Exception e) {
+                    log.warn("Failed to match import={}", infoImg.getId(),e);
+                    errors.add(String.format("Failed to match image %s", infoImg.getFileWithPath()));
+                }
+            });
+            requestService.retrySave(request.getId(), requestEntity -> {
+                requestEntity.addNote("Matched %d files%s", approved.get(),
+                        notApproved.get() == 0 ? "" : (", "+notApproved.get()+" not matched"));
+                if (errors.size() > 20) {
+                    requestEntity.addError("Too many errors occurred during matching: %s. Showing only first 20:", errors.size());
+                    requestEntity.getErrors().addAll(errors.subList(0, 19));
+                }
+                return requestEntity;
+            });
+        }
+        if (subFolders && !request.getStats(ProcessType.APPROVAL).getAllFoldersProcessed()) {
+            log.warn("  Matching folders for requestId={} status={}", request.getId(), request.getStatus());
+            Stream<ImportRequest> iterator = requestRepository.findByParentForApprove(request.getId());
+
+            List<String> errors = new ArrayList<>();
+            AtomicLong approved = new AtomicLong();
+            AtomicLong notApproved = new AtomicLong();
+            iterator.forEach(importRequest -> {
+                try {
+                    if (rematchImportRequest(importRequest, tentativeOnly, subFolders)) {
+                        approved.incrementAndGet();
+                    } else {
+                        notApproved.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to match request={}", importRequest.getId(),e);
+                    errors.add(String.format("Failed to match sub-request %s", importRequest.getPath()));
+                }
+            });
+            requestService.retrySave(request.getId(), requestEntity -> {
+                requestEntity.addNote("Matched %d sub-requests%s", approved.get(),
+                        notApproved.get() == 0 ? "" : (", "+notApproved.get()+" not approved"));
+                if (errors.size() > 20) {
+                    requestEntity.addError("Too many errors occurred during approving: %s. Showing only first 20:", errors.size());
+                    requestEntity.getErrors().addAll(errors.subList(0, 19));
+                }
+                return requestEntity;
+            });
+        }
+        return true;
     }
 }

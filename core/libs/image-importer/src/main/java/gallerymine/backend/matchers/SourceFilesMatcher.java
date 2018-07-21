@@ -1,13 +1,7 @@
 package gallerymine.backend.matchers;
 
-import com.google.common.collect.Sets;
-import gallerymine.backend.beans.repository.PictureRepository;
-import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.matchers.strategies.*;
-import gallerymine.model.Picture;
 import gallerymine.model.PictureInformation;
-import gallerymine.model.Source;
-import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.SourceMatchReport;
 import gallerymine.model.support.SourceRef;
@@ -41,7 +35,8 @@ public class SourceFilesMatcher {
 
     private List<PictureMatcher> getMatchers() {
         if (matchers == null) {
-            matchers = Arrays.asList(findSourcesByFileNameAndSize,
+            matchers = Arrays.asList(
+                    findSourcesByFileNameAndSize,
                     findSourcesByTimestamp,
                     findSourcesByFileName,
                     findSourcesByFileSize
@@ -59,14 +54,22 @@ public class SourceFilesMatcher {
         }
 
         getMatchers().forEach(matcher -> {
-            matcher.find(sourceToMatch).forEach(
-                    source -> {
-                        if (!sourceIds.contains(source.getId())) {
-                            report.getKind(matcher.getKind()).add(source);
-                            sourceIds.add(source.getId());
-                        }
-                    }
-            );
+            matcher.findInGallery(sourceToMatch).forEach(source -> {
+                if (!sourceToMatch.getId().equals(source.getId()) &&  !sourceIds.contains(source.getId())) {
+                    report.getPicturesKind(matcher.getKind()).add(source.getId());
+                    sourceIds.add(source.getId());
+                }
+
+            });
+        });
+
+        getMatchers().forEach(matcher -> {
+            matcher.findInImport(sourceToMatch, sourceToMatch.getImportRequestId()).forEach(source -> {
+                if (!sourceToMatch.getId().equals(source.getId()) &&  !sourceIds.contains(source.getId())) {
+                    report.getCurrentImportKind(matcher.getKind()).add(source.getId());
+                    sourceIds.add(source.getId());
+                }
+            });
         });
 
         return report;
