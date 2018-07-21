@@ -26,17 +26,21 @@ var ImportRequestsTree = {
         populateTemplate(ImportRequestsTree.treeColumnsTemplate, {}, ImportRequestsTree.headerTotals);
 
         ImportRequestsTree.viewSwitcher = initViewSwitcher("#sourceViewSwitcher");
-        SourceList.init({
+        ImportRequestsTree.sourceList = SourceList.init({
                 showDecisionBlock: true,
                 sourceDataProvider: "/sources/uni",
                 breadcrumb: "#breadcrumblist",
+                gallery: '#slideshow',
+                treePath: '#folderTree',
+                treeDates: '#datesTree',
                 pagerBar: "#sourcesNav",
                 sourcesRootDiv: "div#sources",
                 criteriaContributor: ImportRequestsTree.criteriaContributor,
                 viewSwitcher: ImportRequestsTree.viewSwitcher,
-                grade: "IMPORT"
+                grade: "IMPORT",
+                onClick: ImportRequestsTree.onClickImportBlock
             });
-        ImportRequestsTree.viewSwitcher.setSourceList(SourceList);
+        ImportRequestsTree.viewSwitcher.setSourceList(ImportRequestsTree.sourceList);
 
         ImportRequestsTree.treeComponent =
         ImportRequestsTree.tree.jstree({
@@ -247,7 +251,7 @@ var ImportRequestsTree = {
         var importRequestId = data.id;
         console.log("Selected node "+importRequestId);
         ImportRequestsTree.setActiveImportId(importRequestId);
-        SourceList.refreshSources(0);
+        ImportRequestsTree.sourceList.refreshSources(0);
     },
 
     criteriaContributor: function(sourceList, criteria) {
@@ -302,6 +306,13 @@ $(document).ready(function() {
     $("#btnRunRefresh").on('click', function () {
         ImportRequestsTree.refresh();
     });
+    $("#refresh").on('click', function () {
+        debugger;
+        if (ImportRequestsTree.sourceList.treeFolderPath) {
+            ImportRequestsTree.sourceList.treeFolderPath.refresh();
+        }
+    });
+
 });
 
 function getIndexRequests(nodeId) {

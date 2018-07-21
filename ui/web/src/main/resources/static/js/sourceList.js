@@ -1,182 +1,306 @@
 var SourceList = {
-    /* data from ajax response with list, criteria and paging information */
-    responseData: null,
-    currentPath: null,
-    currentRangeStart: null,
-    currentRangeEnd: null,
-    sourcesRootDiv: null,
-    sourceDataProvider: "/sources/find",
-    grade: "GALLERY",
-    showDecisionBlock: false,
-
-    BLOCK_HEIGHT: 100,
-    BLOCK_WIDTH : 350,
-
-/** Linkable components */
-    pagerBar: null,
-    breadcrumb: null,
-    gallery: null,
-    viewSwitcher: null,
-
-    currentView: null,
     VIEW_COMPACT: "compact",
     VIEW_LARGE: "large",
     CLASS_COMPACT: "compact",
 
-    initialized: false,
-
-    loadedIdToBlocks: {},
-
-    refreshSources: function (page) {
-        refreshSources(page);
-    },
-    setView: function (viewName) {
-        if (SourceList.currentView === viewName) {
-            return;
-        }
-        SourceList.currentView = viewName;
-        if (SourceList.VIEW_COMPACT === viewName) {
-            SourceList.sourcesRootDiv.addClass(SourceList.CLASS_COMPACT);
-        } else {
-            SourceList.sourcesRootDiv.removeClass(SourceList.CLASS_COMPACT);
-        }
-        SourceList.recalculateBlockSize();
-        SourceList.refreshSources();
-    },
-    recalculateBlockSize: function () {
-        SourceList.BLOCK_WIDTH = 350;
-        SourceList.BLOCK_HEIGHT = 100;
-
-        var firstChild = SourceList.sourcesRootDiv.find(".sourceBlock:first");
-        var firstChildNode;
-        if (firstChild.length > 0) {
-            firstChildNode = firstChild.get(0);
-            SourceList.BLOCK_HEIGHT = firstChildNode.clientHeight;
-            SourceList.BLOCK_WIDTH = firstChildNode.clientWidth;
-        } else {
-            firstChild = SourceBlock.create({}, SourceList.sourcesRootDiv, false, null);
-            firstChild = firstChild.sourceBlockElement;
-            firstChildNode = firstChild.get(0);
-            SourceList.BLOCK_HEIGHT = firstChildNode.clientHeight;
-            SourceList.BLOCK_WIDTH = firstChildNode.clientWidth;
-            firstChild.remove();
-        }
-    },
-    clean: function () {
-        SourceList.loadedIdToBlocks = {};
-        SourceList.sourcesRootDiv.empty();
-        SourceList.responseData = null;
-    },
-    populate: function (data) {
-        SourceList.responseData = data;
-        SourceList.fillBreadcrumb(data.criteria.path);
-        $.each(data.list.content, function (indexSource, source) {
-            var block = SourceBlock.create(source, SourceList.sourcesRootDiv, false, SourceList.gallery);
-            if (!SourceList.showDecisionBlock) {
-                block.hideDecisionButtons();
-            } else {
-                block.markDecision(source.grade, source.status);
-            }
-        });
-
-        SourceList.pagerBar.updateTo(data.list.number, data.list.totalPages, data.list.size, data.list.totalElements);
-
-        if (SourceList.gallery) {
-            if (SourceList.gallery.isAwaitingElement() ) {
-                SourceList.gallery.changeSlideToAwaiting();
-            }
-        }
-    },
-    get: function (index) {
-        if (SourceList.responseData &&
-            SourceList.responseData.list &&
-            SourceList.responseData.list.content &&
-            SourceList.responseData.list.content.length &&
-            SourceList.responseData.list.content.length > index) {
-            return SourceList.responseData.list.content[index];
-        }
-        return null;
-    },
-    getBlockById : function (id) {
-        return SourceList.loadedIdToBlocks[id];
-    },
-    getById: function (id) {
-        if (SourceList.responseData &&
-            SourceList.responseData.list &&
-            SourceList.responseData.list.content &&
-            SourceList.responseData.list.content.length) {
-            var list = SourceList.responseData.list.content;
-            for (var i = 0; i < list.length; i++) {
-                if (list[i].id === id) {
-                    return list[i];
-                }
-            }
-        }
-        return null;
-    },
-    fillBreadcrumb: function (breadcrumbText){
-        var crumbs = breadcrumbText.split("/");
-        SourceList.breadcrumb.empty();
-        for(index in crumbs) {
-            var cr = crumbs[index];
-            if (index === (crumbs.length-1)) {
-                SourceList.breadcrumb.append("<li><a href='#'>" + cr + "</a></li>");
-            } else {
-                SourceList.breadcrumb.append("<li class='active'><a href='#'>" + cr + "</a></li>");
-            }
-        }
-    },
-
-    init : function (optionsProvided) {
+    init: function (optionsProvided) {
         try {
-            var options = {
+            var object = {
+                BLOCK_WIDTH : 350,
+                BLOCK_HEIGHT: 100,
+
+                /* data from ajax response with list, criteria and paging information */
+                responseData: null,
+                currentPath: null,
+                currentRangeStart: null,
+                currentRangeEnd: null,
+                sourcesRootDiv: null,
+                sourceDataProvider: "/sources/find",
+                grade: "GALLERY",
+                showDecisionBlock: false,
+
+                /** Linkable components */
+                pagerBar: null,
+                breadcrumb: null,
+                gallery: null,
+                viewSwitcher: null,
+
+                currentView: null,
+
+                initialized: false,
+
+                loadedIdToBlocks: {},
+                setView: function (viewName) {
+                    if (this.currentView === viewName) {
+                        return;
+                    }
+                    this.currentView = viewName;
+                    if (SourceList.VIEW_COMPACT === viewName) {
+                        this.sourcesRootDiv.addClass(SourceList.CLASS_COMPACT);
+                    } else {
+                        this.sourcesRootDiv.removeClass(SourceList.CLASS_COMPACT);
+                    }
+                    this.recalculateBlockSize();
+                    this.refreshSources();
+                },
+                recalculateBlockSize: function () {
+                    this.BLOCK_WIDTH = 350;
+                    this.BLOCK_HEIGHT = 100;
+
+                    var firstChild = this.sourcesRootDiv.find(".sourceBlock:first");
+                    var firstChildNode;
+                    if (firstChild.length > 0) {
+                        firstChildNode = firstChild.get(0);
+                        this.BLOCK_HEIGHT = firstChildNode.clientHeight;
+                        this.BLOCK_WIDTH = firstChildNode.clientWidth;
+                    } else {
+                        firstChild = SourceBlock.create({}, this.sourcesRootDiv, false, null, null, this);
+                        firstChild = firstChild.sourceBlockElement;
+                        firstChildNode = firstChild.get(0);
+                        this.BLOCK_HEIGHT = firstChildNode.clientHeight;
+                        this.BLOCK_WIDTH = firstChildNode.clientWidth;
+                        firstChild.remove();
+                    }
+                },
+                clean: function () {
+                    this.loadedIdToBlocks = {};
+                    this.sourcesRootDiv.empty();
+                    this.responseData = null;
+                },
+                populate: function (data) {
+                    this.responseData = data;
+                    this.fillBreadcrumb(data.criteria.path);
+                    var sourceList = this;
+                    $.each(data.list.content, function (indexSource, source) {
+                        var block = SourceBlock.create(source, sourceList.sourcesRootDiv, false, sourceList.gallery, sourceList.options.onClick, sourceList);
+                        if (!sourceList.showDecisionBlock) {
+                            block.hideDecisionButtons();
+                        } else {
+                            block.markDecision(source.grade, source.status);
+                        }
+                    });
+
+                    this.pagerBar.updateTo(data.list.number, data.list.totalPages, data.list.size, data.list.totalElements);
+
+                    if (this.gallery) {
+                        if (this.gallery.isAwaitingElement() ) {
+                            this.gallery.changeSlideToAwaiting();
+                        }
+                    }
+                },
+                get: function (index) {
+                    if (this.responseData &&
+                        this.responseData.list &&
+                        this.responseData.list.content &&
+                        this.responseData.list.content.length &&
+                        this.responseData.list.content.length > index) {
+                        return this.responseData.list.content[index];
+                    }
+                    return null;
+                },
+                getBlockById : function (id) {
+                    return this.loadedIdToBlocks[id];
+                },
+                getById: function (id) {
+                    if (this.responseData &&
+                        this.responseData.list &&
+                        this.responseData.list.content &&
+                        this.responseData.list.content.length) {
+                        var list = this.responseData.list.content;
+                        for (var i = 0; i < list.length; i++) {
+                            if (list[i].id === id) {
+                                return list[i];
+                            }
+                        }
+                    }
+                    return null;
+                },
+                fillBreadcrumb: function (breadcrumbText){
+                    var crumbs = breadcrumbText.split("/");
+                    this.breadcrumb.empty();
+                    for(index in crumbs) {
+                        var cr = crumbs[index];
+                        if (index === (crumbs.length-1)) {
+                            this.breadcrumb.append("<li><a href='#'>" + cr + "</a></li>");
+                        } else {
+                            this.breadcrumb.append("<li class='active'><a href='#'>" + cr + "</a></li>");
+                        }
+                    }
+                },
+
+                prepareCriteriaPath: function(treeElement, node) {
+                    var path = (node.id === "#") ? "/" : (node.id+"/");
+                    return this.prepareCriteria(path);
+                },
+                prepareCriteriaCurrent: function (treeElement, node) {
+                    return this.prepareCriteria();
+                },
+                prepareCriteria: function (path) {
+                    var starting = $("#datepicker input[name='start']").val();
+                    var ending = $("#datepicker input[name='end']").val();
+
+                    if (this.treeDates) {
+                        var selectedDate = this.treeDates.getCurrent();
+                        if (selectedDate) {
+                            starting = selectedDate.original.rangeStart;
+                            ending = selectedDate.original.rangeEnd;
+                        }
+                    }
+
+                    var criteria = {
+                        path: "*",
+                        grade: this.grade,
+                        fromDate: starting,
+                        toDate: ending,
+                        fileName: null,
+                        timestamp: null,
+                        placePath: null,
+                        page: 0,
+                        size: 1000
+                    };
+
+                    if (validValue(path)) {
+                        criteria.path = path;
+                    } else {
+                        if (this.treeFolderPath) {
+                            var pathNode = this.treeFolderPath.getCurrent();
+                            if (validValue(pathNode)) {
+                                criteria.path = pathNode.id;
+                            }
+                        }
+                    }
+
+                    if (this.criteriaContributor) {
+                        criteria = this.criteriaContributor(this, criteria);
+                    }
+
+                    return criteria;
+                },
+
+                clickFoldersTreeNode: function (e, data, tree) {
+                    this.refreshSources(0);
+                    if (this.treeDates) {
+                        this.treeDates.refresh();
+                    }
+                },
+
+                clickDatesTreeNode: function (e, data, tree) {
+                    this.refreshSources(0);
+                },
+
+                populateSourcesList: function (data, node) {
+                    this.clean();
+                    this.populate(data);
+                },
+
+                pagerChangeHandler: function (page, totalPages, size, total, pager) {
+                    if (this.initialized) {
+                        this.refreshSources(page);
+                    }
+                },
+
+                refreshSources: function (page) {
+                    SourceProperties.hide();
+                    this.pagerBar.updatePage(page);
+
+                    var pageSize = Math.trunc(this.sourcesRootDiv.innerWidth() / this.BLOCK_WIDTH ) *
+                        (Math.trunc(this.sourcesRootDiv.innerHeight() / this.BLOCK_HEIGHT));
+                    if (pageSize < 1) {
+                        pageSize = 1;
+                    }
+                    var criteria = this.prepareCriteria();
+
+                    this.currentPath = criteria.path;
+                    this.currentRangeStart = criteria.fromDate;
+                    this.currentRangeEnd = criteria.toDate;
+
+                    if (!validValue(page)) {
+                        page = 0;
+                    }
+                    criteria.page = page;
+                    criteria.size = pageSize;
+                    console.log("Reload sources path="+criteria.path+" requestId="+criteria.requestId);
+                    var object = this;
+                    $.ajax({
+                        type: "POST",
+                        url: this.sourceDataProvider,
+                        data: JSON.stringify(criteria, null, 2),
+                        success: function (response) {
+                            console.log("Reload success for path="+response.criteria.path+" requestId="+response.criteria.requestId);
+                            var list = response.list;
+                            console.log(" stats: page=("+list.number+" of "+list.totalPages+ ") elements=("+list.numberOfElements +" of " +list.size+") " +
+                                " total="+list.totalElements);
+                            if (response.status != "200") {
+                                alert("Find failed " + response.message);
+                            } else {
+                                object.populateSourcesList(response, response.node);
+                            }
+                        },
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            console.log("Reload failed Message: "+ xhr.message);
+                            alert("ReIndex call failed because of " + xhr.message);
+                        },
+                        dataType: "json",
+                        contentType: "application/json"
+                        // async: false
+                    });
+                },
+            };
+            var defaultOptions = {
                 sourceDataProvider: "/sources/uni",
                 breadcrumb: "#breadcrumblist",
+                // gallery: '#slideshow',
+                // treePath: '#folderTree',
+                // treeDates: '#datesTree',
                 grade: "GALLERY",
                 pagerBar: "#sourcesNav",
                 sourcesRootDiv: "div#sources",
                 criteriaContributor: null,
                 viewSwitcher: "IMPORT",
-                showDecisionBlock: false
+                showDecisionBlock: false,
+                onClick: null
             };
-            options = $.extend(options, optionsProvided);
-            SourceList.sourceDataProvider = options.sourceDataProvider;
+            object.options = $.extend(defaultOptions, optionsProvided);
+            object.sourceDataProvider = object.options.sourceDataProvider;
 
-            SourceList.viewSwitcher = options.viewSwitcher;
-            SourceList.showDecisionBlock = options.showDecisionBlock;
-            if (SourceList.viewSwitcher) {
-                SourceList.viewSwitcher.setView(SourceList.viewSwitcher.COMPACT);
+            object.viewSwitcher = object.options.viewSwitcher;
+            object.showDecisionBlock = object.options.showDecisionBlock;
+            if (object.viewSwitcher) {
+                object.viewSwitcher.setView(object.viewSwitcher.COMPACT);
             }
 
-            SourceList.grade = options.grade;
-            SourceList.criteriaContributor = options.criteriaContributor;
-            SourceList.sourcesRootDiv = $(options.sourcesRootDiv);
-            SourceList.pagerBar = Pager.create($(options.pagerBar), pagerChangeHandler);
-            SourceList.breadcrumb = $(options.breadcrumb);
+            object.grade = object.options.grade;
+            object.criteriaContributor = object.options.criteriaContributor;
+            object.sourcesRootDiv = $(object.options.sourcesRootDiv);
+            object.pagerBar = Pager.create($(object.options.pagerBar), this.pagerChangeHandler);
+            object.breadcrumb = $(object.options.breadcrumb);
 
-            SourceList.responseData = null;
+            object.responseData = null;
 
-            if (typeof TreePath != "undefined") {
-                SourceList.treeFolderPath = TreePath.create($('#folderTree'), clickFoldersTreeNode, prepareCriteriaPath);
-                SourceList.treeDates = TreeDates.create($('#datesTree'), clickDatesTreeNode, prepareCriteriaCurrent);
+            if (typeof TreePath != "undefined" && object.options.treePath) {
+                object.treeFolderPath = TreePath.create($('#folderTree'), this.clickFoldersTreeNode, this.prepareCriteriaPath);
             }
-            if (typeof Gallery != "undefined") {
-                SourceList.gallery = new Gallery({
-                    pager: SourceList.pagerBar,
+            if (typeof TreePath != "undefined" && object.options.treeDates) {
+                object.treeDates = TreeDates.create($('#datesTree'), this.clickDatesTreeNode, this.prepareCriteriaCurrent);
+            }
+            if (typeof Gallery != "undefined" && object.options.gallery) {
+                object.gallery = new Gallery({
+                    pager: object.pagerBar,
                     elements: {
-                        slideshow: '#slideshow',
-                        currentImage: '#slideshow .current .image',
-                        currentCaption: '#slideshow .current .caption',
+                        slideshow: object.options.gallery,
+                        currentImage: object.options.gallery+' .current .image',
+                        currentCaption: object.options.gallery+' .current .caption',
                         thumbnailAnchor: 'a.source_anch',
                         galleryParent: "#sources",
                         galleryElement: "#sources .sourceBlock",
-                        previousAnchor: '#slideshow .previous a',
-                        nextAnchor: '#slideshow .next a',
-                        closeAnchor: '#slideshow .close a'
+                        previousAnchor: object.options.gallery+' .previous a',
+                        nextAnchor: object.options.gallery+' .next a',
+                        closeAnchor: object.options.gallery+' .close a'
                     }
                 });
             }
-            SourceList.initialized = true;
+            object.initialized = true;
+            return object;
         } catch (e) {
             console.log("Failed to init SourceList ");
         }
@@ -192,121 +316,4 @@ $(document).ready(function () {
         todayHighlight: true
     });
 
-    $("#refresh").on('click', function () {
-        if (SourceList.treeFolderPath) {
-            SourceList.treeFolderPath.refresh();
-        }
-    });
 });
-
-function prepareCriteriaPath (treeElement, node) {
-    var path = (node.id === "#") ? "/" : (node.id+"/");
-    return prepareCriteria(path);
-}
-function prepareCriteriaCurrent (treeElement, node) {
-    return prepareCriteria();
-}
-function prepareCriteria(path) {
-    var starting = $("#datepicker input[name='start']").val();
-    var ending = $("#datepicker input[name='end']").val();
-
-    if (SourceList.treeDates) {
-        var selectedDate = SourceList.treeDates.getCurrent();
-        if (selectedDate) {
-            starting = selectedDate.original.rangeStart;
-            ending = selectedDate.original.rangeEnd;
-        }
-    }
-
-    var criteria = {
-        path: "*",
-        grade: SourceList.grade,
-        fromDate: starting,
-        toDate: ending,
-        fileName: null,
-        timestamp: null,
-        placePath: null,
-        page: 0,
-        size: 1000
-    };
-
-    if (validValue(path)) {
-        criteria.path = path;
-    } else {
-        if (SourceList.treeFolderPath) {
-            var pathNode = SourceList.treeFolderPath.getCurrent();
-            if (validValue(pathNode)) {
-                criteria.path = pathNode.id;
-            }
-        }
-    }
-
-    if (SourceList.criteriaContributor) {
-        criteria = SourceList.criteriaContributor(this, criteria);
-    }
-
-    return criteria;
-}
-function clickFoldersTreeNode(e, data, tree) {
-    refreshSources(0);
-    if (SourceList.treeDates) {
-        SourceList.treeDates.refresh();
-    }
-}
-function clickDatesTreeNode(e, data, tree) {
-    refreshSources(0);
-}
-function refreshSources(page) {
-    SourceProperties.hide();
-    SourceList.pagerBar.updatePage(page);
-
-    var pageSize = Math.trunc(SourceList.sourcesRootDiv.innerWidth() / SourceList.BLOCK_WIDTH ) *
-        (Math.trunc(SourceList.sourcesRootDiv.innerHeight() / SourceList.BLOCK_HEIGHT));
-    if (pageSize < 1) {
-        pageSize = 1;
-    }
-    var criteria = prepareCriteria();
-
-    SourceList.currentPath = criteria.path;
-    SourceList.currentRangeStart = criteria.fromDate;
-    SourceList.currentRangeEnd = criteria.toDate;
-
-    if (!validValue(page)) {
-        page = 0;
-    }
-    criteria.page = page;
-    criteria.size = pageSize;
-    console.log("Reload sources path="+criteria.path+" requestId="+criteria.requestId);
-    $.ajax({
-        type: "POST",
-        url: SourceList.sourceDataProvider,
-        data: JSON.stringify(criteria, null, 2),
-        success: function (response) {
-            console.log("Reload success for path="+response.criteria.path+" requestId="+response.criteria.requestId);
-            var list = response.list;
-            console.log(" stats: page=("+list.number+" of "+list.totalPages+ ") elements=("+list.numberOfElements +" of " +list.size+") " +
-                    " total="+list.totalElements);
-            if (response.status != "200") {
-                alert("Find failed " + response.message);
-            } else {
-                populateSourcesList(response, response.node);
-            }
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            console.log("Reload failed Message: "+ xhr.message);
-            alert("ReIndex call failed because of " + xhr.message);
-        },
-        dataType: "json",
-        contentType: "application/json"
-        // async: false
-    });
-}
-function populateSourcesList(data, node) {
-    SourceList.clean();
-    SourceList.populate(data);
-}
-function pagerChangeHandler(page, totalPages, size, total, pager) {
-    if (SourceList.initialized) {
-        refreshSources(page);
-    }
-}

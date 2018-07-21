@@ -50,17 +50,17 @@ function populateReportInfo(report) {
     var matchingContent = $("div#matchingSource");
     matchingContent.empty();
 
-    SourceBlock.create(report.matchingSource, matchingContent, false, SourceList.gallery).hideDecisionButtons();
-    SourceBlock.create(report.matchingSource, sourcesContent, fale, SourceList.gallery).showDecisionButtons();
+    SourceBlock.create(report.matchingSource, matchingContent, false, SourceList.gallery, null, null).hideDecisionButtons();
+    SourceBlock.create(report.matchingSource, sourcesContent, fale, SourceList.gallery, null, null).showDecisionButtons();
 
     $.each(report.sources, function (indexSource, source) {
-        SourceBlock.create(source, sourcesContent, false, SourceList.gallery).showDecisionButtons();
+        SourceBlock.create(source, sourcesContent, false, SourceList.gallery, null, null).showDecisionButtons();
     });
 
     var picturesContent = $("div#matchedPictures");
     picturesContent.empty();
     $.each(report.pictures, function (indexPic, picture) {
-        SourceBlock.create(picture, picturesContent, true, SourceList.gallery).hideDecisionButtons();
+        SourceBlock.create(picture, picturesContent, true, SourceList.gallery, null, null).hideDecisionButtons();
     });
 }
 function getSourceDecisionsAndApply() {

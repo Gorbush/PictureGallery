@@ -92,7 +92,7 @@ var DecisionButtonBlock = {
             },
             performAction: function (button, action, itemId, itemData) {
                AjaxHelper.runGET("/sources/approve/"+itemData.grade+"/"+itemId+"/"+action, function (response){
-                   var block = SourceList.getBlockById(response.result.id);
+                   var block = this.sourceList.getBlockById(response.result.id);
                    if (block) {
                        block.markDecision(response.result.grade, response.result.status);
                        ImportRequestsTree.refresh();
@@ -177,8 +177,9 @@ var SourceBlock = {
             element = $(element).parent();
         } while (validValue(element));
     },
-    create: function (dataObject, targetContainer, showStats, gallery) {
+    create: function (dataObject, targetContainer, showStats, gallery, onClick, sourceList) {
         var object = {
+            sourceList: sourceList,
             gallery: gallery,
             showStats: validValue(showStats) && showStats,
             dataObject: dataObject,
@@ -193,6 +194,8 @@ var SourceBlock = {
             fileSize: null,
             timeStamp: null,
             decisionButtons: null,
+
+            onClick: onClick,
 
             folderStats: null,
             folderStatsMessage: null,
@@ -231,9 +234,15 @@ var SourceBlock = {
                 this.decisionButtons.selectButton("");
 
                 var block = this;
-                this.matchingImageDiv.on("click", function(event) {
+                this.matchingImageDiv.on("dblclick", function(event) {
                     if (self.gallery) {
                         self.gallery.startSlideshow(block.matchingImage);
+                    }
+                    return false;
+                });
+                this.matchingImageDiv.on("click", function(event) {
+                    if (self.onClick) {
+                        self.onClick(block, self);
                     }
                     return false;
                 });
@@ -246,7 +255,7 @@ var SourceBlock = {
                 return this.dataObject;
             },
             fill: function () {
-                SourceList.loadedIdToBlocks[this.dataObject.id] = this;
+                this.sourceList.loadedIdToBlocks[this.dataObject.id] = this;
                 this.sourceBlockElement.attr("data:id", this.dataObject.id);
                 this.matchingImageDiv.attr("title", "id: "+this.dataObject.id);
                 if (this.dataObject.thumbPath != null && validValue(this.dataObject.thumbPath)) {
