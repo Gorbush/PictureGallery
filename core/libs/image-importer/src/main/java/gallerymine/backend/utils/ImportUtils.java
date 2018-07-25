@@ -1,12 +1,10 @@
 package gallerymine.backend.utils;
 
 import gallerymine.backend.beans.AppConfig;
-import gallerymine.backend.beans.repository.ImportRequestRepository;
-import gallerymine.backend.beans.repository.ImportSourceRepository;
-import gallerymine.backend.beans.repository.PictureRepository;
-import gallerymine.backend.beans.repository.ProcessRepository;
+import gallerymine.backend.beans.repository.*;
 import gallerymine.backend.exceptions.ImportFailedException;
 import gallerymine.backend.services.ProcessService;
+import gallerymine.backend.services.UniSourceService;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
@@ -59,7 +57,10 @@ public class ImportUtils {
     private ImportRequestRepository requestRepository;
 
     @Autowired
-    private ImportSourceRepository importSourceRepository;
+    private SourceRepository sourceRepository;
+
+    @Autowired
+    protected UniSourceService uniSourceService;
 
     @Autowired
     private PictureRepository pictureRepository;
@@ -286,41 +287,36 @@ public class ImportUtils {
         }
     }
 
-    public Path moveToSimilar(Path file, String importPath) throws IOException {
-        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
-        Path targetPath = Paths.get(importPath);
-        targetPath = appConfig.getImportRootFolderPath().resolve(calcSimilarsPath(targetPath));
-        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
+    public <T extends PictureInformation> Path moveToSiblingPath(T info, String siblingFolder) throws IOException {
+        Path targetSubPath = Paths.get(info.getRootPath()).getParent().resolve(siblingFolder);
+        Path targetPath = appConfig.getImportRootFolderPath().resolve(targetSubPath);
+        Path fullTargetPath = targetPath.resolve(info.getFileName()).getParent();
+
+        Path file = calcCompleteFilePath(info);
         FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        return targetPath;
+
+        /*if (info.getId() == null) {
+            info.setRootPath(targetSubPath.toString());
+        } else {
+            info = (T) uniSourceService.retrySave(info.getId(), info.getClass(), pic -> {
+                pic.setRootPath(targetSubPath.toString());
+                return pic;
+            });
+        }*/
+        return targetSubPath;
     }
 
-    public Path moveToDuplicates(Path file, String importPath) throws IOException {
-        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
-        Path targetPath = Paths.get(importPath);
-        targetPath = appConfig.getImportRootFolderPath().resolve(calcDuplicatesPath(targetPath));
-        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        return targetPath;
+    public <T extends PictureInformation> Path moveToSimilar(T info) throws IOException {
+        return moveToSiblingPath(info, FOLDER_SIMILAR);
     }
-
-    public Path moveToApprove(Path file, String importPath) throws IOException {
-        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
-        Path targetPath = Paths.get(importPath);
-        targetPath = appConfig.getImportRootFolderPath().resolve(calcApprovePath(targetPath));
-        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        return targetPath;
+    public <T extends PictureInformation> Path moveToDuplicates(T info) throws IOException {
+        return moveToSiblingPath(info, FOLDER_DUP);
     }
-
-    public Path moveToFailed(Path file, String importPath) throws IOException {
-        String relativePath = appConfig.relativizePath(file, appConfig.getImportRootFolderPath().resolve(importPath));
-        Path targetPath = Paths.get(importPath);
-        targetPath = calcFailedPath(targetPath);
-        targetPath = appConfig.getImportRootFolderPath().resolve(targetPath);
-        Path fullTargetPath = targetPath.resolve(relativePath).getParent();
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-        return targetPath;
+    public <T extends PictureInformation> Path moveToApprove(T info) throws IOException {
+        return moveToSiblingPath(info, FOLDER_APPROVE);
+    }
+    public <T extends PictureInformation> Path moveToFailed(T info) throws IOException {
+        return moveToSiblingPath(info, FOLDER_FAILED);
     }
 
     public Path calcCompleteFilePath(PictureInformation info) {

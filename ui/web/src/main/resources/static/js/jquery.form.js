@@ -146,7 +146,10 @@ function convertValue (form, name, value) {
 FormHelper.serializeForm = function($form){
     return JSON.stringify(this.parseForm($form), null, 2);
 };
-
+/**
+ * Populates the form with data Object, cleaning all the fields which has no corresponding fields
+ * ( if not marked by preserve attribute )
+ */
 FormHelper.populate = function (rootElement, dataObject, onCellRenderFunction) {
         rootElement.data("populatedBy", dataObject);
         rootElement.find("[name]").each( function() {
@@ -158,34 +161,64 @@ FormHelper.populate = function (rootElement, dataObject, onCellRenderFunction) {
             }
 
             var fieldName = cellElement.attr("name");
-            if (typeof fieldName == "undefined") {
+            if (typeof fieldName === "undefined") {
                 fieldName = cellElement.attr("class");
             }
-            if (typeof fieldName == "undefined" || fieldName == "") {
+            if (typeof fieldName === "undefined" || fieldName === "") {
                 return;
             }
-            var content = getFieldValue(dataObject, fieldName);
-            var fieldClass = cellElement.attr("class");
-            var formatting = cellElement.attr("data-format");
-
-            content = fixContent(fieldName, content, fieldClass, cellElement[0].tagName, formatting);
-
-            if (/^(input|select|textarea)$/i.test(cellElement[0].tagName)){
-                if (cellElement[0].type == "checkbox") {
-                    cellElement.prop('checked', content == "true" || content == true);
-                } else {
-                    cellElement.val(content);
-                }
-            } else {
-                cellElement.text(content);
-            }
-
-            if (onCellRenderFunction) {
-                onCellRenderFunction(rowObject, rowElement, cellElement, fieldName, content);
-            }
+            FormHelper.populateElement(cellElement, dataObject, fieldName, onCellRenderFunction);
         });
     };
+/**
+ * Populates the form with data Object, touching only fields from object
+ */
+FormHelper.populateFromObject = function (rootElement, dataObject, onCellRenderFunction) {
+    var data = rootElement.data("populatedBy");
+    for(prop in dataObject) {
+        if(dataObject.hasOwnProperty(prop)) {
+            data[prop] = dataObject[prop];
+            var cellElement =  $("[name='"+prop+"']",rootElement);
+            if (cellElement.length === 0) {
+                cellElement =  $("."+prop,rootElement);
+            }
+            if (cellElement.length === 0) {
+                continue;
+            }
+            FormHelper.populateElement(cellElement, dataObject, prop, onCellRenderFunction);
+        }
+    }
+};
+/**
+ * Populates the specific form element with data from object
+ */
+FormHelper.populateElement = function(cellElement, dataObject, fieldName, onCellRenderFunction) {
+    if (typeof fieldName === "undefined" || fieldName === "") {
+        return;
+    }
+    var content = getFieldValue(dataObject, fieldName);
+    var fieldClass = cellElement.attr("class");
+    var formatting = cellElement.attr("data-format");
 
+    content = fixContent(fieldName, content, fieldClass, cellElement[0].tagName, formatting);
+
+    if (/^(input|select|textarea)$/i.test(cellElement[0].tagName)){
+        if (cellElement[0].type === "checkbox") {
+            cellElement.prop('checked', content === "true" || content === true);
+        } else {
+            cellElement.val(content);
+        }
+    } else {
+        cellElement.text(content);
+    }
+
+    if (onCellRenderFunction) {
+        onCellRenderFunction(rowObject, rowElement, cellElement, fieldName, content);
+    }
+};
+/**
+ * Validates the form elements
+ */
 FormHelper.validate = function($form){
 	// var rangeParser = /(int|float)([\[\(])(\d*):(\d*)([\)\]])/g;
 	var urlParser = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
@@ -305,6 +338,10 @@ FormHelper.validate = function($form){
     return everythingIsValid;
 };
 
+/**
+ * Fixing the content, applying changed basing on the class - like formatting of file size, dates, time and
+ * extracting the simple file name
+ */
 function fixContent(fieldName, fieldValue, fieldClass, tagName, formatting) {
     if (!validValue(fieldValue)) {
         fieldValue = "";
@@ -337,10 +374,10 @@ function fixContent(fieldName, fieldValue, fieldClass, tagName, formatting) {
     return fieldValue;
 }
 function getFieldValue(object, fieldPath) {
-    if (!validValue(object)) {getField
+    if (!validValue(object)) {
         return null;
     }
-    if (typeof fieldPath == "undefined" || fieldPath == null || fieldPath == "") {
+    if (typeof fieldPath === "undefined" || fieldPath == null || fieldPath === "") {
         return null;
     }
     if (fieldPath.indexOf(".") != -1) {

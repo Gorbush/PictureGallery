@@ -9,7 +9,6 @@ public interface PictureMatcher {
 
     int MATCH_LIMIT = 50;
 
-
     String getKind();
 
     default Collection<PictureInformation> findInGallery(PictureInformation source) {

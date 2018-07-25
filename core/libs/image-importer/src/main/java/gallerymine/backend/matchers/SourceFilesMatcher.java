@@ -59,7 +59,6 @@ public class SourceFilesMatcher {
                     report.getPicturesKind(matcher.getKind()).add(source.getId());
                     sourceIds.add(source.getId());
                 }
-
             });
         });
 

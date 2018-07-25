@@ -207,8 +207,8 @@ public class ImportProcessor extends ImportProcessorBase {
 
                     if (ignorableFileAnayser.accepts(file.toFile().getName())) {
                         log.debug("    file ignored {}", info.getFileWithPath());
-                        Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                        info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
+                        Path targetFolder = importUtils.moveToFailed(info);
+                        info.setRootPath(targetFolder.toString());
                         filesCountIgnored++;
                         info.setStatus(InfoStatus.SKIPPED);
                     } else {
@@ -222,23 +222,22 @@ public class ImportProcessor extends ImportProcessorBase {
                         }
                         if (info.getPopulatedBy().contains(KIND_PICTURE)) {
                             if (!info.isFailed()) {
-                                if (!checkIfDuplicate(file, request, info)) {
-                                    Path targetFolder = importUtils.moveToApprove(file, request.getRootPath());
-                                    info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
-                                    info.setStatus(InfoStatus.ANALYSING);
-                                }
+                                Path targetRootPath = importUtils.moveToApprove(info);
+                                info.setRootPath(targetRootPath.toString());
+
+                                info.setStatus(InfoStatus.ANALYSING);
                                 filesCountSucceed++;
                             } else {
                                 filesCountFailed++;
-                                Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                                info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
+                                Path targetFolder = importUtils.moveToFailed(info);
+                                info.setRootPath(targetFolder.toString());
                                 info.setStatus(InfoStatus.FAILED);
                                 info.addError(" Wrong format of file");
                                 logUnknownFormats.error(" Wrong format of file {}", file.toAbsolutePath().toString());
                             }
                         } else {
-                            Path targetFolder = importUtils.moveToFailed(file, request.getRootPath());
-                            info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
+                            Path targetFolder = importUtils.moveToFailed(info);
+                            info.setRootPath(targetFolder.toString());
                             filesCountFailed++;
                             info.setStatus(InfoStatus.FAILED);
                             info.addError(" Unknown format of file");
@@ -292,33 +291,6 @@ public class ImportProcessor extends ImportProcessorBase {
             log.error("     import processing failed for file {}. Reason: {}", path, e.getMessage());
         }
         log.info("   import processing done path={}", request.getPath());
-    }
-
-    /**
-     * Not only checks if we already have such kind of file imported, but also identifies
-     * match - similar or duplicate and moves the file to the right import subfolder
-     * */
-    private boolean checkIfDuplicate(Path file, ImportRequest request, FileInformation info) throws IOException {
-        SourceCriteria criteria = new SourceCriteria();
-        criteria.setFileName(file.toFile().getName());
-        criteria.setFileSize(file.toFile().length());
-        criteria.maxSize();
-
-        Iterator<Picture> iterator = uniSourceRepository.fetchCustomStream(criteria, Picture.class);
-        iterator.forEachRemaining( pic -> {
-            try {
-                Path targetFolder = importUtils.moveToDuplicates(file, request.getRootPath());
-                info.setRootPath(appConfig.relativizePathToImport(targetFolder.toFile().getAbsolutePath()));
-            } catch (IOException e) {
-                log.warn("Failed to move to Duplicates file={}", info.getFullFilePath());
-            }
-            info.setStatus(InfoStatus.DUPLICATE);
-            if (pic.getThumbPath() != null) {
-                info.setThumbPath(pic.getThumbPath());
-                info.getPopulatedBy().add(KIND_THUMB);
-            }
-        });
-        return InfoStatus.DUPLICATE.equals(info.getStatus());
     }
 
     private void processPictureFile(Path file, ImportSource info, BaseAnalyser analyser) {

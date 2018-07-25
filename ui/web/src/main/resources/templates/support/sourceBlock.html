@@ -3,8 +3,8 @@
      xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" class="sourceBlock">
     <div class="sourceBlockBody">
         <div class="matchingProperties">
-            <div class="status"></div>
-            <div class="filePath"></div>
+            <div class="status" name="status"></div>
+            <div class="filePath" name="filePath"></div>
             <div class="folderStats">
                 <span class="message"></span>
                 <span class="data">
@@ -14,9 +14,9 @@
                     Dups <span class="badge duplicates"></span>
                 </span>
             </div>
-            <div class="fileName"></div>
-            <div class="fileSize"></div>
-            <div class="timeStamp"></div>
+            <div class="fileName" name="fileName"></div>
+            <div class="fileSize file_size" name="size"></div>
+            <div class="timeStamp date" name="timestamp"></div>
         </div>
         <div class="source_image" title="SimpleHint">
             <a href="#" class="source_anch"><img class="img-thumbnail" /></a>
@@ -25,6 +25,10 @@
             <span class="decisionButton btn_LATER glyphicon glyphicon-time" value="later" ></span>
             <span class="decisionButton btn_APPROVE glyphicon glyphicon-star" value="approve" grade="PICTURE"></span>
             <span class="decisionButton btn_DUPLICATE glyphicon glyphicon-remove" value="duplicate" grade="IMPORT"></span>
+        </div>
+        <div class="matchInfoBlock">
+            <span class="matchCount matchPicCount" name="matchPicCount">12</span>
+            <span class="matchCount matchImpCount" name="matchImpCount">12</span>
         </div>
     </div>
 </div>

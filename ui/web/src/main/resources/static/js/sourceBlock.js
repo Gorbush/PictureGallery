@@ -94,7 +94,7 @@ var DecisionButtonBlock = {
             performAction: function (button, action, itemId, itemData) {
                var blockOriginal = this;
                AjaxHelper.runGET("/sources/approve/"+itemData.grade+"/"+itemId+"/"+action, function (response){
-                   var block = blockOriginal.sourceList.getBlockById(response.result.id);
+                   var block = blockOriginal.sourceBlock.sourceList.getBlockById(response.result.id);
                    if (block) {
                        block.markDecision(response.result.grade, response.result.status);
                        ImportRequestsTree.refresh();
@@ -271,22 +271,33 @@ var SourceBlock = {
                     console.log("Import loaded for id "+response.result.id);
                     var dataObject = response.result;
                     block.dataObject = dataObject;
-                    block.fill();
+                    try {
+                        block.fill();
+                    } catch (e) {
+                        console.log("Failed to fill the source block "+e);
+                    }
                 });
+            },
+            hideInfoBoxes: function () {
+                $("[name='matchPicCount']",this.sourceBlockElement).hide();
+                $("[name='matchImpCount']",this.sourceBlockElement).hide();
+                $(".matchInfoBlock",this.sourceBlockElement).hide();
+                this.hideDecisionButtons(false);
             },
             fill: function () {
                 if (!validValue(this.dataObject.id)) {
                     console.log("empty data object!");
-                    this.hideDecisionButtons(false);
+                    this.hideInfoBoxes();
                     return;
                 }
                 if (validValue(this.dataObject.id) && !validValue(this.dataObject.fileName)) {
-                    this.hideDecisionButtons(false);
+                    this.hideInfoBoxes();
                     this.preload();
                     return;
                 }
                 if (this.dataObject.status === "SKIPPED" || this.dataObject.status === "FAILED") {
-                    this.hideDecisionButtons(true);
+                    this.hideInfoBoxes(true);
+                    this.hideInfoBoxes();
                 } else {
                     if (!this.hideDecisionButtonsRequest) {
                         this.showDecisionButtons();
@@ -311,12 +322,27 @@ var SourceBlock = {
                 // var fullImagePic = "/pics/"+this.dataObject.filePath+"/"+this.dataObject.fileName;
                 this.matchingImageAnch.attr("href", "/srcs/"+fullImageSrc);
                 this.matchingImageAnch.attr("title", this.dataObject.label);
-                this.status.text(this.dataObject.status);
-                this.fileName.text(this.dataObject.fileName);
-                this.filePath.text(this.dataObject.filePath);
-                this.fileSize.text(fileSizeSI(this.dataObject.size));
-                var st = formatDate(this.dataObject.timestamp);
-                this.timeStamp.text(st);
+                // this.status.text(this.dataObject.status);
+                // this.fileName.text(this.dataObject.fileName);
+                // this.filePath.text(this.dataObject.filePath);
+                // this.fileSize.text(fileSizeSI(this.dataObject.size));
+                // var st = formatDate(this.dataObject.timestamp);
+                // this.timeStamp.text(st);
+                FormHelper.populate(this.sourceBlockElement , this.dataObject);
+
+                if (this.dataObject.matchReport) {
+                    var matchPicCount = Object.keys(this.dataObject.matchReport.pictures).length;
+                    var matchImpCount = Object.keys(this.dataObject.matchReport.currentImport).length;
+                    FormHelper.populateFromObject(this.sourceBlockElement, {
+                        matchPicCount: matchPicCount,
+                        matchImpCount: matchImpCount
+                    });
+                    $("[name='matchPicCount']", this.sourceBlockElement).toggle(matchPicCount > 0);
+                    $("[name='matchImpCount']", this.sourceBlockElement).toggle(matchImpCount > 0);
+                    $(".matchInfoBlock", this.sourceBlockElement).toggle((matchPicCount + matchImpCount) > 0);
+                } else {
+                    $(".matchInfoBlock", this.sourceBlockElement).hide();
+                }
 
                 if (this.showStats) {
                     initFolderStatsRequest(this);
@@ -402,7 +428,11 @@ var SourceBlock = {
 
         };
         object.clone();
-        object.fill();
+        try {
+            object.fill();
+        } catch (e) {
+            console.log("Failed to fill the source block "+e);
+        }
 
         return object;
     }

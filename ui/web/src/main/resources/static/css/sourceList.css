@@ -247,7 +247,33 @@ div.sourceBlock:hover div.sourceBlockBody div.decisionBlock .decisionButton {
 div.sourceBlock div.sourceBlockBody div.decisionBlock .decisionButton.decision_selected {
     display: block;
 }
-
+div.matchInfoBlock {
+    position: absolute;
+    min-width: 20px;
+    left:  0;
+    bottom: 3px;
+    height: 28px;
+    background-color: #ededed;
+    margin-left: 2px;
+    text-align: center;
+    align-content: center;
+}
+div.matchInfoBlock .matchCount.matchPicCount{
+    background-color: #bcedbf;
+}
+div.matchInfoBlock .matchCount.matchImpCount{
+    background-color: #edebb5;
+}
+div.matchInfoBlock .matchCount{
+    min-width: 20px;
+    float: left;
+    padding: 1px;
+    margin: 2px;
+    border: 1px solid red;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+}
 span.btn_LATER {
     /*background-size: 16px 16px;*/
     /*background-repeat: no-repeat;*/

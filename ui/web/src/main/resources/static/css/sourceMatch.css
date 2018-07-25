@@ -186,6 +186,25 @@ div.decisionBlock .decisionButton{
     background-color: #1deded;
     padding: 3px;
 }
+div.decisionBlock .decisionButton.decision_selected {
+    border: 1px solid red;
+}
+div.matchInfoBlock {
+    position: absolute;
+    min-width: 20px;
+    left:  0;
+    top: 0;
+    height: 22px;
+    background-color: #ededed;
+    margin-right: 10px;
+    text-align: left;
+    align-content: left;
+    border: 1px solid red;
+}
+div.matchInfoBlock .matchCount{
+    min-width: 20px;
+    float: left;
+}
 span.btn_LATER {
     /*background-size: 16px 16px;*/
     /*background-repeat: no-repeat;*/
@@ -203,7 +222,4 @@ span.btn_DUPLICATE {
     /*background-repeat: no-repeat;*/
     /*background-image: url('/images/trash-16.png');*/
     /*background-position: center center;*/
-}
-div.decisionBlock .decisionButton.decision_selected {
-    border: 1px solid red;
 }

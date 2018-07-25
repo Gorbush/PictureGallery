@@ -3,6 +3,7 @@ package gallerymine.model.support;
 public enum InfoStatus {
     ANALYSING(false),
     APPROVING(false),
+    SIMILAR(true),
 
     APPROVED(true),
     FAILED(true),
