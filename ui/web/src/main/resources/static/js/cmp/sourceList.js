@@ -138,6 +138,12 @@ var SourceList = {
                 prepareCriteria: function (path) {
                     var starting = $("#datepicker input[name='start']").val();
                     var ending = $("#datepicker input[name='end']").val();
+                    if (starting === "") {
+                        starting = null;
+                    }
+                    if (ending === "") {
+                        ending = null;
+                    }
 
                     if (this.treeDates) {
                         var selectedDate = this.treeDates.getCurrent();
@@ -278,10 +284,16 @@ var SourceList = {
             object.responseData = null;
 
             if (typeof TreePath != "undefined" && object.options.treePath) {
-                object.treeFolderPath = TreePath.create($('#folderTree'), this.clickFoldersTreeNode, this.prepareCriteriaPath);
+                object.treeFolderPath = TreePath.create($('#folderTree'),
+                    function(e, data, tree) {return object.clickFoldersTreeNode(e, data, tree);},
+                    function (treeElement, node) { return object.prepareCriteriaPath(treeElement, node);}
+                    );
             }
             if (typeof TreePath != "undefined" && object.options.treeDates) {
-                object.treeDates = TreeDates.create($('#datesTree'), this.clickDatesTreeNode, this.prepareCriteriaCurrent);
+                object.treeDates = TreeDates.create($('#datesTree'),
+                    function(e, data, tree) {object.clickDatesTreeNode(e, data, tree);},
+                    function (treeElement, node) { return object.prepareCriteriaCurrent(treeElement, node);}
+                    );
             }
             if (typeof Gallery != "undefined" && object.options.gallery) {
                 object.gallery = new Gallery({
@@ -302,7 +314,7 @@ var SourceList = {
             object.initialized = true;
             return object;
         } catch (e) {
-            console.log("Failed to init SourceList ");
+            console.log("Failed to init SourceList "+e);
         }
     }
 };

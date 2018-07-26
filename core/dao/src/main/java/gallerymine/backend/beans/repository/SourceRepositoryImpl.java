@@ -8,6 +8,7 @@ import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.PageHierarchyImpl;
 import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.DateStats;
+import gallerymine.model.support.PictureGrade;
 import gallerymine.model.support.SourceFolderStats;
 import gallerymine.model.support.SourceKind;
 import gallerymine.backend.utils.RegExpHelper;
@@ -19,8 +20,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.Metric;
-import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.geo.format.DistanceFormatter;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -71,6 +70,12 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
 
     @Override
     public Page<FolderStats> fetchPathCustom(SourceCriteria sourceCriteria) {
+        PictureGrade grade = sourceCriteria.getGrade();
+        if (grade == null) {
+            grade = PictureGrade.GALLERY;
+        }
+        Class entityClass = grade.getEntityClass();
+
         sourceCriteria.setSortByField("filePath");
         sourceCriteria.setSortDescending(false);
         String sourcePath = sourceCriteria.getPath();
@@ -98,9 +103,9 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         pipelineCount.add(group(fields()).sum("count").as("count"));
         pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
 
-        Aggregation aggregationCount  = newAggregation(Source.class, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
+        Aggregation aggregationCount  = newAggregation(entityClass, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
 //        List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
-        FolderStats countStats = template.aggregate(aggregationCount, Source.class, FolderStats.class).getUniqueMappedResult();
+        FolderStats countStats = template.aggregate(aggregationCount, entityClass, FolderStats.class).getUniqueMappedResult();
 
         long totalCount = (countStats == null || countStats.getFilesCount() == null) ? 0 : countStats.getFilesCount();
         int newOffset = sourceCriteria.getOffset();
@@ -118,10 +123,10 @@ public class SourceRepositoryImpl implements SourceRepositoryCustom {
         pipeline.add(Aggregation.skip(newOffset));
         pipeline.add(Aggregation.limit(sourceCriteria.getSize()));
 
-        Aggregation aggregation  = newAggregation(Source.class, (AggregationOperation[]) pipeline.toArray(new AggregationOperation[]{}));
+        Aggregation aggregation  = newAggregation(entityClass, (AggregationOperation[]) pipeline.toArray(new AggregationOperation[]{}));
 
         // get distinct path, but before we need to cut the original path - and everything starting from first slash /
-        AggregationResults<FolderStats> output = template.aggregate(aggregation, Source.class, FolderStats.class);
+        AggregationResults<FolderStats> output = template.aggregate(aggregation, entityClass, FolderStats.class);
 
         return new PageHierarchyImpl<>(output.getMappedResults(), pager, totalCount, sourcePath);
     }

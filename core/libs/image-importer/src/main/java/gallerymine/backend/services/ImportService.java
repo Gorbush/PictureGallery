@@ -417,7 +417,7 @@ public class ImportService {
 
             return picture;
         } catch (Exception e) {
-            throw new ImageApproveException("Failed to copy file");
+            throw new ImageApproveException("Failed to copy file", e);
         }
     }
 

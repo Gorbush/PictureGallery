@@ -117,7 +117,7 @@ var TreeDates = {
                                 return "/sources/findDates";
                             },
                             "data" : function (node, cb, par2) {
-                                var criteria = this.prepareCriteria(this, node);
+                                var criteria = treeObject.prepareCriteria(this, node);
                                 return JSON.stringify(criteria, null, 2);
                             },
                             "postprocessor": function (node, data, par2) {

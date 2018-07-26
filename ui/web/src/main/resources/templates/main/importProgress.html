@@ -6,14 +6,14 @@
 	<title>GalleryMine</title>
     <link rel="stylesheet" type="text/css" href="/css/importRequest.css" id="css"> </link>
 
-    <script type="application/javascript" src="/js/importRequest.js" ></script>
-    <script type="application/javascript" src="/js/progressBar.js" ></script>
+    <script type="application/javascript" src="/js/cmp/progressBar.js" ></script>
+    <script type="application/javascript" src="/js/cmp/sourceBlock.js"></script>
+    <script type="application/javascript" src="/js/cmp/pager.js"></script>
+    <script type="application/javascript" src="/js/cmp/sourceList.js"></script>
+    <script type="application/javascript" src="/js/cmp/sourceProperties.js"></script>
+    <script type="application/javascript" src="/js/cmp/viewSwitcher.js" ></script>
 
-    <script type="application/javascript" src="/js/sourceBlock.js"></script>
-    <script type="application/javascript" src="/js/pager.js"></script>
-    <script type="application/javascript" src="/js/sourceList.js"></script>
-    <script type="application/javascript" src="/js/sourceProperties.js"></script>
-    <script type="application/javascript" src="/js/viewSwitcher.js" ></script>
+    <script type="application/javascript" src="/js/importRequest.js" ></script>
 
     <script type="application/javascript" th:inline="javascript">
 
@@ -33,10 +33,7 @@
     </section>
 
     <section layout:fragment="pageNavigation" class="container">
-        <div id="sourceViewSwitcher">
-            <span class="glyphicon glyphicon-sd-video view-compact viewButton"></span>
-            <span class="glyphicon glyphicon-hd-video view-large viewButton"></span>
-        </div>
+        <div th:replace="support/switcher" ></div>
         <div th:replace="support/pager" ></div>
     </section>
 
@@ -127,19 +124,6 @@
     </section>
 
     <section layout:fragment="dialogs" class="container">
-        <div id="importTreeRow">
-            <span name="name"></span>
-            <div class="node_postblock">
-                <div name="status" class="status">Status</div>
-                <div name="totalStats.files" class="counts">Files</div>
-                <div name="totalStats.filesDone" class="counts">/Done</div>
-                <div name="totalStats.failed" class="counts">/Failed</div>
-                <div name="totalStats.duplicates" class="counts">/Dupl</div>
-                <div name="totalStats.skipped" class="counts">/Skip</div>
-                <div name="totalStats.folders" class="counts">Folders</div>
-                <div name="totalStats.foldersDone" class="counts">/Done</div>
-            </div>
-        </div>
         <div id="templates">
             <div th:replace="support/sourceBlock" ></div>
             <div id="matchBlockTemplate">
@@ -151,6 +135,19 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div id="importTreeRow">
+            <span name="name"></span>
+            <div class="node_postblock">
+                <div name="status" class="status">Status</div>
+                <div name="totalStats.files" class="counts">Files</div>
+                <div name="totalStats.filesDone" class="counts">/Done</div>
+                <div name="totalStats.failed" class="counts">/Failed</div>
+                <div name="totalStats.duplicates" class="counts">/Dupl</div>
+                <div name="totalStats.skipped" class="counts">/Skip</div>
+                <div name="totalStats.folders" class="counts">Folders</div>
+                <div name="totalStats.foldersDone" class="counts">/Done</div>
             </div>
         </div>
     </section>

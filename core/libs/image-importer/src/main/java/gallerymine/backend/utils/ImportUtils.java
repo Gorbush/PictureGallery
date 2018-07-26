@@ -290,7 +290,7 @@ public class ImportUtils {
     public <T extends PictureInformation> Path moveToSiblingPath(T info, String siblingFolder) throws IOException {
         Path targetSubPath = Paths.get(info.getRootPath()).getParent().resolve(siblingFolder);
         Path targetPath = appConfig.getImportRootFolderPath().resolve(targetSubPath);
-        Path fullTargetPath = targetPath.resolve(info.getFileName()).getParent();
+        Path fullTargetPath = targetPath.resolve(info.getFileWithPath()).getParent();
 
         Path file = calcCompleteFilePath(info);
         FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
