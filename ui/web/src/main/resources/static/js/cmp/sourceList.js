@@ -116,8 +116,11 @@ var SourceList = {
                     return null;
                 },
                 fillBreadcrumb: function (breadcrumbText){
-                    var crumbs = breadcrumbText.split("/");
                     this.breadcrumb.empty();
+                    if (!validValue(breadcrumbText)) {
+                        return;
+                    }
+                    var crumbs = breadcrumbText.split("/");
                     for(index in crumbs) {
                         var cr = crumbs[index];
                         if (index === (crumbs.length-1)) {
@@ -128,7 +131,7 @@ var SourceList = {
                     }
                 },
 
-                prepareCriteria: function (path) {
+                prepareCriteria: function (data) {
                     var criteria = {
                         path: "",
                         grade: this.grade,
@@ -139,13 +142,13 @@ var SourceList = {
                         size: 1000
                     };
 
-                    // if (validValue(path)) {
-                    //     criteria.path = path;
-                    // }
-
                     if (this.criteriaContributor) {
                         criteria = this.criteriaContributor(this, criteria);
                     }
+                    if (validValue(data) && validValue(data.fullPath)) {
+                        criteria.path = data.fullPath;
+                    }
+
 
                     return criteria;
                 },
@@ -253,13 +256,13 @@ var SourceList = {
             if (typeof TreePath != "undefined" && object.options.treePath) {
                 object.treeFolderPath = TreePath.create($('#folderTree'),
                     function(e, data, tree) {return object.clickFoldersTreeNode(e, data, tree);},
-                    function (treeElement, node) { return object.prepareCriteria(node);}
+                    function (node) { return object.prepareCriteria(node);}
                     );
             }
             if (typeof TreePath != "undefined" && object.options.treeDates) {
                 object.treeDates = TreeDates.create($('#datesTree'),
                     function(e, data, tree) {object.clickDatesTreeNode(e, data, tree);},
-                    function (treeElement, node) { return object.prepareCriteria(node);}
+                    function (node) { return object.prepareCriteria(node);}
                     );
             }
             if (typeof Gallery != "undefined" && object.options.gallery) {

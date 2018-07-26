@@ -232,12 +232,16 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
         }
 
         int selectLevelToExtract = StringUtils.countMatches(sourcePath.replaceAll("\\^\\\\\\/",""),"/");
+        if (sourcePath.length() > 0) {
+            selectLevelToExtract++;
+        }
 
         pipelineBase.add(project()
                 .and("$filePath").as("filePath")
                 .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevelToExtract)).as("name")
+                .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevelToExtract-1)).as("parentName")
         );
-        pipelineBase.add(group(fields("name").and("filePath")).count().as("count"));
+        pipelineBase.add(group(fields("name").and("parentName").and("filePath")).count().as("count"));
 
         return pipelineBase;
     }
@@ -291,19 +295,23 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
             if ("".equals(originalPath)) {
                 searchCriteria.setPath("[^\\/]+");
             } else {
-                searchCriteria.setPath(originalPath+"/[^\\/]+");
+                searchCriteria.setPath(originalPath);
             }
             List<AggregationOperation> pipelineSubChildren = prepareBasePathPipeline(searchCriteria);
             searchCriteria.setPath(originalPath);
-            pipelineSubChildren.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
-            pipelineSubChildren.add(group(fields("name").and("name")).count().as("foldersCount"));
+            pipelineSubChildren.add(project()
+                    .and("$_id.name").as("name")
+                    .and("$parentName").as("parentName")
+                    .and("$count").as("filesCount")
+                    .and("$_id.filePath").as("fullPath"));
+            pipelineSubChildren.add(group(fields("name").and("name").and("parentName")).count().as("foldersCount"));
 
             Aggregation aggregation = newAggregation(clazz, (AggregationOperation[]) pipelineSubChildren.toArray(new AggregationOperation[]{}));
             // get distinct path, but before we need to cut the original path - and everything starting from first slash /
             AggregationResults<FolderStats> outputSubFolders = template.aggregate(aggregation, clazz, FolderStats.class);
 
             Map<String, FolderStats> subFoldersInfo = new HashMap<>();
-            outputSubFolders.forEach(fs -> subFoldersInfo.put(fs.getName(), fs));
+            outputSubFolders.forEach(fs -> subFoldersInfo.put(fs.getParentName(), fs));
 
             output.forEach(fs -> {
                 if (subFoldersInfo.containsKey(fs.getName())) {

@@ -53,7 +53,11 @@ var TreePath = {
                                 return "/sources/findPath";
                             },
                             "data" : function (node, cb, par2) {
-                                var criteria = treeObject.prepareCriteria(this, node);
+                                var data = node;
+                                if (node && node.original && node.original.content) {
+                                    data = node.original.content;
+                                }
+                                var criteria = treeObject.prepareCriteria(data);
                                 return JSON.stringify(criteria, null, 2);
                             },
                             "postprocessor": function (node, data, par2) {

@@ -60,8 +60,8 @@ var ImportRequestsTree = {
                         var processId = ImportRequestsTree.getActiveProcessId();
                         return "/importing/list/"+processId+"/"+id;
                     },
-                    "postprocessor": function (node, data, par2) {
-                        var dataNew = ImportRequestsTree.preprocessAsNodes(data.list.content, data.result);
+                    "postprocessor": function (node, data) {
+                        var dataNew = ImportRequestsTree.preprocessAsNodes(data.list.content, data.result, node);
                         // dataNew.id = node.id;
                         // dataNew.parent = node.parent;
                         return dataNew;
@@ -121,36 +121,22 @@ var ImportRequestsTree = {
         }).on("select_node.jstree", ImportRequestsTree.onNodeClick);
     },
 
-    preprocessAsNodes: function (nodesList, nodeParent) {
+    preprocessAsNodes: function (nodesList, nodeParent, treeNode) {
         function prepareNode(nodeData) {
-            var node = {};
-            node.text = (nodeData.path === "") ? "Gallery Root" : nodeData.path;
+            var node = {
+                text    : (nodeData.path === "") ? "Gallery Root" : nodeData.path,
+                icon    : "NODE_STATUS_" + nodeData.status,
+                parent  : nodeData.parent ? nodeData.parent : "#",
+                content : nodeData,
+                state   : { opened: false },
+                children: nodeData.foldersCount > 0
+            };
             if (node.rootPath && node.text.startsWith(nodeData.rootPath)) {
                 node.text = node.text.substr(nodeData.rootPath.length);
             }
             if (node.text.startsWith("/")) {
                 node.text = node.text.substr(1);
             }
-            node.icon = "NODE_STATUS_" + nodeData.status;
-            node.content = nodeData;
-            node.state = {
-                opened: false
-            };
-            node.parent = nodeData.parent;
-            if (node.parent === null) {
-                node.parent = '#';
-                // node.id = '#';
-            // } else {
-            //     node.parent = node.id;
-            }
-            // if (node.parent === nodeData.rootId) {
-            //     node.parent = '#';
-                // node.id = '#';
-            // }
-            if (nodeData.foldersCount > 0) {
-                node.children = true;
-            }
-
             return node;
         }
 
@@ -161,8 +147,12 @@ var ImportRequestsTree = {
         }
 
         if (nodeParent) {
+            var childrenLoadRequest = treeNode && treeNode.original && treeNode.original.content&&
+                                        nodeParent.id === treeNode.original.content.id;
+            if (childrenLoadRequest) {
+                return nodes;
+            }
             var parentNode = prepareNode(nodeParent);
-            // nodesList.push(nodeParent);
             if (nodes.length > 0) {
                 parentNode.children = nodes;
             }
@@ -258,14 +248,14 @@ var ImportRequestsTree = {
 
     criteriaContributor: function(sourceList, criteria) {
         criteria.requestId = ImportRequestsTree.getActiveImportId();
-        criteria.path = "";
+        criteria.path = null;
         return criteria;
     },
     criteriaContributorMatches: function(sourceList, criteria) {
         var block = ImportRequestsTree.getSelectedImportSource();
         if (block) {
             criteria.matchesOfImportId = block.dataobject.id;
-            criteria.path = "";
+            criteria.path = null;
             return criteria;
         } else {
             debugger;
