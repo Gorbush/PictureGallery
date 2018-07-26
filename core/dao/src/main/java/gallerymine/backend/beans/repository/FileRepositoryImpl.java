@@ -28,10 +28,7 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -174,11 +171,11 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
                 }
                 if (starting != null && ending != null) {
                     criteria.add(Criteria.where("timestamp").gte(starting.toDate()).lte(ending.toDate()));
-                criteria.add(
+                    criteria.add(
                         Criteria.where("timestamps").elemMatch(
                                 Criteria.where("stamp").gte(starting.toDate()).lte(ending.toDate())
                         )
-                );
+                    );
                 } else {
                     if (starting != null) {
                         criteria.add(Criteria.where("timestamp").gte(starting.toDate()));
@@ -211,10 +208,7 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
         return criteria;
     }
 
-    @Override
-    public <T extends Information> Page<FolderStats> fetchPathCustom(RequestCriteria searchCriteria, Class<T> clazz) {
-        searchCriteria.setSortByField("filePath");
-        searchCriteria.setSortDescending(false);
+    private List<AggregationOperation>  prepareBasePathPipeline(RequestCriteria searchCriteria) {
         String sourcePath = searchCriteria.getPath();
         // fixing path - to get all sub-folders - if they have photos
         if (sourcePath != null) {
@@ -226,55 +220,102 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
         }
 
         List<Criteria> criteriaList = applyCustomCriteria(searchCriteria);
+        // revert back changes of path
+        searchCriteria.setPath(sourcePath);
+
         Criteria criteria = criteriaList == null ? null : new Criteria().andOperator(criteriaList.toArray(new Criteria[0]));
-        
-        List<AggregationOperation> pipeline = new ArrayList<>();
-        List<AggregationOperation> pipelineCount = new ArrayList<>();
+
+        List<AggregationOperation> pipelineBase = new ArrayList<>();
 
         if (criteria != null) {
-            pipeline.add(Aggregation.match(criteria));
+            pipelineBase.add(Aggregation.match(criteria));
         }
 
-        int selectLevel = StringUtils.countMatches(sourcePath,"/");
+        int selectLevelToExtract = StringUtils.countMatches(sourcePath.replaceAll("\\^\\\\\\/",""),"/");
 
-        pipeline.add(project()
+        pipelineBase.add(project()
                 .and("$filePath").as("filePath")
-                .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevel)).as("name")
+                .and(ArrayOperators.arrayOf(StringOperators.Split.valueOf("$filePath").split("/")).elementAt(selectLevelToExtract)).as("name")
         );
-        pipeline.add(group(fields("name").and("filePath")).count().as("count"));
+        pipelineBase.add(group(fields("name").and("filePath")).count().as("count"));
 
-        pipelineCount.addAll(pipeline);
-        // group them as one line
-        pipelineCount.add(group(fields()).sum("count").as("count"));
-        pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
+        return pipelineBase;
+    }
 
-        Aggregation aggregationCount  = newAggregation(clazz, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
-//        List<FolderStats> countStatse = template.aggregate(aggregationCount, Source.class, FolderStats.class).getMappedResults();
-        FolderStats countStats = template.aggregate(aggregationCount, clazz, FolderStats.class).getUniqueMappedResult();
+    @Override
+    public <T extends Information> Page<FolderStats> fetchPathCustom(RequestCriteria searchCriteria, Class<T> clazz) {
+        searchCriteria.setSortByField("filePath");
+        searchCriteria.setSortDescending(false);
 
-        long totalCount = (countStats == null || countStats.getFilesCount() == null) ? 0 : countStats.getFilesCount();
-        int newOffset = searchCriteria.getOffset();
-        int newPage = searchCriteria.getPage();
-        if (searchCriteria.getOffset() > totalCount) {
-            // offset is over the total list length - get it one page back from the end
-            newOffset = (int) (totalCount % searchCriteria.getSize());
-            newPage = (int) (totalCount / searchCriteria.getSize());
+        List<AggregationOperation> pipelineBase = prepareBasePathPipeline(searchCriteria);
+
+        long totalCount;
+        {
+            List<AggregationOperation> pipelineCount = new ArrayList<>(pipelineBase);
+            // group them as one line
+            pipelineCount.add(group(fields()).sum("count").as("count"));
+            pipelineCount.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
+
+            Aggregation aggregationCount = newAggregation(clazz, (AggregationOperation[]) pipelineCount.toArray(new AggregationOperation[]{}));
+            FolderStats countStats = template.aggregate(aggregationCount, clazz, FolderStats.class).getUniqueMappedResult();
+            totalCount = (countStats == null || countStats.getFilesCount() == null) ? 0 : countStats.getFilesCount();
         }
-        PageRequest pager = new PageRequest(newPage, searchCriteria.getSize());
 
-        pipeline.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
+        AggregationResults<FolderStats> output;
+        PageRequest pager;
+        {
+            List<AggregationOperation> pipelineChildren = new ArrayList<>(pipelineBase);
+            pipelineChildren.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
+            pipelineChildren.add(sort(new Sort(Sort.Direction.DESC, "name")));
+            pipelineChildren.add(Aggregation.limit(searchCriteria.getSize()));
 
-        pipeline.add(sort(new Sort(Sort.Direction.DESC, "name")));
-        pipeline.add(Aggregation.skip(newOffset));
-        pipeline.add(Aggregation.limit(searchCriteria.getSize()));
+            {
+                int newOffset = searchCriteria.getOffset();
+                int newPage = searchCriteria.getPage();
+                if (searchCriteria.getOffset() > totalCount) {
+                    // offset is over the total list length - get it one page back from the end
+                    newOffset = (int) (totalCount % searchCriteria.getSize());
+                    newPage = (int) (totalCount / searchCriteria.getSize());
+                }
+                pipelineChildren.add(Aggregation.skip(newOffset));
+                pager = new PageRequest(newPage, searchCriteria.getSize());
+            }
 
-        Aggregation aggregation  = newAggregation(clazz, (AggregationOperation[]) pipeline.toArray(new AggregationOperation[]{}));
+            Aggregation aggregation = newAggregation(clazz, (AggregationOperation[]) pipelineChildren.toArray(new AggregationOperation[]{}));
+            // get distinct path, but before we need to cut the original path - and everything starting from first slash /
+            output = template.aggregate(aggregation, clazz, FolderStats.class);
+        }
 
-        // get distinct path, but before we need to cut the original path - and everything starting from first slash /
-        AggregationResults<FolderStats> output = template.aggregate(aggregation, clazz, FolderStats.class);
+        { // Children SubFolders counts
+            String originalPath = searchCriteria.getPath();
+            if ("".equals(originalPath)) {
+                searchCriteria.setPath("[^\\/]+");
+            } else {
+                searchCriteria.setPath(originalPath+"/[^\\/]+");
+            }
+            List<AggregationOperation> pipelineSubChildren = prepareBasePathPipeline(searchCriteria);
+            searchCriteria.setPath(originalPath);
+            pipelineSubChildren.add(project().and("$_id.name").as("name").and("$count").as("filesCount").and("$_id.filePath").as("fullPath"));
+            pipelineSubChildren.add(group(fields("name").and("name")).count().as("foldersCount"));
+
+            Aggregation aggregation = newAggregation(clazz, (AggregationOperation[]) pipelineSubChildren.toArray(new AggregationOperation[]{}));
+            // get distinct path, but before we need to cut the original path - and everything starting from first slash /
+            AggregationResults<FolderStats> outputSubFolders = template.aggregate(aggregation, clazz, FolderStats.class);
+
+            Map<String, FolderStats> subFoldersInfo = new HashMap<>();
+            outputSubFolders.forEach(fs -> subFoldersInfo.put(fs.getName(), fs));
+
+            output.forEach(fs -> {
+                if (subFoldersInfo.containsKey(fs.getName())) {
+                    fs.setFoldersCount(subFoldersInfo.get(fs.getName()).getFoldersCount());
+                } else {
+                    fs.setFoldersCount(0L);
+                }
+            });
+        }
 
         // Need one more aggregation to fetch count of folders for each child for foldersCount
-        return new PageHierarchyImpl<>(output.getMappedResults(), pager, totalCount, sourcePath);
+        return new PageHierarchyImpl<>(output.getMappedResults(), pager, totalCount, searchCriteria.getPath());
     }
 
 

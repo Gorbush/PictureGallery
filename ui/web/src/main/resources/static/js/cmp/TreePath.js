@@ -13,7 +13,7 @@ var TreePath = {
                     // id: (nodesList.root ? nodesList.root : "") + path,
                     text: (path === "")? "Gallery Root" : path,
                     icon: "glyphicon glyphicon-folder-open",
-                    children: true,
+                    children: data.foldersCount > 0,
                     state: {
                         opened : false
                     },
