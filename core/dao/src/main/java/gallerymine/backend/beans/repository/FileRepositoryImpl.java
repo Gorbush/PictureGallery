@@ -136,7 +136,7 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
         if (searchCriteria.getFileSize() != null) {
             criteria.add(Criteria.where("size").is(searchCriteria.getFileSize()));
         }
-        if (isNotBlank(searchCriteria.getPath())) {
+        if (searchCriteria.getPath() != null) {
             if (RegExpHelper.isMask(searchCriteria.getPath())) {
                 criteria.add(Criteria.where("filePath").regex(RegExpHelper.convertToRegExp(searchCriteria.getPath())));
             } else {
@@ -217,7 +217,13 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
         searchCriteria.setSortDescending(false);
         String sourcePath = searchCriteria.getPath();
         // fixing path - to get all sub-folders - if they have photos
-        searchCriteria.setPath(sourcePath+"*");
+        if (sourcePath != null) {
+            if ("".equals(sourcePath)) {
+                searchCriteria.setPath("~^[^\\/]+$");
+            } else {
+                searchCriteria.setPath("~^" + sourcePath + "/[^\\/]+$");
+            }
+        }
 
         List<Criteria> criteriaList = applyCustomCriteria(searchCriteria);
         Criteria criteria = criteriaList == null ? null : new Criteria().andOperator(criteriaList.toArray(new Criteria[0]));
@@ -267,6 +273,7 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
         // get distinct path, but before we need to cut the original path - and everything starting from first slash /
         AggregationResults<FolderStats> output = template.aggregate(aggregation, clazz, FolderStats.class);
 
+        // Need one more aggregation to fetch count of folders for each child for foldersCount
         return new PageHierarchyImpl<>(output.getMappedResults(), pager, totalCount, sourcePath);
     }
 

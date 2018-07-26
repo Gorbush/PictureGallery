@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.WriteResult;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.geo.format.DistanceFormatter;
@@ -52,6 +54,33 @@ public class ImportSourceRepositoryImpl<Information extends PictureInformation>
             infos.add(info);
         }
         return infos;
+    }
+
+    @Override
+    public Page<FolderStats> fetchPathCustom(SourceCriteria criteria) {
+        PictureGrade grade = criteria.getGrade();
+        if (grade == null) {
+            grade = PictureGrade.GALLERY;
+        }
+        return super.fetchPathCustom(criteria, grade.getEntityClass());
+    }
+
+    @Override
+    public List<DateStats> fetchDatesCustom(SourceCriteria criteria) {
+        PictureGrade grade = criteria.getGrade();
+        if (grade == null) {
+            grade = PictureGrade.GALLERY;
+        }
+        return super.fetchDatesCustom(criteria, grade.getEntityClass());
+    }
+
+    @Override
+    public Page<Information> fetchCustom(SourceCriteria criteria) {
+        PictureGrade grade = criteria.getGrade();
+        if (grade == null) {
+            grade = PictureGrade.GALLERY;
+        }
+        return super.fetchCustom(criteria, grade.getEntityClass());
     }
 
     @Override

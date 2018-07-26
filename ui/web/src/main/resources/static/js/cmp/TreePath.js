@@ -7,24 +7,31 @@ var TreePath = {
         function preprocessFoldersAsNodes(nodesList, nodeParent) {
             var nodes = [];
             for(nodexIndex in nodesList.content) {
-                var path = nodesList.content[nodexIndex];
-                if (path.name) {
-                    path = path.name;
-                }
+                var data = nodesList.content[nodexIndex];
+                var path = data.name;
                 var node = {
-                    id: (nodesList.root ? nodesList.root : "") + path,
+                    // id: (nodesList.root ? nodesList.root : "") + path,
                     text: (path === "")? "Gallery Root" : path,
                     icon: "glyphicon glyphicon-folder-open",
                     children: true,
                     state: {
                         opened : false
                     },
-                    data: path,
-                    parent: nodeParent.id
+                    content: data
                 };
                 nodes.push(node);
             }
-
+            if (nodeParent.id === "#") {
+                return  {
+                    parent: "#",
+                    text: "Gallery Root",
+                    icon: "glyphicon glyphicon-folder-open",
+                    children: nodes,
+                    state: {
+                        opened : true
+                    }
+                }
+            }
             return nodes;
         }
 

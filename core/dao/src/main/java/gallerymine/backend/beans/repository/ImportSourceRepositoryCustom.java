@@ -2,8 +2,11 @@ package gallerymine.backend.beans.repository;
 
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ImportRequest;
+import gallerymine.model.mvc.FolderStats;
 import gallerymine.model.mvc.SourceCriteria;
+import gallerymine.model.support.DateStats;
 import gallerymine.model.support.ProcessType;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,6 +16,10 @@ import java.util.List;
  */
 @Repository
 public interface ImportSourceRepositoryCustom<Information extends PictureInformation>  extends FileRepositoryCustom<Information, SourceCriteria>{
+
+    Page<Information> fetchCustom(SourceCriteria criteria);
+    Page<FolderStats> fetchPathCustom(SourceCriteria sourceCriteria);
+    List<DateStats> fetchDatesCustom(SourceCriteria sourceCriteria);
 
     Information saveByGrade(Information entity);
 

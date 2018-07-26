@@ -128,36 +128,10 @@ var SourceList = {
                     }
                 },
 
-                prepareCriteriaPath: function(treeElement, node) {
-                    var path = (node.id === "#") ? "/" : (node.id+"/");
-                    return this.prepareCriteria(path);
-                },
-                prepareCriteriaCurrent: function (treeElement, node) {
-                    return this.prepareCriteria();
-                },
                 prepareCriteria: function (path) {
-                    var starting = $("#datepicker input[name='start']").val();
-                    var ending = $("#datepicker input[name='end']").val();
-                    if (starting === "") {
-                        starting = null;
-                    }
-                    if (ending === "") {
-                        ending = null;
-                    }
-
-                    if (this.treeDates) {
-                        var selectedDate = this.treeDates.getCurrent();
-                        if (selectedDate) {
-                            starting = selectedDate.original.rangeStart;
-                            ending = selectedDate.original.rangeEnd;
-                        }
-                    }
-
                     var criteria = {
-                        path: "*",
+                        path: "",
                         grade: this.grade,
-                        fromDate: starting,
-                        toDate: ending,
                         fileName: null,
                         timestamp: null,
                         placePath: null,
@@ -165,16 +139,9 @@ var SourceList = {
                         size: 1000
                     };
 
-                    if (validValue(path)) {
-                        criteria.path = path;
-                    } else {
-                        if (this.treeFolderPath) {
-                            var pathNode = this.treeFolderPath.getCurrent();
-                            if (validValue(pathNode)) {
-                                criteria.path = pathNode.id;
-                            }
-                        }
-                    }
+                    // if (validValue(path)) {
+                    //     criteria.path = path;
+                    // }
 
                     if (this.criteriaContributor) {
                         criteria = this.criteriaContributor(this, criteria);
@@ -286,13 +253,13 @@ var SourceList = {
             if (typeof TreePath != "undefined" && object.options.treePath) {
                 object.treeFolderPath = TreePath.create($('#folderTree'),
                     function(e, data, tree) {return object.clickFoldersTreeNode(e, data, tree);},
-                    function (treeElement, node) { return object.prepareCriteriaPath(treeElement, node);}
+                    function (treeElement, node) { return object.prepareCriteria(node);}
                     );
             }
             if (typeof TreePath != "undefined" && object.options.treeDates) {
                 object.treeDates = TreeDates.create($('#datesTree'),
                     function(e, data, tree) {object.clickDatesTreeNode(e, data, tree);},
-                    function (treeElement, node) { return object.prepareCriteriaCurrent(treeElement, node);}
+                    function (treeElement, node) { return object.prepareCriteria(node);}
                     );
             }
             if (typeof Gallery != "undefined" && object.options.gallery) {

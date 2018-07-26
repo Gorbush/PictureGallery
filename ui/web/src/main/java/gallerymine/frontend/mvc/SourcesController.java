@@ -22,6 +22,7 @@ import gallerymine.backend.beans.repository.PictureRepository;
 import gallerymine.backend.beans.repository.SourceRepository;
 import gallerymine.backend.matchers.SourceFilesMatcher;
 import gallerymine.backend.services.ImportService;
+import gallerymine.model.Picture;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ActionRequest;
 import gallerymine.model.Source;
@@ -57,12 +58,6 @@ public class SourcesController {
 	public AppConfig appConfig;
 
 	@Autowired
-	private SourceRepository sourceRepository;
-
-	@Autowired
-    private PictureRepository pictureRepository;
-
-	@Autowired
     private SourceFilesMatcher sourceFilesMatcher;
 
 	@Autowired
@@ -78,7 +73,7 @@ public class SourcesController {
     @ResponseBody
 	public Object list(@RequestBody SourceCriteria criteria) {
 
-		Page<Source> sources = sourceRepository.fetchCustom(criteria);
+		Page<PictureInformation> sources = uniSourceRepository.fetchCustom(criteria);
 
         return responseOk()
             .put("list", sources)
@@ -158,15 +153,10 @@ public class SourcesController {
     @PostMapping("uni")
     @ResponseBody
 	public Object uniList(@RequestBody SourceCriteria criteria) {
-        PictureGrade grade = criteria.getGrade();
-        if (grade == null) {
-            grade = PictureGrade.GALLERY;
-        }
-
-        Page<PictureInformation> sources = uniSourceRepository.fetchCustom(criteria, grade.getEntityClass());
+        Page<PictureInformation> sources = uniSourceRepository.fetchCustom(criteria);
 
         return responseOk()
-            .put("list", sources)
+            .results(sources)
             .put("op", "find")
             .put("criteria", criteria)
 		    .build();
@@ -175,11 +165,10 @@ public class SourcesController {
 	@PostMapping("findPath")
     @ResponseBody
 	public Object listPath(@RequestBody SourceCriteria criteria) {
-
-		Page<FolderStats> sourcePaths = sourceRepository.fetchPathCustom(criteria);
+		Page<FolderStats> sourcePaths = uniSourceRepository.fetchPathCustom(criteria);
 
         return responseOk()
-            .put("list", sourcePaths)
+            .results(sourcePaths)
             .put("op", "findPath")
             .put("criteria", criteria)
 		    .build();
@@ -188,11 +177,10 @@ public class SourcesController {
 	@PostMapping("findDates")
     @ResponseBody
 	public Object listDates(@RequestBody SourceCriteria criteria) {
-
-		List<DateStats> dateStats = sourceRepository.fetchDatesCustom(criteria);
+		List<DateStats> dateStats = uniSourceRepository.fetchDatesCustom(criteria);
 
         return responseOk()
-            .put("list", dateStats)
+            .results(dateStats)
             .put("op", "findDates")
             .put("criteria", criteria)
 		    .build();
@@ -201,27 +189,30 @@ public class SourcesController {
     @GetMapping(value = {"list/", "list/{parentId}"} )
     @ResponseBody
     public Object listByParent(@PathVariable("parentId") Optional<String> parentId) {
-        Page<Source> page = sourceRepository.findByFilePath(
+        Page<PictureInformation> page = uniSourceRepository.findByFilePath(
                 parentId.isPresent()? parentId.get() : null,
                 new PageRequest(0, 500, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
 
         return responseOk().put("response", page).build();
     }
 
-    @GetMapping(value = {"match/{sourceId}"} )
+    @GetMapping(value = {"match/{grade}/{sourceId}"} )
     @ResponseBody
-    public Object matchSource(@PathVariable("sourceId") String sourceId) {
-        Source source = sourceRepository.findOne(sourceId);
+    public Object matchSource(@PathVariable("grade") PictureGrade grade, @PathVariable("sourceId") String id) {
+        PictureInformation source = uniSourceRepository.fetchOne(id, grade.getEntityClass());
 
         SourceMatchReport matchReport = sourceFilesMatcher.matchSourceTo(source);
         if (matchReport == null) {
             return responseError("Failed to match")
-                    .put("sourceId", sourceId)
-                    .put("source", source).build();
+                    .put("id", id)
+                    .put("grade", grade)
+                    .result(source)
+                    .build();
         }
         ResponseBuilder responseBuilder = responseOk()
-                .put("sourceId", sourceId)
-                .put("source", source);
+                .put("id", id)
+                .put("grade", grade)
+                .result(source);
         if (matchReport.getPictures().size() == 1){
             responseBuilder.addMessage("Pictures found");
         }
@@ -233,8 +224,7 @@ public class SourcesController {
     @PostMapping(value = {"stats/"} )
     @ResponseBody
     public Object getFolderStats(@RequestBody String folderPath) {
-
-        SourceFolderStats stats = sourceRepository.getFolderStats(appConfig.getSourcesRootFolder(), folderPath);
+        SourceFolderStats stats = uniSourceRepository.getFolderStats(appConfig.getSourcesRootFolder(), folderPath, PictureGrade.GALLERY.getEntityClass());
 
         if (stats == null) {
             return responseError("Failed to get folder stats")
@@ -243,51 +233,8 @@ public class SourcesController {
         }
         ResponseBuilder responseBuilder = responseOk()
                 .put("folderPath", folderPath)
-                .put("stats", stats);
+                .result(stats);
 
-        return responseBuilder.build();
-    }
-
-    @PostMapping(value = {"match/decisions"} )
-    @ResponseBody
-    public Object applyDecisions(@RequestBody List<ActionRequest> decisions) {
-        ResponseBuilder responseBuilder = responseOk();
-        int i = 0;
-        for (ActionRequest action: decisions) {
-            String id = action.getFirstOperand();
-            if (id == null) {
-                responseBuilder.addMessage("Decision failed for index=%d as id was null", i);
-                continue;
-            }
-            Source source = sourceRepository.findOne(id);
-            if (source == null) {
-                responseBuilder.addMessage("Decision failed for index=%d id=%s as source not found", i, id);
-                continue;
-            }
-            switch (action.getKind()) {
-                case APPROVE: {
-                    source.setKind(SourceKind.PRIMARY);
-                    responseBuilder.addMessage("index=%d id=%s marked as PRIMARY", i, id);
-                    break;
-                }
-                case DUPLICATE: {
-                    source.setKind(SourceKind.DUPLICATE);
-                    responseBuilder.addMessage("index=%d id=%s marked as DUPLICATE", i, id);
-                    break;
-                }
-                case LATER: {
-                    source.setKind(SourceKind.UNSET);
-                    responseBuilder.addMessage("index=%d id=%s marked as UNSET", i, id);
-                    break;
-                }
-                default: {
-                    log.error("Unpredicted action KIND! {} for i={} and id={}", action.getKind(), i, id);
-                }
-            }
-            sourceRepository.save(source);
-
-            i++;
-        }
         return responseBuilder.build();
     }
 
