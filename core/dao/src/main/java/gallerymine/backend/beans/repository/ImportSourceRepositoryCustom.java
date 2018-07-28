@@ -26,6 +26,7 @@ public interface ImportSourceRepositoryCustom<Information extends PictureInforma
     List<PictureInformation> findInfo(String id);
 
     void updateAllRequestsToNextProcess(String oldProcessId, String newProcessId, ImportRequest.ImportStatus oldStatus, ImportRequest.ImportStatus newStatus, ProcessType processType);
+    void updateAllImportSourcesToNextProcess(String oldProcessId, String newProcessId);
 //    @Query(value="{'name': ?0}");
 //    Page<Foo> findByMethod(String name, Pageable pageable);
 }

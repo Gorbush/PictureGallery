@@ -149,6 +149,7 @@ public class ImportService {
 
                 // update ImportRequests to TO_MATCH with processOfMatching
                 uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), processOfMatching.getId(), ENUMERATION_COMPLETE, TO_MATCH, ProcessType.MATCHING);
+                uniSourceRepository.updateAllImportSourcesToNextProcess(process.getId(), processOfMatching.getId());
 
                 requestMatchPool.executeRequest(request);
                 log.info(" initiated Matching id={} from Import id={}", processOfMatching.getId(), process.getId());
@@ -185,7 +186,7 @@ public class ImportService {
                 log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
                 return;
             }
-            Path impPath = importUtils.calcCompleteFilePath(IMPORT, importInfo.getFileWithPath());
+            Path impPath = importUtils.calcCompleteFilePath(IMPORT, importInfo.getFullFilePath());
             Path picPath = importUtils.calcCompleteFilePath(GALLERY, pictureInfo.getFileWithPath());
             if (Files.isSymbolicLink(impPath)) {
                 log.info("ImportSource id={} is marked as APPROVED, and file is symlink. picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
@@ -195,7 +196,7 @@ public class ImportService {
                 log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
                 return;
             }
-            if (impPath.toFile().delete()) {
+            if (!impPath.toFile().delete()) {
                 log.error("ImportSource id={} is marked as APPROVED, but failed to delete approved file! picId={} path={} piPath={}", importInfo.getId(), pictureId, impPath, picPath);
                 return;
             }
@@ -226,6 +227,7 @@ public class ImportService {
 
                 // update ImportRequests to TO_APPROVE with processOfApprove
                 uniSourceRepository.updateAllRequestsToNextProcess(process.getId(), processOfApprove.getId(), MATCHING_COMPLETE, TO_APPROVE, ProcessType.APPROVAL);
+                uniSourceRepository.updateAllImportSourcesToNextProcess(process.getId(), processOfApprove.getId());
 
                 requestApprovePool.executeRequest(request);
 
@@ -441,11 +443,13 @@ public class ImportService {
             return true;
         }
 
-        source = uniSourceService.retrySave(source.getId(), IMPORT.getEntityClass(), info -> {
-            info.setStatus(APPROVED);
-            info.setAssignedToPicture(true);
-            info.addPicture(pictureId);
-            return info;
+        Path newRootPath = importUtils.moveToApprove(source);
+        source = uniSourceService.retrySave(source.getId(), source.getGrade().getEntityClass(), sourceEntity -> {
+            sourceEntity.setStatus(APPROVED);
+            sourceEntity.setAssignedToPicture(true);
+            sourceEntity.addPicture(pictureId);
+            sourceEntity.setRootPath(newRootPath.toString());
+            return sourceEntity;
         });
 
         log.info("  source id={} is approved", source.getId());
@@ -490,7 +494,13 @@ public class ImportService {
             return true;
         }
 
-        uniSourceService.updateStatus(source.getId(), IMPORT.getEntityClass(), DUPLICATE);
+        Path newRootPath = importUtils.moveToDuplicates(source);
+        source = uniSourceService.retrySave(source.getId(), ImportSource.class, sourceEntity -> {
+            sourceEntity.setStatus(DUPLICATE);
+            sourceEntity.setRootPath(newRootPath.toString());
+            return sourceEntity;
+        });
+
         log.info("  source id={} marked as Duplicate", source.getId());
 
         ImportRequest request = requestRepository.findOne(source.getImportRequestId());

@@ -121,6 +121,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                         info.setMatchReport(matchReport);
                         info.getPopulatedBy().add(KIND_MATCHING);
                         info.setStatus(targetStatus);
+                        info.addIndexProcessId(process.getId());
                         if (targetRootPath != null) {
                             info.setRootPath(targetRootPath.toString());
                         }

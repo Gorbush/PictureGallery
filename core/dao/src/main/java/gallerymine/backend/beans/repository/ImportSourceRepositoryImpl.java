@@ -3,6 +3,7 @@ package gallerymine.backend.beans.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.WriteResult;
+import gallerymine.model.ImportSource;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
@@ -111,6 +112,23 @@ public class ImportSourceRepositoryImpl<Information extends PictureInformation>
         }
 
         return criteria;
+    }
+
+    @Override
+    public void updateAllImportSourcesToNextProcess(String oldProcessId, String newProcessId) {
+        Query query = new Query();
+        Criteria criteria = Criteria.where("indexProcessIds").is(oldProcessId);
+        query.addCriteria(criteria);
+
+        Update update = new Update();
+        if (newProcessId != null) {
+            update.addToSet("indexProcessIds", newProcessId);
+        }
+
+        WriteResult writeResult = template.updateMulti(query, update, ImportSource.class);
+        log.info("Updated {} ImportSources id=({} added to {})",
+                writeResult.getN(),
+                newProcessId, oldProcessId);
     }
 
     @Override

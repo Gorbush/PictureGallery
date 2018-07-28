@@ -293,16 +293,12 @@ public class ImportUtils {
         Path fullTargetPath = targetPath.resolve(info.getFileWithPath()).getParent();
 
         Path file = calcCompleteFilePath(info);
-        FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
-
-        /*if (info.getId() == null) {
-            info.setRootPath(targetSubPath.toString());
+        if (!file.getParent().equals(fullTargetPath)) {
+            FileUtils.moveFileToDirectory(file.toFile(), fullTargetPath.toFile(), true);
         } else {
-            info = (T) uniSourceService.retrySave(info.getId(), info.getClass(), pic -> {
-                pic.setRootPath(targetSubPath.toString());
-                return pic;
-            });
-        }*/
+            log.info("Attempt to move the file to the same folder. Skipping. path={} file={}", fullTargetPath, file.toFile().getName());
+        }
+
         return targetSubPath;
     }
 
