@@ -320,7 +320,17 @@ var SourceBlock = {
                 var fullImageSrc = this.dataObject.filePath+"/"+this.dataObject.fileName;
                 fullImageSrc = encodeURIComponent(fullImageSrc).replace(/%2F/g, "/");
                 // var fullImagePic = "/pics/"+this.dataObject.filePath+"/"+this.dataObject.fileName;
-                this.matchingImageAnch.attr("href", "/srcs/"+fullImageSrc);
+                var hrefPicture = "";
+                if (this.dataObject.grade === "GALLERY") {
+                    hrefPicture = "/pics/"+fullImageSrc;
+                }
+                if (this.dataObject.grade === "IMPORT") {
+                    hrefPicture = "/srcs/"+fullImageSrc;
+                }
+                if (this.dataObject.grade === "SOURCE") {
+                    hrefPicture = "/srcs/"+fullImageSrc;
+                }
+                this.matchingImageAnch.attr("href", hrefPicture);
                 this.matchingImageAnch.attr("title", this.dataObject.label);
                 // this.status.text(this.dataObject.status);
                 // this.fileName.text(this.dataObject.fileName);

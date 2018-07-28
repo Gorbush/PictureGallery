@@ -3,7 +3,7 @@ var GalleryManager = {
     init: function () {
         GalleryManager.viewSwitcher = initViewSwitcher("#sourceViewSwitcher");
         GalleryManager.sourceList = SourceList.init({
-            showDecisionBlock: true,
+            showDecisionBlock: false,
             sourceDataProvider: "/sources/uni",
             breadcrumb: "#breadcrumblist",
             gallery: '#slideshow',
