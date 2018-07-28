@@ -132,11 +132,14 @@ function moveChildren(source, target) {
         target = target[0];
     }
     var sourceNodes = source.childNodes;
+    var children = [];
+    if (sourceNodes == null || sourceNodes.length === 0) {
+        return children;
+    }
     var nodesList = [];
     sourceNodes.forEach(function(child) {
         nodesList.push(child);
     });
-    var children = [];
     nodesList.forEach(function(child) {
         target.appendChild(child);
         children.push(child);

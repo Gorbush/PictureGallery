@@ -3,15 +3,20 @@
  */
 var TreePath = {
 
+    init: function(){
+        TreePath.treePathColumnsTemplate = $("#TreePathRowTemplate");
+    },
+
     create: function (element, clickJSTreeNode, prepareCriteria) {
+        TreePath.init();
+
         function preprocessFoldersAsNodes(nodesList, nodeParent) {
             var nodes = [];
             for(nodexIndex in nodesList.content) {
                 var data = nodesList.content[nodexIndex];
                 var path = data.name;
                 var node = {
-                    // id: (nodesList.root ? nodesList.root : "") + path,
-                    text: (path === "")? "Gallery Root" : path,
+                    text: path,
                     icon: "glyphicon glyphicon-folder-open",
                     children: data.foldersCount > 0,
                     state: {
@@ -62,10 +67,13 @@ var TreePath = {
                             },
                             "postprocessor": function (node, data, par2) {
                                 return preprocessFoldersAsNodes(data.list, node);
+                            },
+                            "renderer" : function (node, obj, settings, jstree, document) {
+                                populateTemplate(TreePath.treePathColumnsTemplate, obj.original.content, node.childNodes[1]);
                             }
                         }
                     },
-                    "plugins": ["contextmenu", "dnd"],
+                    "plugins": ["contextmenu", "dnd", "wholerow"],
                     "contextmenu": {
                         "items": function ($node) {
                             return {

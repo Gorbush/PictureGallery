@@ -157,3 +157,19 @@ div#pageCenterButtons {
     margin-left: -25%;
     float: right;
 }
+/** Tree table nodes */
+.jstree-node div.node_postblock {
+    float:right;
+    /*border:1px solid red;*/
+    width: auto;
+}
+.jstree-node div.node_postblock div.status {
+    float: left;
+    width: 100px;
+    text-align: left;
+}
+.jstree-node div.node_postblock div.counts {
+    float: left;
+    width: 65px;
+    text-align: right;
+}

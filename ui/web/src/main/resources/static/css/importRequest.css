@@ -93,21 +93,6 @@ div#pageContentScroller {
     /*font-size: x-small;*/
     height: 20px;
 }
-div.node_postblock {
-    float:right;
-    /*border:1px solid red;*/
-    width: auto;
-}
-div.node_postblock div.status {
-    float: left;
-    width: 100px;
-    text-align: left;
-}
-div.node_postblock div.counts {
-    float: left;
-    width: 65px;
-    text-align: right;
-}
 li.jstree-node i.NODE_STATUS_FOUND {
     background-image: url(../images/loading-16.gif);
     background-position: 1px 4px;

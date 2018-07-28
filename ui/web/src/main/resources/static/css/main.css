@@ -5,3 +5,12 @@
 .paginatorContainer .pagination {
     margin: 9px;
 }
+
+#folderTree .jstree-anchor {
+    right: 0px;
+    width: 100%;
+    padding-right: 25px;
+}
+#folderTree div[name='filesCount'] {
+    color: grey;
+}

@@ -109,6 +109,12 @@
     <section layout:fragment="dialogs" class="container">
         <div id="templates">
             <div th:replace="support/sourceBlock" ></div>
+            <div id="TreePathRowTemplate">
+                <span name="name"></span>
+                <div class="node_postblock">
+                    <div name="filesCount" class="counts">Photoes</div>
+                </div>
+            </div>
         </div>
         <div id="contextMenuFolderAction" class="dropdown clearfix contextmenu">
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
