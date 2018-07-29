@@ -65,6 +65,8 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
                     return request;
                 });
         updateMarker();
+        process.addNote("Incoming statistics:");
+        importService.addImportStats(process, request);
 
         log.info(" matching processing id={} status={} path={}", request.getId(), request.getStatus(), request.getPath());
         try {

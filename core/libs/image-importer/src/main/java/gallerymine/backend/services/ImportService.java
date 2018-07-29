@@ -363,7 +363,7 @@ public class ImportService {
         return process;
     }
 
-    private void addImportStats(Process process, ImportRequest request) {
+    public void addImportStats(Process process, ImportRequest request) {
         try {
             ImportRequest.ImportStats stats = request.getTotalStats(process.getType());
             process.addNote("Import statistics:");

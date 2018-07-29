@@ -49,6 +49,9 @@ public class ImportApproveProcessor extends ImportProcessorBase {
 
             return request;
         });
+        process.addNote("Incoming statistics:");
+        importService.addImportStats(process, request);
+
         ImportRequest.ImportStats stats = request.getStats(processType);
         if (stats.getAllFilesProcessed() && stats.getAllFoldersProcessed()) {
             importService.checkSubsAndDone(request.getId(), null, processType, statusHolder.getProcessingDone());
