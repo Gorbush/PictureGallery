@@ -23,6 +23,9 @@ public class ImageInformation {
     public Double longitude;
     public SortedSet<Timestamp> timestamps = new TreeSet<>();
     public String device;
+    public String deviceMaker;
+    public String flash;
+    public boolean facesDetected;
     private List<String> errors = new ArrayList<>();
 
     private List<String> notes = new ArrayList<>();

@@ -11,6 +11,8 @@ import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 import com.drew.metadata.exif.makernotes.KodakMakernoteDirectory;
 //import com.drew.metadata.file.FileMetadataDirectory;
 //import com.drew.metadata.file.FileSystemDirectory;
+import com.drew.metadata.exif.makernotes.PanasonicMakernoteDescriptor;
+import com.drew.metadata.exif.makernotes.PanasonicMakernoteDirectory;
 import com.drew.metadata.iptc.IptcDirectory;
 import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.photoshop.PsdHeaderDirectory;
@@ -21,8 +23,6 @@ import gallerymine.model.FileInformation;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.support.ImageInformation;
 import gallerymine.model.support.TimestampKind;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -276,7 +276,13 @@ public class ImageDrewFormatAnalyser extends BaseAnalyser {
                     }
                     break;
                 }
+                case "ExifImageDirectory": {
+                    ExifImageDirectory dir = (ExifImageDirectory)directory;
+                    ExifImageDescriptor descriptor = new ExifImageDescriptor(dir);
+                    break;
+                }
                 case "ExifSubIFDDirectory": {
+                    ExifSubIFDDescriptor descriptor = new ExifSubIFDDescriptor((ExifSubIFDDirectory)directory);
                     if (directory.containsTag(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL)) {
                         info.addStamp(TimestampKind.TS_FILE_EXIF_ORIGINAL.create(directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL)));
                     }
@@ -294,6 +300,12 @@ public class ImageDrewFormatAnalyser extends BaseAnalyser {
                     }
                     if (directory.containsTag(ExifSubIFDDirectory.TAG_EXIF_IMAGE_HEIGHT)) {
                         info.height = directory.getInt(ExifSubIFDDirectory.TAG_EXIF_IMAGE_HEIGHT);
+                    }
+                    if (directory.containsTag(ExifSubIFDDirectory.TAG_FLASH)) {
+                        info.flash = descriptor.getFlashDescription();
+                    }
+                    if (directory.containsTag(ExifSubIFDDirectory.TAG_MAKE)) {
+                        info.deviceMaker = directory.getString(ExifSubIFDDirectory.TAG_MAKE);
                     }
                     String model = directory.getString(ExifSubIFDDirectory.TAG_MODEL);
                     if (StringUtils.isNotBlank(model)) {
@@ -426,6 +438,9 @@ public class ImageDrewFormatAnalyser extends BaseAnalyser {
                     if (StringUtils.isNotBlank(creatorTool)) {
                         info.device = creatorTool;
                     }
+                    if (directoryCustom.getObject(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1) != null) {
+                        info.facesDetected = true;
+                    }
                     break;
                 }
                 case "CasioType2MakernoteDirectory": {
@@ -461,9 +476,11 @@ public class ImageDrewFormatAnalyser extends BaseAnalyser {
                     break;
                 }
                 case "PanasonicMakernoteDirectory": {
+                    PanasonicMakernoteDescriptor descriptor = new PanasonicMakernoteDescriptor((PanasonicMakernoteDirectory) directory);
                     if (StringUtils.isBlank(info.device)) {
                         info.device = "Panasonic";
                     }
+                    info.facesDetected = directory.getBoolean(PanasonicMakernoteDirectory.TAG_FACES_DETECTED);
                     log.info("PanasonicMakernoteDirectory image directory: {} in file {}", directory.getClass().getSimpleName(), info.file.getAbsolutePath());
                     break;
                 }
