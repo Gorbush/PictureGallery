@@ -342,17 +342,20 @@ public class ImportRequest {
         StringBuilder res = new StringBuilder();
         int CUT_PART = 5;
         if (activeProcessId != null && activeProcessId.length() > CUT_PART) {
+            res.append("IP");
             int len = activeProcessId.length();
             res.append(activeProcessId, len-CUT_PART, len);
         }
         res.append(":");
         if (rootId != null && rootId.length() > CUT_PART) {
             int len = rootId.length();
+            res.append("IR");
             res.append(rootId, len-CUT_PART, len);
         }
         res.append(":");
         if (id != null && id.length() > CUT_PART) {
             int len = id.length();
+            res.append("IR");
             res.append(id, len-CUT_PART, len);
         }
         res.append("[");

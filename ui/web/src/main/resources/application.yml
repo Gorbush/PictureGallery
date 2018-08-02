@@ -1,0 +1,71 @@
+spring:
+    application:
+        name: GalleryMine
+    data:
+        rest.base-path: /api
+        mongodb.uri: mongodb://localhost:27017/galleryMineReal3
+
+    # Allow Thymeleaf templates to be reloaded at dev time
+    thymeleaf.cache: false
+    jmx.default-domain: gallerymine
+
+# Set whether to expose the Spring-managed Scheduler instance in the Quartz SchedulerRepository.
+quartz.scheduler-factory.expose-scheduler-in-repository: false
+
+server:
+    address: 127.0.0.1
+    port: 8070
+    tomcat:
+        access_log_enabled: true
+        basedir: target/tomcat
+#    SSL.key-store:
+#    servletpath:
+#    context-path:
+    error.include-stacktrace: always
+
+logging:
+    pattern.level: "%-27.27X{marker}%5p"
+    level.: warn
+    level:
+        org.springframework.data=debug
+        org.springframework.web.servlet.resource.PathResourceResolver=trace
+        org.springframework.web.servlet.resource.AbstractResourceResolver=trace
+
+
+application.api.google:
+    geocode=AIzaSyBkyXKYbKdEpdJhlnUcypn9ZVI5gOodBNU
+    serverName=GalleryMineServer-Mac
+
+gallery:
+    paths:
+        galleryRootFolder: ~/work_mine/data/gallery/
+        sourcesRootFolder: ~/work_mine/data/rootFolder/
+        thumbsRootFolder: ~/work_mine/data/thumbsFolder/
+        importRootFolder: ~/work_mine/data/importFolder/
+        importExposedRootFolder: ~/work_mine/data/importExposedFolder/
+
+    debug:
+        dryRunImportMoves: true
+    import:
+        abandoned_timeout_ms: 1800000
+        disableThumbs: false
+
+
+
+endpoints.jmx_enabled: true
+endpoints.HEALTH.enabled: true
+
+# JavaMelody configuration:
+# https://github.com/javamelody/javamelody/wiki/SpringBootStarter
+management:
+    security.enabled: false
+    endpoints.web.exposure.include: "*"
+    metrics:
+        export.datadog.enabled: false
+        use-global-registry: false
+
+javamelody:
+    # Enable JavaMelody auto-configuration (optional, default: true)
+    enabled: true
+    quartz-default-listener-disabled: false
+

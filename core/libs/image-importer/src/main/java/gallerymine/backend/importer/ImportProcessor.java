@@ -199,7 +199,8 @@ public class ImportProcessor extends ImportProcessorBase {
                     info.setImportRequestRootId(request.getRootId());
 
                     info.setRootPath(request.getRootPath());
-                    info.setFilePath(appConfig.relativizePath(file.getParent(), importRootFullFolder));
+                    info.setFilePathOriginal(appConfig.relativizePath(file.getParent(), importRootFullFolder));
+                    info.setFilePath(info.getFilePathOriginal());
                     info.setFileName(file.toFile().getName());
                     info.setFileNameOriginal(file.toFile().getName());
 

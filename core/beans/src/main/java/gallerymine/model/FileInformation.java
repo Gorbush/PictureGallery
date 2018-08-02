@@ -29,8 +29,14 @@ public class FileInformation implements Comparable<FileInformation> {
 
     @Indexed
     private String storage;
+
+    /** PictureFolder Id*/
+    @Indexed
+    private String folderId;
     @Indexed
     private String filePath;
+    @Indexed
+    private String filePathOriginal;
     @Indexed
     private String fileName;
     @Indexed
@@ -112,6 +118,12 @@ public class FileInformation implements Comparable<FileInformation> {
         return path.toString();
     }
 
+    /** Returns file path without <b>rootPath</b>*/
+    public Path getFileWithPathAsPath() {
+        Path path = Paths.get(filePath, fileName);
+        return path;
+    }
+
     public String getLocation() {
         return
             (StringUtils.isNotBlank(storage) ? (storage+":") : "") +
@@ -125,6 +137,7 @@ public class FileInformation implements Comparable<FileInformation> {
 
         rootPath = sourceToMatch.getRootPath();
         filePath = sourceToMatch.getFilePath();
+        filePathOriginal = sourceToMatch.getFilePathOriginal();
         fileName = sourceToMatch.getFileName();
         fileNameOriginal = sourceToMatch.getFileNameOriginal();
 

@@ -3,6 +3,7 @@ package gallerymine.backend.services;
 import gallerymine.backend.beans.AppConfig;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
 import gallerymine.backend.beans.repository.ImportSourceRepository;
+import gallerymine.backend.beans.repository.PictureFolderRepository;
 import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.data.RetryVersion;
 import gallerymine.backend.exceptions.ImageApproveException;
@@ -13,9 +14,7 @@ import gallerymine.backend.pool.ImportApproveRequestPoolManager;
 import gallerymine.backend.pool.ImportMatchingRequestPoolManager;
 import gallerymine.backend.pool.ImportRequestPoolManager;
 import gallerymine.backend.utils.ImportUtils;
-import gallerymine.model.ImportSource;
-import gallerymine.model.Picture;
-import gallerymine.model.PictureInformation;
+import gallerymine.model.*;
 import gallerymine.model.Process;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.SourceCriteria;
@@ -32,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -54,6 +54,9 @@ public class ImportService {
 
     @Autowired
     private ImportUtils importUtils;
+
+    @Autowired
+    private PictureFolderRepository pictureFolderRepository;
 
     @Autowired
     private AppConfig appConfig;
@@ -393,16 +396,57 @@ public class ImportService {
         return file;
     }
 
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public PictureFolder getOrCreatePictureFolder(Path folder) throws ImportFailedException {
+        try {
+            if (folder == null) {
+                PictureFolder picFolder = pictureFolderRepository.findByPathl("");
+                if (picFolder == null) {
+                    picFolder = new PictureFolder();
+                    picFolder.setName("");
+                    picFolder.setPath("");
+                    pictureFolderRepository.save(picFolder);
+                }
+                return picFolder;
+            }
+            String folderRelPath = folder.toString().toLowerCase();
+            PictureFolder picFolder = pictureFolderRepository.findByPathl(folderRelPath);
+
+            if (picFolder == null) {
+                picFolder = new PictureFolder();
+                picFolder.setName(folder.toFile().getName());
+                picFolder.setPath(folder.toString());
+
+                PictureFolder picFolderParent = getOrCreatePictureFolder(folder.getParent());
+                picFolder.setParentId(picFolderParent.getId());
+
+                pictureFolderRepository.save(picFolder);
+                if (picFolder.getParentId() != null) {
+                    pictureFolderRepository.incrementFoldersCount(picFolder.getParentId());
+                }
+            }
+
+            return picFolder;
+        } catch (Exception e) {
+            log.error("Failed to create PictureFolder for path {}. Reason: {}", folder, e.getMessage(), e);
+            throw new ImportFailedException("Failed to create PictureFolder for path {}. Reason: {}", folder, e.getMessage());
+        }
+    }
+
     public PictureInformation settlePicture(PictureInformation source) throws ImageApproveException {
         try {
             log.info("  source id={} is getting approved", source.getId());
 
             Path importImage = importUtils.calcCompleteFilePath(source);
-            Path galleryImagePath = indexateFileIfNeeded(importUtils.calcCompleteFilePath(GALLERY, source.getFileWithPath()));
+
+            Path relativePathWithFile = source.getFileWithPathAsPath();
+            Path relativePathWithFileLowered = Paths.get(relativePathWithFile.toString().toLowerCase());
+            Path galleryImagePath = indexateFileIfNeeded(importUtils.calcCompleteFilePath(GALLERY, relativePathWithFileLowered.toString()));
 
             galleryImagePath.getParent().toFile().mkdirs();
 
             FileUtils.copyFile(importImage.toFile(), galleryImagePath.toFile(), true);
+            PictureFolder picFolder = getOrCreatePictureFolder(relativePathWithFileLowered.getParent());
 
             Picture picture = uniSourceService.retrySave(source.getId(), Picture.class, pic -> {
                 if (pic == null) {
@@ -413,9 +457,19 @@ public class ImportService {
                 pic.setGrade(PictureGrade.GALLERY);
                 pic.addImport(source.getId());
                 pic.setRootPath(null);
+                // update to lowered path
+                if (relativePathWithFileLowered.getParent() != null) {
+                    pic.setFilePath(relativePathWithFileLowered.getParent().toString());
+                } else {
+                    pic.setFilePath("");
+                }
+                // update to the lowered and potentially indexed file name
                 pic.setFileName(galleryImagePath.toFile().getName());
+                pic.setFolderId(picFolder.getId());
                 return pic;
             });
+            pictureFolderRepository.incrementFilesCount(picFolder.getId());
+            log.info("  source id={} is saved to gallery as path={}", source.getId(), relativePathWithFileLowered);
 
             return picture;
         } catch (Exception e) {
