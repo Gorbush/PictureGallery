@@ -111,14 +111,14 @@ public class ImportService {
         return request;
     }
 
-    public ImportRequest prepareImportFolder(boolean enforce) throws ImportFailedException {
+    public ImportRequest prepareImportFolder(boolean enforce, boolean testFolder) throws ImportFailedException {
         Process process = new Process();
         ImportRequest importRequest = null;
         try {
-            process.setName("Processing of Import");
+            process.setName("Processing of Import"+(testFolder?" of TEST folder":""));
             process.setStatus(ProcessStatus.PREPARING);
             process.setType(ProcessType.IMPORT);
-            String importInternalPath = importUtils.prepareImportFolder(enforce, process);
+            String importInternalPath = importUtils.prepareImportFolder(enforce, process, testFolder);
 
             importRequest = registerNewImportFolderRequest(importInternalPath, null, process.getId());
         } catch (ImportFailedException e) {

@@ -15,11 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.websocket.server.PathParam;
@@ -27,13 +25,14 @@ import java.security.Principal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @RequestMapping("/")
 public class MainPageController {
+
+    @Autowired
+    protected MongoTemplate mongoTemplate = null;
 
     @Autowired
     FileRepository fileRepository;
@@ -46,6 +45,14 @@ public class MainPageController {
 
     @Autowired
     private ObjectMapper jacksonObjectMapper;
+
+    @GetMapping("/version")
+    @ResponseBody
+    public Map<String, String> getVersion() {
+        Map<String, String> info = new HashMap<>();
+        info.put("database", mongoTemplate.getDb().getName());
+        return info;
+    }
 
     @GetMapping
     public ModelAndView list(Principal principal) {

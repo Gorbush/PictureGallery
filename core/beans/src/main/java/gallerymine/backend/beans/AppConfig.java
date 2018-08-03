@@ -31,6 +31,9 @@ public class AppConfig {
     @Value("${gallery.paths.importExposedRootFolder}")
     public String importExposedRootFolder;
 
+    @Value("${gallery.paths.importTestRootFolder}")
+    public String importTestRootFolder;
+
     @Value("${gallery.debug.dryRunImportMoves}")
     public boolean dryRunImportMoves = true;
 
@@ -70,6 +73,11 @@ public class AppConfig {
     public String getImportExposedRootFolder() {
         checkFolders();
         return importExposedRootFolder;
+    }
+
+    public String getImportTestRootFolder() {
+        checkFolders();
+        return importTestRootFolder;
     }
 
     public String relativizePathToGallery(String filePath) throws FileNotFoundException {
@@ -137,6 +145,7 @@ public class AppConfig {
         thumbsRootFolder = amendFolder(thumbsRootFolder);
         importRootFolder = amendFolder(importRootFolder);
         importExposedRootFolder = amendFolder(importExposedRootFolder);
+        importTestRootFolder = amendFolder(importTestRootFolder);
 
         if (importRootFolderPath == null) {
             importRootFolderPath = Paths.get(importRootFolder);

@@ -16,7 +16,7 @@ import java.util.*;
 @Document
 @Data
 @ToString(callSuper = true)
-public class PictureInformation extends FileInformation {
+public abstract class PictureInformation extends FileInformation {
 
     private long width;
     private long height;

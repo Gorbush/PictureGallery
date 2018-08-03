@@ -193,8 +193,11 @@ public class ImportUtils {
         }
     }
 
-    public String prepareImportFolder(boolean enforce, Process process) throws ImportFailedException {
-        Path pathExposed = Paths.get(appConfig.getImportExposedRootFolder());
+    public String prepareImportFolder(boolean enforce, Process process, boolean testFolder) throws ImportFailedException {
+        Path pathExposed = testFolder ?
+                                Paths.get(appConfig.getImportTestRootFolder())
+                                :
+                                Paths.get(appConfig.getImportExposedRootFolder());
         Path pathToImport = appConfig.getImportRootFolderPath().resolve(DateTime.now().toString("yyyy-MM-dd_HH-mm-ss_SSS"));
 
         Path pathToImportSource = pathToImport.resolve(FOLDER_SOURCE);
@@ -234,7 +237,14 @@ public class ImportUtils {
             AtomicLong files = new AtomicLong();
             AtomicLong folders = new AtomicLong();
 
+            boolean dryRunBefore = appConfig.dryRunImportMoves;
             try {
+                if (testFolder) {
+                    process.addNote("Import of test folder");
+                    process.addNote("   Set the dryRun ON. Before was {}", dryRunBefore);
+                    process.addNote("   Test folder {}", pathExposed);
+                    appConfig.setDryRunImportMoves(true);
+                }
                 moveFileStructure(pathExposed, pathToImportSource, files, folders);
 
 
@@ -269,6 +279,11 @@ public class ImportUtils {
                     return processEntity;
                 });
                 throw new ImportFailedException("Failed to index. Reason: Failed to move files from exposed folder. Reason: " + e.getMessage(), e);
+            } finally {
+                if (testFolder) {
+                    process.addNote("Import of test folder. Restore the dryRun to {}", dryRunBefore);
+                    appConfig.setDryRunImportMoves(dryRunBefore);
+                }
             }
 
 //            String pathToIndex = appConfig.relativizePathToImport(pathToImport.resolve(FOLDER_SOURCE)).toString();

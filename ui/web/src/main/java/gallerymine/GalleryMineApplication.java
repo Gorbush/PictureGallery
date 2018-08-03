@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.*;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import gallerymine.model.Customer;
 import gallerymine.backend.beans.repository.CustomerRepository;
@@ -50,7 +51,7 @@ public class GalleryMineApplication implements CommandLineRunner {
 	@Autowired
 	private CustomerRepository repository;
 
-	@Bean
+    @Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
 	}

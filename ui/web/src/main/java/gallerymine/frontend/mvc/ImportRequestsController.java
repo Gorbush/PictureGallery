@@ -91,9 +91,10 @@ public class ImportRequestsController {
 
     @GetMapping("import")
     @ResponseBody
-    public Object importFolder(@RequestParam(value = "enforce", defaultValue = "false", required = false) boolean enforce) {
+    public Object importFolder(@RequestParam(value = "enforce", defaultValue = "false", required = false) boolean enforce,
+							   @RequestParam(value = "test", defaultValue = "", required = false) boolean testFolder) {
 	    try {
-            ImportRequest request = importService.prepareImportFolder(enforce);
+            ImportRequest request = importService.prepareImportFolder(enforce, testFolder);
 
             return responseOk()
                     .put("id", request.getId())
