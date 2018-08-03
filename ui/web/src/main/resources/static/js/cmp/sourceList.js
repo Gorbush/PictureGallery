@@ -143,7 +143,7 @@ var SourceList = {
                     };
 
                     if (this.criteriaContributor) {
-                        criteria = this.criteriaContributor(this, criteria);
+                        criteria = this.criteriaContributor(this, criteria, data);
                     }
                     if (validValue(data) && validValue(data.fullPath)) {
                         criteria.path = data.fullPath;

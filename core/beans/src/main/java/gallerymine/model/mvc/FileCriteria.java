@@ -1,5 +1,6 @@
 package gallerymine.model.mvc;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import gallerymine.model.support.InfoStatus;
 import lombok.Data;
 import org.joda.time.DateTime;
@@ -17,6 +18,7 @@ public class FileCriteria {
     private DateTime fromDate;
     private DateTime toDate;
     private String path;
+    private String folderId;
     private String fileName;
     private Long fileSize;
     private DateTime timestamp;
@@ -30,7 +32,8 @@ public class FileCriteria {
     private Set<String> populatedNotBy;
     private InfoStatus status;
 
-    private PageRequest pager = null;
+    @JsonIgnore
+    private PageRequest pager;
 
     public FileCriteria(){
         pager = new PageRequest(0,5);

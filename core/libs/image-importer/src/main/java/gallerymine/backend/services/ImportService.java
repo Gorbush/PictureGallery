@@ -400,22 +400,22 @@ public class ImportService {
     public PictureFolder getOrCreatePictureFolder(Path folder) throws ImportFailedException {
         try {
             if (folder == null) {
-                PictureFolder picFolder = pictureFolderRepository.findByPathl("");
+                PictureFolder picFolder = pictureFolderRepository.findByFullPath("");
                 if (picFolder == null) {
                     picFolder = new PictureFolder();
                     picFolder.setName("");
-                    picFolder.setPath("");
+                    picFolder.setFullPath("");
                     pictureFolderRepository.save(picFolder);
                 }
                 return picFolder;
             }
             String folderRelPath = folder.toString().toLowerCase();
-            PictureFolder picFolder = pictureFolderRepository.findByPathl(folderRelPath);
+            PictureFolder picFolder = pictureFolderRepository.findByFullPath(folderRelPath.toLowerCase());
 
             if (picFolder == null) {
                 picFolder = new PictureFolder();
                 picFolder.setName(folder.toFile().getName());
-                picFolder.setPath(folder.toString());
+                picFolder.setFullPath(folder.toString().toLowerCase());
 
                 PictureFolder picFolderParent = getOrCreatePictureFolder(folder.getParent());
                 picFolder.setParentId(picFolderParent.getId());
@@ -446,7 +446,7 @@ public class ImportService {
             galleryImagePath.getParent().toFile().mkdirs();
 
             FileUtils.copyFile(importImage.toFile(), galleryImagePath.toFile(), true);
-            PictureFolder picFolder = getOrCreatePictureFolder(relativePathWithFileLowered.getParent());
+            PictureFolder picFolder = getOrCreatePictureFolder(relativePathWithFile.getParent());
 
             Picture picture = uniSourceService.retrySave(source.getId(), Picture.class, pic -> {
                 if (pic == null) {

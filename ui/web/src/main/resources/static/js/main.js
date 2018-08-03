@@ -27,7 +27,7 @@ var GalleryManager = {
     onClickImportBlock: function (block) {
         GalleryManager.setSelectedPicture(block);
     },
-    criteriaContributor: function(sourceList, criteria) {
+    criteriaContributor: function(sourceList, criteria, nodeData) {
         var starting = $("#datepicker input[name='start']").val();
         var ending = $("#datepicker input[name='end']").val();
         if (starting === "") {
@@ -53,8 +53,20 @@ var GalleryManager = {
 
         if (GalleryManager.sourceList && GalleryManager.sourceList.treeFolderPath) {
             var pathNode = GalleryManager.sourceList.treeFolderPath.getCurrent();
-            if (validValue(pathNode) && !(pathNode.parent === "#")) {
-                criteria.path = pathNode.original.content.fullPath;
+            if (validValue(nodeData)) {
+                if (nodeData.parent === "#") {
+                    criteria.folderId = "";
+                } else {
+                    criteria.folderId = nodeData.id;
+                }
+            } else {
+                debugger;
+                if (validValue(pathNode) && pathNode.parent === "#") {
+                    criteria.folderId = "";
+                    // criteria.path = pathNode.original.content.fullPath;
+                } else {
+                    criteria.folderId = pathNode;
+                }
             }
         }
         return criteria;

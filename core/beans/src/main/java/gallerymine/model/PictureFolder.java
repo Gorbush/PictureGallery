@@ -33,12 +33,9 @@ public class PictureFolder {
     long filesCount;
     long foldersCount;
 
-    /** Current folder path with name */
-    private String path;
-
-    /** Current folder path with name, lowercased to support all filesystems */
+    /** Current folder path with name, in lower case to support all filesystems */
     @Indexed(unique = true)
-    private String pathl;
+    private String fullPath;
 
     private List<String> notes = new ArrayList<>();
 
@@ -68,11 +65,6 @@ public class PictureFolder {
     public void setName(String name) {
         this.name = name;
         namel = name == null ? null : name.toLowerCase().replaceAll("^[_$/\\\\]*", "");
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-        pathl = path == null ? null : path.toLowerCase();
     }
 
 }

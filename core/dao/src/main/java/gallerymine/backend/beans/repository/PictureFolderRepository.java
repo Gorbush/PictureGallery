@@ -29,7 +29,6 @@ public interface PictureFolderRepository extends MongoRepository<PictureFolder, 
 	Collection<PictureFolder> findByName(@Param("name") String name);
 	Collection<PictureFolder> findByNamel(@Param("namel") String namel);
 
-	PictureFolder findByPath(@Param("path") String path);
-	PictureFolder findByPathl(@Param("pathl") String pathl);
+	PictureFolder findByFullPath(@Param("fullPath") String path);
 
 }

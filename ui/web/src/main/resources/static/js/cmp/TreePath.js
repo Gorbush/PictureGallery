@@ -55,7 +55,7 @@ var TreePath = {
                             dataType: "json",
                             contentType: "application/json",
                             "url" : function (node, cb, par2) {
-                                return "/sources/findPath";
+                                return "/sources/listFolders";
                             },
                             "data" : function (node, cb, par2) {
                                 var data = node;

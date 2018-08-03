@@ -246,12 +246,12 @@ var ImportRequestsTree = {
         ImportRequestsTree.sourceList.refreshSources(0);
     },
 
-    criteriaContributor: function(sourceList, criteria) {
+    criteriaContributor: function(sourceList, criteria, nodeData) {
         criteria.requestId = ImportRequestsTree.getActiveImportId();
         criteria.path = null;
         return criteria;
     },
-    criteriaContributorMatches: function(sourceList, criteria) {
+    criteriaContributorMatches: function(sourceList, criteria, nodeData) {
         var block = ImportRequestsTree.getSelectedImportSource();
         if (block) {
             criteria.matchesOfImportId = block.dataobject.id;

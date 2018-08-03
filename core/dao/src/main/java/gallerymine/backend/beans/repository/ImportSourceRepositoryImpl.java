@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.WriteResult;
 import gallerymine.model.ImportSource;
+import gallerymine.model.PictureFolder;
 import gallerymine.model.PictureInformation;
 import gallerymine.model.importer.ImportRequest;
 import gallerymine.model.mvc.FolderStats;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 /**
  * Source repository with custom methods
  * Created by sergii_puliaiev on 6/19/17.
@@ -38,6 +41,9 @@ public class ImportSourceRepositoryImpl<Information extends PictureInformation>
 
     @Autowired
     private ObjectMapper jacksonObjectMapper;
+
+    @Autowired
+    private PictureFolderRepository pictureFolderRepository;
 
     @Override
     public List<PictureInformation> findInfo(String id) {
@@ -102,6 +108,20 @@ public class ImportSourceRepositoryImpl<Information extends PictureInformation>
 
     protected List<Criteria> applyCustomCriteria(SourceCriteria searchCriteria) {
         List<Criteria> criteria = super.applyCustomCriteria(searchCriteria);
+
+        if (searchCriteria.getFolderId() != null) {
+            if (searchCriteria.getFolderId().isEmpty()) {
+                PictureFolder rootPicFolder = pictureFolderRepository.findByFullPath("");
+                if (rootPicFolder != null) {
+                    criteria.add(Criteria.where("folderId").is(rootPicFolder.getId()));
+                } else {
+                    log.warn("Request is for root gallery picFolder, but it is not found!");
+                    criteria.add(Criteria.where("folderId").is("NOT_FOUND"));
+                }
+            } else {
+                criteria.add(Criteria.where("folderId").is(searchCriteria.getFolderId()));
+            }
+        }
 
         if (searchCriteria.getLatitude() != null && searchCriteria.getLongitude() != null &&
                 searchCriteria.getDistance() != null) {

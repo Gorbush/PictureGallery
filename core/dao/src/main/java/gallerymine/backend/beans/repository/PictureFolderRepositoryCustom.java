@@ -16,6 +16,9 @@
 
 package gallerymine.backend.beans.repository;
 
+import gallerymine.model.PictureFolder;
+import gallerymine.model.mvc.FileCriteria;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -24,4 +27,7 @@ public interface PictureFolderRepositoryCustom {
 	long incrementFilesCount(String picFolderId);
 	long incrementFoldersCount(String picFolderId);
 
+    PictureFolder getRootFolder();
+
+    Page<PictureFolder> fetchCustom(FileCriteria criteria);
 }
