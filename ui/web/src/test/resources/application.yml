@@ -1,0 +1,8 @@
+spring:
+    data:
+        mongodb.uri: mongodb://localhost:27017/galleryMineTest
+
+javamelody:
+    # Enable JavaMelody auto-configuration (optional, default: true)
+    enabled: false
+
