@@ -17,7 +17,7 @@ function formatDate(value) {
     if (!validValue(value)) {
         return value;
     }
-    if (/^\d+$/.test(value)) {
+    if (/^[+-]?\d+$/.test(value)) {
         // means this is number only - treat it as milliseconds epoc
         value = new Date(value);
         value = serverDate(value);

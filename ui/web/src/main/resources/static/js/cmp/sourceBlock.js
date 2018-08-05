@@ -341,8 +341,14 @@ var SourceBlock = {
                 FormHelper.populate(this.sourceBlockElement , this.dataObject);
 
                 if (this.dataObject.matchReport) {
-                    var matchPicCount = Object.keys(this.dataObject.matchReport.pictures).length;
-                    var matchImpCount = Object.keys(this.dataObject.matchReport.currentImport).length;
+                    var matchPicCount = 0;
+                    $.each(this.dataObject.matchReport.pictures, function (indexSource, importIds) {
+                        matchPicCount += importIds.length;
+                    });
+                    var matchImpCount = 0;
+                    $.each(this.dataObject.matchReport.currentImport, function (indexSource, importIds) {
+                        matchImpCount += importIds.length;
+                    });
                     FormHelper.populateFromObject(this.sourceBlockElement, {
                         matchPicCount: matchPicCount,
                         matchImpCount: matchImpCount

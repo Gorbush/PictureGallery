@@ -292,17 +292,21 @@ var ImportRequestsTree = {
         var reportImports = report.currentImport;
         var reportPicture = report.pictures;
 
-        $.each(reportImports, function (indexSource, source) {
-
-        });
-        $.each(reportPicture, function (indexSource, matchIds) {
+        $.each(reportImports, function (indexSource, importIds) {
             var matches = populateTemplate(ImportRequestsTree.matchesBlockTemplate,{ title: indexSource}, ImportRequestsTree.matchesBlock);
-            $.each(matchIds, function (index, id) {
+            $.each(importIds, function (index, id) {
+                console.log("preloading id="+id+" grade=IMPORT");
+                var matchSources = matches.find(".SourceBlockContainer");
+                var blockMapped = SourceBlock.create({ id: id, grade: "IMPORT"}, matchSources, false, null, null, null).hideDecisionButtons();
+            });
+        });
+        $.each(reportPicture, function (indexSource, pictureIds) {
+            var matches = populateTemplate(ImportRequestsTree.matchesBlockTemplate,{ title: indexSource}, ImportRequestsTree.matchesBlock);
+            $.each(pictureIds, function (index, id) {
                 console.log("preloading id="+id+" grade=GALLERY");
                 var matchSources = matches.find(".SourceBlockContainer");
                 var blockMapped = SourceBlock.create({ id: id, grade: "GALLERY"}, matchSources, false, null, null, null).hideDecisionButtons();
             });
-
         });
 
 
