@@ -17,13 +17,11 @@
 package gallerymine.frontend.mvc;
 
 import gallerymine.backend.beans.AppConfig;
-import gallerymine.backend.beans.repository.CustomerRepository;
 import gallerymine.backend.beans.repository.ImportRequestRepository;
-import gallerymine.backend.beans.repository.ProcessRepository;
 import gallerymine.backend.importer.ImportProcessor;
 import gallerymine.backend.pool.ImportRequestPoolManager;
+import gallerymine.backend.pool.MiscBackgroundJobsPool;
 import gallerymine.backend.services.ImportService;
-import gallerymine.backend.utils.ImportUtils;
 import gallerymine.model.importer.ImportRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,22 +51,13 @@ public class ImportRequestsController {
 	public AppConfig appConfig;
 
 	@Autowired
-	private CustomerRepository messageRepository;
+	private MiscBackgroundJobsPool miscBackgroundJobsPool;
 
 	@Autowired
 	private ImportRequestRepository requestRepository;
 
 	@Autowired
-    private ProcessRepository processRepository;
-
-	@Autowired
-	private ImportProcessor requestProcessor;
-
-	@Autowired
 	private ImportRequestPoolManager requestPool;
-
-	@Autowired
-    private ImportUtils importUtils;
 
 	@Autowired
 	private ImportService importService;
@@ -153,10 +142,12 @@ public class ImportRequestsController {
 	@GetMapping("/approveImport/{importId}")
 	@ResponseBody
 	public Object approveImport(@PathVariable("importId") String importRequestId,
+									  @RequestAttribute("background") Optional<Boolean> backgroundOption,
 									  @RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
 									  @RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
 		boolean tentativeOnly = tentativeOnlyOption.orElse(true);
 		boolean subFolders = subFoldersOption.orElse(true);
+		boolean background = backgroundOption.orElse(false);
 
 		ImportRequest request = requestRepository.findOne(importRequestId);
 		if (request == null) {
@@ -164,6 +155,8 @@ public class ImportRequestsController {
 					.op("approveImport")
 					.put("importId", importRequestId)
 					.put("tentativeOnly", tentativeOnly)
+					.put("subFoldersOption", subFoldersOption)
+					.put("background", background)
 					.put("importId", subFolders)
 					.build();
 		}
@@ -173,14 +166,22 @@ public class ImportRequestsController {
 				||
 				request.getStatus().equals(ImportRequest.ImportStatus.APPROVED)
 		) {
-			log.info("Approving node requestId={} status={}", request.getId(), request.getStatus());
-			importService.approveImportRequest(request, tentativeOnly, subFolders);
+			log.info("Approving node background={} requestId={} status={}", background, request.getId(), request.getStatus());
+			if (background) {
+                miscBackgroundJobsPool.executeRequest("ApproveImportRequest_" + request.getPath(),
+                        () -> importService.approveImportRequest(request, tentativeOnly, subFolders)
+                );
+            } else {
+                importService.approveImportRequest(request, tentativeOnly, subFolders);
+            }
 		} else {
 			log.warn("Wrong status - not APPROVING or APPROVED for requestId={} status={}", request.getId(), request.getStatus());
 			return responseError("Wrong status - not APPROVING or APPROVED")
 					.op("approveImport")
 					.put("importId", importRequestId)
 					.put("tentativeOnly", tentativeOnly)
+                    .put("subFoldersOption", subFoldersOption)
+					.put("background", background)
 					.put("importId", subFolders)
 					.build();
 		}
@@ -189,22 +190,29 @@ public class ImportRequestsController {
 				.op("approveImport")
 				.put("importId", importRequestId)
 				.put("tentativeOnly", tentativeOnly)
+                .put("subFoldersOption", subFoldersOption)
+				.put("background", background)
 				.put("importId", subFolders)
 				.build();
 	}
+
 	@GetMapping("/rematchImport/{importId}")
 	@ResponseBody
 	public Object rematchImport(@PathVariable("importId") String importRequestId,
-									  @RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
-									  @RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
+                                @RequestAttribute("background") Optional<Boolean> backgroundOption,
+								@RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
+								@RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
 		boolean tentativeOnly = tentativeOnlyOption.orElse(true);
 		boolean subFolders = subFoldersOption.orElse(true);
+        boolean background = backgroundOption.orElse(false);
 
 		ImportRequest request = requestRepository.findOne(importRequestId);
 		if (request == null) {
 			return responseErrorNotFound("Not found")
 					.op("rematchImport")
 					.put("importId", importRequestId)
+					.put("background", background)
+					.put("subFolders", subFolders)
 					.put("tentativeOnly", tentativeOnly)
 					.put("importId", subFolders)
 					.build();
@@ -216,10 +224,18 @@ public class ImportRequestsController {
 				request.getStatus().equals(ImportRequest.ImportStatus.APPROVED)
 		) {
 			log.info("Re-match node requestId={} status={}", request.getId(), request.getStatus());
-			importService.rematchImportRequest(request, tentativeOnly, subFolders);
+            if (background) {
+                miscBackgroundJobsPool.executeRequest("ApproveImportRequest_" + request.getPath(),
+                        () -> importService.rematchImportRequest(request, tentativeOnly, subFolders)
+                );
+            } else {
+                importService.rematchImportRequest(request, tentativeOnly, subFolders);
+            }
 			return responseOk()
 					.op("rematchImport")
 					.put("importId", importRequestId)
+                    .put("background", background)
+                    .put("subFolders", subFolders)
 					.put("tentativeOnly", tentativeOnly)
 					.put("importId", subFolders)
 					.build();
@@ -229,6 +245,8 @@ public class ImportRequestsController {
 			return responseError("Wrong status - not APPROVING or APPROVED")
 					.op("rematchImport")
 					.put("importId", importRequestId)
+                    .put("background", background)
+                    .put("subFolders", subFolders)
 					.put("tentativeOnly", tentativeOnly)
 					.put("importId", subFolders)
 					.build();
