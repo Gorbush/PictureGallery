@@ -142,20 +142,17 @@ public class ImportRequestsController {
 	@GetMapping("/approveImport/{importId}")
 	@ResponseBody
 	public Object approveImport(@PathVariable("importId") String importRequestId,
-									  @RequestAttribute("background") Optional<Boolean> backgroundOption,
-									  @RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
-									  @RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
-		boolean tentativeOnly = tentativeOnlyOption.orElse(true);
-		boolean subFolders = subFoldersOption.orElse(true);
-		boolean background = backgroundOption.orElse(false);
+									  @RequestParam(value = "background", required = false, defaultValue = "false") boolean background,
+									  @RequestParam(value = "tentativeAlso", required = false, defaultValue = "true") boolean tentativeAlso,
+									  @RequestParam(value = "subFolders", required = false, defaultValue = "true") boolean subFolders) {
 
 		ImportRequest request = requestRepository.findOne(importRequestId);
 		if (request == null) {
 			return responseErrorNotFound("Not found")
 					.op("approveImport")
 					.put("importId", importRequestId)
-					.put("tentativeOnly", tentativeOnly)
-					.put("subFoldersOption", subFoldersOption)
+					.put("tentativeAlso", tentativeAlso)
+					.put("subFolders", subFolders)
 					.put("background", background)
 					.put("importId", subFolders)
 					.build();
@@ -169,18 +166,18 @@ public class ImportRequestsController {
 			log.info("Approving node background={} requestId={} status={}", background, request.getId(), request.getStatus());
 			if (background) {
                 miscBackgroundJobsPool.executeRequest("ApproveImportRequest_" + request.getPath(),
-                        () -> importService.approveImportRequest(request, tentativeOnly, subFolders)
+                        () -> importService.approveImportRequest(request, tentativeAlso, subFolders)
                 );
             } else {
-                importService.approveImportRequest(request, tentativeOnly, subFolders);
+                importService.approveImportRequest(request, tentativeAlso, subFolders);
             }
 		} else {
 			log.warn("Wrong status - not APPROVING or APPROVED for requestId={} status={}", request.getId(), request.getStatus());
 			return responseError("Wrong status - not APPROVING or APPROVED")
 					.op("approveImport")
 					.put("importId", importRequestId)
-					.put("tentativeOnly", tentativeOnly)
-                    .put("subFoldersOption", subFoldersOption)
+					.put("tentativeAlso", tentativeAlso)
+                    .put("subFolders", subFolders)
 					.put("background", background)
 					.put("importId", subFolders)
 					.build();
@@ -189,8 +186,8 @@ public class ImportRequestsController {
 		return responseOk()
 				.op("approveImport")
 				.put("importId", importRequestId)
-				.put("tentativeOnly", tentativeOnly)
-                .put("subFoldersOption", subFoldersOption)
+				.put("tentativeAlso", tentativeAlso)
+                .put("subFolders", subFolders)
 				.put("background", background)
 				.put("importId", subFolders)
 				.build();
@@ -199,12 +196,9 @@ public class ImportRequestsController {
 	@GetMapping("/rematchImport/{importId}")
 	@ResponseBody
 	public Object rematchImport(@PathVariable("importId") String importRequestId,
-                                @RequestAttribute("background") Optional<Boolean> backgroundOption,
-								@RequestAttribute("tentativeOnly") Optional<Boolean> tentativeOnlyOption,
-								@RequestAttribute("subFolders") Optional<Boolean> subFoldersOption) {
-		boolean tentativeOnly = tentativeOnlyOption.orElse(true);
-		boolean subFolders = subFoldersOption.orElse(true);
-        boolean background = backgroundOption.orElse(false);
+                                @RequestParam(value = "background", required = false, defaultValue = "false") boolean background,
+                                @RequestParam(value = "tentativeAlso", required = false, defaultValue = "true") boolean tentativeAlso,
+                                @RequestParam(value = "subFolders", required = false, defaultValue = "true") boolean subFolders) {
 
 		ImportRequest request = requestRepository.findOne(importRequestId);
 		if (request == null) {
@@ -213,7 +207,7 @@ public class ImportRequestsController {
 					.put("importId", importRequestId)
 					.put("background", background)
 					.put("subFolders", subFolders)
-					.put("tentativeOnly", tentativeOnly)
+					.put("tentativeAlso", tentativeAlso)
 					.put("importId", subFolders)
 					.build();
 		}
@@ -226,17 +220,17 @@ public class ImportRequestsController {
 			log.info("Re-match node requestId={} status={}", request.getId(), request.getStatus());
             if (background) {
                 miscBackgroundJobsPool.executeRequest("ApproveImportRequest_" + request.getPath(),
-                        () -> importService.rematchImportRequest(request, tentativeOnly, subFolders)
+                        () -> importService.rematchImportRequest(request, tentativeAlso, subFolders)
                 );
             } else {
-                importService.rematchImportRequest(request, tentativeOnly, subFolders);
+                importService.rematchImportRequest(request, tentativeAlso, subFolders);
             }
 			return responseOk()
 					.op("rematchImport")
 					.put("importId", importRequestId)
                     .put("background", background)
                     .put("subFolders", subFolders)
-					.put("tentativeOnly", tentativeOnly)
+					.put("tentativeAlso", tentativeAlso)
 					.put("importId", subFolders)
 					.build();
 
@@ -247,7 +241,7 @@ public class ImportRequestsController {
 					.put("importId", importRequestId)
                     .put("background", background)
                     .put("subFolders", subFolders)
-					.put("tentativeOnly", tentativeOnly)
+					.put("tentativeAlso", tentativeAlso)
 					.put("importId", subFolders)
 					.build();
 		}

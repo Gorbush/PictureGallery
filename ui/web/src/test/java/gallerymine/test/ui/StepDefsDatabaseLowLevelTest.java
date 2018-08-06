@@ -34,18 +34,37 @@ public class StepDefsDatabaseLowLevelTest extends SpringIntegrationTest {
         log.info("Import Request id={}", importRequestId);
     }
 
-    @Given("^wait import request become (.*) for (\\d+) seconds$")
-    public void waitImportRequestStatus(String statusExpected, long seconds) throws Throwable {
+    @Given("^run approve for import request id=([^\\s]+)$")
+    public void runApproveOfImportForTestFolder(String importRequestIdStr) throws Throwable {
+        String importRequestId = resolveExpression(importRequestIdStr);
+        log.info("Initiated approve of import request id={}", importRequestId);
+        runGetRequestSuccess("/importing/approveImport/"+importRequestId+"?background=true");
+    }
+
+    @Given("^run forced approve for import request id=([^\\s]+)$")
+    public void runForcedApproveOfImportForTestFolder(String importRequestIdStr) throws Throwable {
+        String importRequestId = resolveExpression(importRequestIdStr);
+        log.info("Initiated approve of import request id={}", importRequestId);
+        runGetRequestSuccess("/importing/approveImport/"+importRequestId+"?background=true&tentativeAlso=true");
+    }
+
+    @Given("^wait import request id=([^\\s]+) become ([^\\s]+) for (\\d+) seconds$")
+    public void waitImportRequestStatus(String importRequestIdStr, String statusExpected, long seconds) throws Throwable {
+        String importRequestId = resolveExpression(importRequestIdStr);
         long startedAt = System.currentTimeMillis();
-        String importRequestId = get("importRequestId");
         String statusCurrent;
+        long till = (startedAt+seconds*1000);
+        long now;
         do {
             runGetRequestSuccess("/importing/" + importRequestId);
             statusCurrent = resolveExpression("response.body.result.status");
+            now = System.currentTimeMillis();
             Thread.sleep(1000);
-            log.info("  import request id={} status={} expected status={}", importRequestId, statusCurrent, statusExpected);
+            log.info("  import request await {} of {} sec. id={} status={} expected status={}",
+                    (now - startedAt)/1000, seconds,
+                    importRequestId, statusCurrent, statusExpected);
         } while (
-                    ((startedAt+seconds*100) < System.currentTimeMillis())
+                    (now < till)
                             &&
                     !statusExpected.equals(statusCurrent)
                 );

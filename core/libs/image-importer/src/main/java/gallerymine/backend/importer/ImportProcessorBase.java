@@ -113,7 +113,7 @@ public abstract class ImportProcessorBase implements Runnable {
             updateMarker();
             processRequest();
 
-            log.info(" processing finished successfuly for {}", request.getPath());
+            log.info(" processing finished successfully for {}", request.getPath());
         } catch (Exception e){
             log.error(" processing failed for {} Reason: {}", request.getPath(), e.getMessage(), e);
         } finally {

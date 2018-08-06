@@ -36,22 +36,40 @@ public class PictureFolderRepositoryImpl implements PictureFolderRepositoryCusto
     protected MongoTemplate template = null;
 
     @Override
-    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
     public long incrementFilesCount(String picFolderId) {
-        PictureFolder picFolder = template.findById(picFolderId, PictureFolder.class);
-        picFolder.setFilesCount(picFolder.getFilesCount()+1);
-        template.save(picFolder);
-        log.info(" incFiles for folder new={} path={}", picFolder.getFilesCount(), picFolder.getFullPath());
-        return picFolder.getFilesCount();
+        return changeFilesCount(picFolderId, +1);
+    }
+    @Override
+    public long decrementFilesCount(String picFolderId) {
+        return changeFilesCount(picFolderId, -1);
     }
 
     @Override
     @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
-    public long incrementFoldersCount(String picFolderId) {
+    public long changeFilesCount(String picFolderId, long changeValue) {
         PictureFolder picFolder = template.findById(picFolderId, PictureFolder.class);
-        picFolder.setFoldersCount(picFolder.getFoldersCount()+1);
+        picFolder.setFilesCount(picFolder.getFilesCount()+1);
         template.save(picFolder);
-        log.info(" incFolders for folder new={} path={}", picFolder.getFilesCount(), picFolder.getFullPath());
+        log.info(" incFiles for folder by={} new={} path={}", changeValue, picFolder.getFilesCount(), picFolder.getFullPath());
+        return picFolder.getFilesCount();
+    }
+
+    @Override
+    public long incrementFoldersCount(String picFolderId) {
+        return changeFoldersCount(picFolderId, +1);
+    }
+    @Override
+    public long decrementFoldersCount(String picFolderId) {
+        return changeFoldersCount(picFolderId, -1);
+    }
+
+    @Override
+    @RetryVersion(times = 10, on = org.springframework.dao.OptimisticLockingFailureException.class)
+    public long changeFoldersCount(String picFolderId, long changeValue) {
+        PictureFolder picFolder = template.findById(picFolderId, PictureFolder.class);
+        picFolder.setFoldersCount(picFolder.getFoldersCount()+changeValue);
+        template.save(picFolder);
+        log.info(" incFolders for folder by={} new={} path={}", changeValue, picFolder.getFilesCount(), picFolder.getFullPath());
         return picFolder.getFoldersCount();
     }
 

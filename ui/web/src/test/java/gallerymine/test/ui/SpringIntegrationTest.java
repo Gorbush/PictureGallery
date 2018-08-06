@@ -28,7 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-//@RunWith(SpringJUnit4ClassRunner.class)
+//@SpringBootTest(classes = GalleryMineApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @SpringBootTest(classes = GalleryMineApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @ContextConfiguration
 public class SpringIntegrationTest {

@@ -145,8 +145,8 @@ public class FileRepositoryImpl<Information extends FileInformation, RequestCrit
             criteria.add(Criteria.where("importRequestId").is(searchCriteria.getRequestId()));
         }
 
-        if (searchCriteria.getStatus() != null) {
-            criteria.add(Criteria.where("status").is(searchCriteria.getStatus()));
+        if (searchCriteria.getStatuses() != null) {
+            criteria.add(Criteria.where("status").in(searchCriteria.getStatuses()));
         }
 
         if (isNotBlank(searchCriteria.getRequestRootId())) {

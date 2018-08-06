@@ -206,59 +206,64 @@ public class ImportProcessor extends ImportProcessorBase {
 
                     filesCount++;
 
-                    if (ignorableFileAnayser.accepts(file.toFile().getName())) {
-                        log.debug("    file ignored {}", info.getFileWithPath());
-                        Path targetFolder = importUtils.moveToFailed(info);
-                        info.setRootPath(targetFolder.toString());
-                        filesCountIgnored++;
-                        info.setStatus(InfoStatus.SKIPPED);
-                    } else {
-                        log.debug("    file parsing {}", info.getFileWithPath());
-                        List<BaseAnalyser> analysers = getAnalysers();
-
-                        for (BaseAnalyser analyser : analysers) {
-                            if (analyser.acceptsFile(info.getFileName())) {
-                                processPictureFile(file, info, analyser);
-                            }
-                        }
-                        if (info.getPopulatedBy().contains(KIND_PICTURE)) {
-                            if (!info.isFailed()) {
-                                Path targetRootPath = importUtils.moveToApprove(info);
-                                info.setRootPath(targetRootPath.toString());
-
-                                info.setStatus(InfoStatus.ANALYSING);
-                                filesCountSucceed++;
-                            } else {
-                                filesCountFailed++;
-                                Path targetFolder = importUtils.moveToFailed(info);
-                                info.setRootPath(targetFolder.toString());
-                                info.setStatus(InfoStatus.FAILED);
-                                info.addError(" Wrong format of file");
-                                logUnknownFormats.error(" Wrong format of file {}", file.toAbsolutePath().toString());
-                            }
-                        } else {
+                    try {
+                        if (ignorableFileAnayser.accepts(file.toFile().getName())) {
+                            log.debug("    file ignored {}", info.getFileWithPath());
                             Path targetFolder = importUtils.moveToFailed(info);
                             info.setRootPath(targetFolder.toString());
-                            filesCountFailed++;
-                            info.setStatus(InfoStatus.FAILED);
-                            info.addError(" Unknown format of file");
-                            logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
+                            filesCountIgnored++;
+                            info.setStatus(InfoStatus.SKIPPED);
+                        } else {
+                            log.debug("    file parsing {}", info.getFileWithPath());
+                            List<BaseAnalyser> analysers = getAnalysers();
+
+                            for (BaseAnalyser analyser : analysers) {
+                                if (analyser.acceptsFile(info.getFileName())) {
+                                    processPictureFile(file, info, analyser);
+                                }
+                            }
+                            if (info.getPopulatedBy().contains(KIND_PICTURE)) {
+                                if (!info.isFailed()) {
+                                    Path targetRootPath = importUtils.moveToApprove(info);
+                                    info.setRootPath(targetRootPath.toString());
+
+                                    info.setStatus(InfoStatus.ANALYSING);
+                                    filesCountSucceed++;
+                                } else {
+                                    filesCountFailed++;
+                                    Path targetFolder = importUtils.moveToFailed(info);
+                                    info.setRootPath(targetFolder.toString());
+                                    info.setStatus(InfoStatus.FAILED);
+                                    info.addError(" Wrong format of file");
+                                    logUnknownFormats.error(" Wrong format of file {}", file.toAbsolutePath().toString());
+                                }
+                            } else {
+                                Path targetFolder = importUtils.moveToFailed(info);
+                                info.setRootPath(targetFolder.toString());
+                                filesCountFailed++;
+                                info.setStatus(InfoStatus.FAILED);
+                                info.addError(" Unknown format of file");
+                                logUnknownFormats.error(" Unknown format of file {}", file.toAbsolutePath().toString());
+                            }
                         }
-                    }
-                    uniSourceRepository.saveByGrade(info);
-                    if (!info.hasThumb() && !
-                            (
-                                    InfoStatus.FAILED.equals(info.getStatus())
-                            ||
-                                    InfoStatus.SKIPPED.equals(info.getStatus())
-                            )
-                       ) {
-                        log.info("     No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
-                        Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
-                        ThumbRequest request = new ThumbRequest(info.getFullFilePath(), thumbStoredFile.toString());
-                        request.setSource(info.getId());
-                        thumbRequestRepository.save(request);
-                        thumbRequestPool.executeRequest(request);
+                        uniSourceRepository.saveByGrade(info);
+                        if (!info.hasThumb() && !
+                                (
+                                        InfoStatus.FAILED.equals(info.getStatus())
+                                                ||
+                                                InfoStatus.SKIPPED.equals(info.getStatus())
+                                )
+                        ) {
+                            log.info("     No thumbnail injected - need to generate one for {} in {}", info.getFileName(), info.getFilePath());
+                            Path thumbStoredFile = importUtils.generatePicThumbName(info.getFileName(), info.getTimestamp());
+                            ThumbRequest request = new ThumbRequest(info.getFullFilePath(), thumbStoredFile.toString());
+                            request.setSource(info.getId());
+                            thumbRequestRepository.save(request);
+                            thumbRequestPool.executeRequest(request);
+                        }
+                    } catch (Exception e) {
+                        filesCountFailed++;
+                        logUnknownFormats.error(" Failed processing of file {}", file.toAbsolutePath().toString(), e);
                     }
                 }
             }
@@ -283,8 +288,8 @@ public class ImportProcessor extends ImportProcessorBase {
                     filesCount, filesCountSucceed, filesCountIgnored, filesCountFailed, request.getPath());
         } catch (IOException e) {
             request = requestService.retrySave(request.getId(), requestEntity -> {
-                    requestEntity.setFilesCount(-1);
-                    requestEntity.setFilesIgnoredCount(-1);
+                    requestEntity.setFilesCount(0);
+                    requestEntity.setFilesIgnoredCount(0);
                     requestEntity.getStats(processType).setAllFilesProcessed(true);
                     requestEntity.addError("indexing failed for file " + path);
                     return requestEntity;

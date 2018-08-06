@@ -25,7 +25,13 @@ import org.springframework.stereotype.Repository;
 public interface PictureFolderRepositoryCustom {
 
 	long incrementFilesCount(String picFolderId);
-	long incrementFoldersCount(String picFolderId);
+    long decrementFilesCount(String picFolderId);
+
+    long changeFilesCount(String picFolderId, long changeValue);
+
+    long incrementFoldersCount(String picFolderId);
+	long decrementFoldersCount(String picFolderId);
+	long changeFoldersCount(String picFolderId, long changeValue);
 
     PictureFolder getRootFolder();
 

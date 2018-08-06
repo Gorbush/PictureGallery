@@ -73,11 +73,11 @@ public class ThumbRequestProcessor implements Runnable {
     }
 
     private void processRequest(ThumbRequest requestSrc) {
-        log.info("  processing started path={}", requestSrc.getId(), requestSrc.getFilePath());
         if (requestSrc == null) {
             log.info("  processing skipped path={}", requestSrc.getId(), requestSrc.getFilePath());
             return;
         }
+        log.info("  processing started path={}", requestSrc.getId(), requestSrc.getFilePath());
         ThumbRequest request = thumbRequestRepository.findOne(requestSrc.getId());
         if (request == null) {
             log.info("  already processed path={}", requestSrc.getId(), requestSrc.getFilePath());

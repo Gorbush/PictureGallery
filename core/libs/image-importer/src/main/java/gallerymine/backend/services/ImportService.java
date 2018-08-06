@@ -168,7 +168,7 @@ public class ImportService {
     public void replaceApprovedFilesWithSymLinks(Process process) {
         SourceCriteria criteria = new SourceCriteria();
         criteria.setProcessId(process.getId());
-        criteria.setStatus(InfoStatus.APPROVED);
+        criteria.setStatuses(InfoStatus.APPROVED);
         criteria.maxSize();
 
         Iterator<PictureInformation> iterator = uniSourceRepository.fetchCustomStream(criteria, IMPORT.getEntityClass());
@@ -196,11 +196,11 @@ public class ImportService {
                 return;
             }
             if (!picPath.toFile().exists()) {
-                log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={}", importInfo.getId(), pictureId, importInfo.getFileWithPath());
+                log.error("ImportSource id={} is marked as APPROVED, but picture mapped in Gallery is missing! picId={} path={} picPath={}", importInfo.getId(), pictureId, importInfo.getFileWithPath(), picPath);
                 return;
             }
             if (!impPath.toFile().delete()) {
-                log.error("ImportSource id={} is marked as APPROVED, but failed to delete approved file! picId={} path={} piPath={}", importInfo.getId(), pictureId, impPath, picPath);
+                log.error("ImportSource id={} is marked as APPROVED, but failed to delete approved file! picId={} path={} picPath={}", importInfo.getId(), pictureId, impPath, picPath);
                 return;
             }
             try {
@@ -536,10 +536,11 @@ public class ImportService {
     }
 
     public Boolean actionMarkAsDuplicate(PictureInformation source) throws Exception {
-        PictureInformation target = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
-        if (target != null) {
+        PictureInformation pictureApproved = uniSourceRepository.fetchOne(source.getId(), GALLERY.getEntityClass());
+        if (pictureApproved != null) {
             log.info("  source id={} was approved - removing", source.getId());
-            uniSourceRepository.deleteByGrade(target.getId(), GALLERY.getEntityClass());
+            uniSourceRepository.deleteByGrade(pictureApproved.getId(), GALLERY.getEntityClass());
+            pictureFolderRepository.decrementFilesCount(pictureApproved.getFolderId());
         }
         InfoStatus oldStatus = source.getStatus();
 
@@ -585,13 +586,15 @@ public class ImportService {
         return true;
     }
 
-    public boolean approveImportRequest(ImportRequest request, boolean tentativeOnly, boolean subFolders) {
+    public boolean approveImportRequest(ImportRequest request, boolean tentativeAlso, boolean subFolders) {
         if (!request.getStats(ProcessType.APPROVAL).getAllFilesProcessed()) {
             log.warn("  Approving files for requestId={} status={}", request.getId(), request.getStatus());
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
-            if (tentativeOnly) {
-                criteria.setStatus(InfoStatus.APPROVING);
+            if (tentativeAlso) {
+                criteria.setStatuses(InfoStatus.APPROVING, InfoStatus.SIMILAR);
+            } else {
+                criteria.setStatuses(InfoStatus.APPROVING);
             }
             criteria.maxSize();
 
@@ -630,7 +633,7 @@ public class ImportService {
             AtomicLong notApproved = new AtomicLong();
             iterator.forEach(importRequest -> {
                 try {
-                    if (approveImportRequest(importRequest, tentativeOnly, subFolders)) {
+                    if (approveImportRequest(importRequest, tentativeAlso, subFolders)) {
                         approved.incrementAndGet();
                     } else {
                         notApproved.incrementAndGet();
@@ -654,13 +657,15 @@ public class ImportService {
         return ImportRequest.ImportStatus.APPROVED.equals(request.getStatus());
     }
 
-    public boolean rematchImportRequest(ImportRequest request, boolean tentativeOnly, boolean subFolders) {
+    public boolean rematchImportRequest(ImportRequest request, boolean tentativeAlso, boolean subFolders) {
         if (!request.getStats(ProcessType.APPROVAL).getAllFilesProcessed()) {
             log.warn("  Matching files for requestId={} status={}", request.getId(), request.getStatus());
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
-            if (tentativeOnly) {
-                criteria.setStatus(InfoStatus.APPROVING);
+            if (tentativeAlso) {
+                criteria.setStatuses(InfoStatus.APPROVING, InfoStatus.SIMILAR);
+            } else {
+                criteria.setStatuses(InfoStatus.APPROVING);
             }
             criteria.maxSize();
 
@@ -702,7 +707,7 @@ public class ImportService {
             AtomicLong notApproved = new AtomicLong();
             iterator.forEach(importRequest -> {
                 try {
-                    if (rematchImportRequest(importRequest, tentativeOnly, subFolders)) {
+                    if (rematchImportRequest(importRequest, tentativeAlso, subFolders)) {
                         approved.incrementAndGet();
                     } else {
                         notApproved.incrementAndGet();

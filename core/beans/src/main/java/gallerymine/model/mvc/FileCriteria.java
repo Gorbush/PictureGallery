@@ -6,6 +6,8 @@ import lombok.Data;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +33,7 @@ public class FileCriteria {
     private Set<String> populatedBy;
     private Set<String> populatedNotBy;
     private InfoStatus status;
+    private Set<InfoStatus> statuses;
 
     @JsonIgnore
     private PageRequest pager;
@@ -63,4 +66,7 @@ public class FileCriteria {
         return pager.getPageNumber() * pager.getPageSize();
     }
 
+    public void setStatuses(InfoStatus... statuses) {
+        this.statuses = new HashSet<>(Arrays.asList(statuses));
+    }
 }
