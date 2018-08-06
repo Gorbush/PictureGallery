@@ -131,7 +131,7 @@ var SourceList = {
                     }
                 },
 
-                prepareCriteria: function (data) {
+                prepareCriteria: function (node, nodeType) {
                     var criteria = {
                         path: "",
                         grade: this.grade,
@@ -139,14 +139,14 @@ var SourceList = {
                         timestamp: null,
                         placePath: null,
                         page: 0,
-                        size: 1000
+                        size: 100
                     };
 
                     if (this.criteriaContributor) {
-                        criteria = this.criteriaContributor(this, criteria, data);
+                        criteria = this.criteriaContributor(this, criteria, node, nodeType);
                     }
-                    if (validValue(data) && validValue(data.fullPath)) {
-                        criteria.path = data.fullPath;
+                    if (nodeType === "path" && validValue(node) && validValue(node.fullPath)) {
+                        criteria.path = node.fullPath;
                     }
 
 
@@ -239,7 +239,6 @@ var SourceList = {
             object.options = $.extend(defaultOptions, optionsProvided);
             object.sourceDataProvider = object.options.sourceDataProvider;
 
-            object.viewSwitcher = object.options.viewSwitcher;
             object.showDecisionBlock = object.options.showDecisionBlock;
             if (object.viewSwitcher) {
                 object.viewSwitcher.setView(object.viewSwitcher.COMPACT);
@@ -253,17 +252,17 @@ var SourceList = {
 
             object.responseData = null;
 
-            if (typeof TreePath != "undefined" && object.options.treePath) {
-                object.treeFolderPath = TreePath.create($('#folderTree'),
-                    function(e, data, tree) {return object.clickFoldersTreeNode(e, data, tree);},
-                    function (node) { return object.prepareCriteria(node);}
-                    );
+            if (object.options.treePath) {
+                object.options.treePath.clickJSTreeNode = function(e, data, tree) {return object.clickFoldersTreeNode(e, data, tree); };
+                object.options.treePath.prepareCriteria = function (node) { return object.prepareCriteria(node); };
+                object.options.treePath.init();
+                object.treePath = object.options.treePath;
             }
-            if (typeof TreePath != "undefined" && object.options.treeDates) {
-                object.treeDates = TreeDates.create($('#datesTree'),
-                    function(e, data, tree) {object.clickDatesTreeNode(e, data, tree);},
-                    function (node) { return object.prepareCriteria(node);}
-                    );
+            if (object.options.treeDates) {
+                object.options.treeDates.clickJSTreeNode = function(e, data, tree) {return object.clickDatesTreeNode(e, data, tree); };
+                object.options.treeDates.prepareCriteria = function (node) { return object.prepareCriteria(node); };
+                object.options.treeDates.init();
+                object.treeDates = object.options.treeDates;
             }
             if (typeof Gallery != "undefined" && object.options.gallery) {
                 object.gallery = new Gallery({
@@ -281,6 +280,12 @@ var SourceList = {
                     }
                 });
             }
+
+            object.viewSwitcher = object.options.viewSwitcher;
+            if (object.viewSwitcher) {
+                object.viewSwitcher.setSourceList(object);
+            }
+
             object.initialized = true;
             return object;
         } catch (e) {

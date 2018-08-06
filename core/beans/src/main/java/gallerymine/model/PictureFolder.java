@@ -37,6 +37,10 @@ public class PictureFolder {
     @Indexed(unique = true)
     private String fullPath;
 
+    /** Current folder path with name, in lower case to support all filesystems */
+    @Indexed
+    private String path;
+
     private List<String> notes = new ArrayList<>();
 
     @CreatedDate

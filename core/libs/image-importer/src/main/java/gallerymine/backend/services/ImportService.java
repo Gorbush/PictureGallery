@@ -168,7 +168,7 @@ public class ImportService {
     public void replaceApprovedFilesWithSymLinks(Process process) {
         SourceCriteria criteria = new SourceCriteria();
         criteria.setProcessId(process.getId());
-        criteria.setStatuses(InfoStatus.APPROVED);
+        criteria.addStatuses(InfoStatus.APPROVED);
         criteria.maxSize();
 
         Iterator<PictureInformation> iterator = uniSourceRepository.fetchCustomStream(criteria, IMPORT.getEntityClass());
@@ -404,6 +404,7 @@ public class ImportService {
                 if (picFolder == null) {
                     picFolder = new PictureFolder();
                     picFolder.setName("");
+                    picFolder.setPath(null);
                     picFolder.setFullPath("");
                     pictureFolderRepository.save(picFolder);
                 }
@@ -415,6 +416,11 @@ public class ImportService {
             if (picFolder == null) {
                 picFolder = new PictureFolder();
                 picFolder.setName(folder.toFile().getName());
+                if (folder.getParent() != null) {
+                    picFolder.setPath(folder.getParent().toString().toLowerCase());
+                } else {
+                    picFolder.setPath("");
+                }
                 picFolder.setFullPath(folder.toString().toLowerCase());
 
                 PictureFolder picFolderParent = getOrCreatePictureFolder(folder.getParent());
@@ -591,10 +597,9 @@ public class ImportService {
             log.warn("  Approving files for requestId={} status={}", request.getId(), request.getStatus());
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
+            criteria.addStatuses(InfoStatus.APPROVING);
             if (tentativeAlso) {
-                criteria.setStatuses(InfoStatus.APPROVING, InfoStatus.SIMILAR);
-            } else {
-                criteria.setStatuses(InfoStatus.APPROVING);
+                criteria.addStatuses(InfoStatus.SIMILAR);
             }
             criteria.maxSize();
 
@@ -662,10 +667,9 @@ public class ImportService {
             log.warn("  Matching files for requestId={} status={}", request.getId(), request.getStatus());
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
+            criteria.addStatuses(InfoStatus.APPROVING);
             if (tentativeAlso) {
-                criteria.setStatuses(InfoStatus.APPROVING, InfoStatus.SIMILAR);
-            } else {
-                criteria.setStatuses(InfoStatus.APPROVING);
+                criteria.addStatuses(InfoStatus.SIMILAR);
             }
             criteria.maxSize();
 

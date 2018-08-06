@@ -284,7 +284,7 @@ public class ImportProcessor extends ImportProcessorBase {
                         stats.getFailed().set(doneFilesCountFailed);
                         return requestEntity;
                     });
-            log.info("     files processing done {} or {} succeeded (ignored:{}  failed:{}). path={}",
+            log.info("     files processing done {} of {} succeeded (ignored:{}  failed:{}). path={}",
                     filesCount, filesCountSucceed, filesCountIgnored, filesCountFailed, request.getPath());
         } catch (IOException e) {
             request = requestService.retrySave(request.getId(), requestEntity -> {

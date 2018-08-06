@@ -77,7 +77,7 @@ public class ImportMatchingProcessor extends ImportProcessorBase {
             int filesSimilarCount = 0;
             SourceCriteria criteria = new SourceCriteria();
             criteria.setRequestId(request.getId());
-            criteria.setStatuses(InfoStatus.ANALYSING);
+            criteria.addStatuses(InfoStatus.ANALYSING);
             criteria.setPopulatedNotBy(Sets.newHashSet(KIND_MATCHING));
             criteria.maxSize();
 

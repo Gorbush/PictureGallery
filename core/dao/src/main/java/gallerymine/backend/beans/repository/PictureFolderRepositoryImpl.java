@@ -96,9 +96,9 @@ public class PictureFolderRepositoryImpl implements PictureFolderRepositoryCusto
         }
         if (searchCriteria.getPath() != null) {
             if (RegExpHelper.isMask(searchCriteria.getPath())) {
-                criteria.add(Criteria.where("fullPath").regex(RegExpHelper.convertToRegExp(searchCriteria.getPath())));
+                criteria.add(Criteria.where("path").regex(RegExpHelper.convertToRegExp(searchCriteria.getPath())));
             } else {
-                criteria.add(Criteria.where("fullPath").is(searchCriteria.getPath()));
+                criteria.add(Criteria.where("path").is(searchCriteria.getPath()));
             }
         }
 

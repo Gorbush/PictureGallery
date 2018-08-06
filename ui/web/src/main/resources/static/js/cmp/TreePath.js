@@ -3,12 +3,7 @@
  */
 var TreePath = {
 
-    init: function(){
-        TreePath.treePathColumnsTemplate = $("#TreePathRowTemplate");
-    },
-
-    create: function (element, clickJSTreeNode, prepareCriteria) {
-        TreePath.init();
+    create: function (element, doInit, rowTemplateElement, clickJSTreeNode, prepareCriteria) {
 
         function preprocessFoldersAsNodes(nodesList, nodeParent) {
             var nodes = [];
@@ -41,13 +36,18 @@ var TreePath = {
         }
 
         var object = {
-            div: element,
-            clickJSTreeNode: clickJSTreeNode,
+            div: $(element),
             currentNode: null,
+            treeRowColumnsTemplate: validValue(rowTemplateElement) ? $(rowTemplateElement) : null,
+            initialized: false,
+
+            /** callBack handlers */
+            clickJSTreeNode: clickJSTreeNode,
             prepareCriteria: prepareCriteria,
 
             init: function () {
                 var treeObject = this;
+                this.initialized= true;
                 this.div.jstree({
                     'core': {
                         'data' : {
@@ -55,21 +55,29 @@ var TreePath = {
                             dataType: "json",
                             contentType: "application/json",
                             "url" : function (node, cb, par2) {
-                                return "/sources/listFolders";
+                                return "/sources/findPath";
                             },
                             "data" : function (node, cb, par2) {
                                 var data = node;
                                 if (node && node.original && node.original.content) {
                                     data = node.original.content;
                                 }
-                                var criteria = treeObject.prepareCriteria(data);
-                                return JSON.stringify(criteria, null, 2);
+                                if (treeObject.prepareCriteria) {
+                                    var criteria = treeObject.prepareCriteria(data, "path");
+                                    return JSON.stringify(criteria, null, 2);
+                                }
+                                debugger;
+                                return null;
                             },
                             "postprocessor": function (node, data, par2) {
                                 return preprocessFoldersAsNodes(data.list, node);
                             },
                             "renderer" : function (node, obj, settings, jstree, document) {
-                                populateTemplate(TreePath.treePathColumnsTemplate, obj.original.content, node.childNodes[1]);
+                                if (object.treeRowColumnsTemplate) {
+                                    populateTemplate(object.treeRowColumnsTemplate, obj.original.content, node.childNodes[1]);
+                                } else {
+                                    node.childNodes[1].innerHTML += obj.text;
+                                }
                             }
                         }
                     },
@@ -124,7 +132,9 @@ var TreePath = {
             }
         };
 
-        object.init();
+        if (validValue(doInit) && doInit) {
+            object.init();
+        }
         return object;
     }
 

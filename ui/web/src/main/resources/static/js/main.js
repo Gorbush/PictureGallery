@@ -7,8 +7,9 @@ var GalleryManager = {
             sourceDataProvider: "/sources/uni",
             breadcrumb: "#breadcrumblist",
             gallery: '#slideshow',
-            treePath: '#folderTree',
-            treeDates: '#datesTree',
+            // treePath: TreePath.create("#folderTree", false, "#TreePathRowTemplate"),
+            treePath: TreeFolders.create("#folderTree", false, "#TreePathRowTemplate"),
+            treeDates: TreeDates.create('#datesTree', false, null),
             pagerBar: "#sourcesNav",
             sourcesRootDiv: "div#sources",
             criteriaContributor: GalleryManager.criteriaContributor,
@@ -16,7 +17,6 @@ var GalleryManager = {
             grade: "GALLERY",
             onClick: GalleryManager.onClickImportBlock
         });
-        GalleryManager.viewSwitcher.setSourceList(GalleryManager.sourceList);
     },
     setSelectedPicture: function (block) {
         GalleryManager.selectedBlock = block;
@@ -27,7 +27,7 @@ var GalleryManager = {
     onClickImportBlock: function (block) {
         GalleryManager.setSelectedPicture(block);
     },
-    criteriaContributor: function(sourceList, criteria, nodeData) {
+    criteriaContributor: function(sourceList, criteria, nodeData, nodeType) {
         var starting = $("#datepicker input[name='start']").val();
         var ending = $("#datepicker input[name='end']").val();
         if (starting === "") {
@@ -51,21 +51,33 @@ var GalleryManager = {
             criteria.toDate     = ending;
         }
 
-        if (GalleryManager.sourceList && GalleryManager.sourceList.treeFolderPath) {
-            var pathNode = GalleryManager.sourceList.treeFolderPath.getCurrent();
-            if (validValue(nodeData)) {
-                if (nodeData.parent === "#") {
+        if (GalleryManager.sourceList && GalleryManager.sourceList.treePath) {
+            if (validValue(nodeData) && nodeType === "path") {
+                if (nodeData.parent === "#" || nodeData.id === "#") {
                     criteria.folderId = "";
                 } else {
                     criteria.folderId = nodeData.id;
                 }
+                if (criteria.path === "") {
+                    delete criteria.path;
+                }
             } else {
-                debugger;
-                if (validValue(pathNode) && pathNode.parent === "#") {
-                    criteria.folderId = "";
-                    // criteria.path = pathNode.original.content.fullPath;
+                var pathNode = GalleryManager.sourceList.treePath.getCurrent();
+                if (validValue(pathNode)) {
+                    if (pathNode.parent === "#" || pathNode.id === "#") {
+                        criteria.folderId = "";
+                    } else {
+                        criteria.folderId = pathNode.original.content.id;
+                    }
+                    if (criteria.path === "") {
+                        delete criteria.path;
+                    }
                 } else {
-                    criteria.folderId = pathNode;
+                    debugger;
+                    criteria.folderId = "";
+                    if (criteria.path === "") {
+                        delete criteria.path;
+                    }
                 }
             }
         }

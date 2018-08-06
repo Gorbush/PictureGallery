@@ -1,101 +1,36 @@
 /**
- * Created by sergii_puliaiev on 7/7/17.
+ * Created by sergii_puliaiev on 8/6/18.
  */
-var TreeDates = {
+var TreeFolders = {
 
     create: function (element, doInit, rowTemplateElement, clickJSTreeNode, prepareCriteria) {
 
-        function preprocessDatesAsNodes (nodesList, nodeParent, treeObject) {
+        function preprocessFoldersAsNodes(nodesList, nodeParent) {
             var nodes = [];
-            var nodesTree = {};
-            var currentNode = treeObject.getCurrent();
-            var currentFound = false;
-            var allNode = {
-                id: "all",
-                text: "All",
-                icon: "glyphicon glyphicon-folder-open",
-                rangeStart: null,
-                rangeEnd: null,
-                state: {
-                    opened : true
-                },
-                parent: '#'
-            };
-            nodes.push(allNode);
-
-            for(nodexIndex in nodesList) {
-                var year = nodesList[nodexIndex].byYear;
-                var yearNode = nodesTree[year];
-                if (!validValue(yearNode)) {
-                    yearNode = {
-                        id: year,
-                        text: year,
-                        icon: "glyphicon glyphicon-folder-open",
-                        rangeStart: formatToDateDateObject(new Date(year, 0, 1)),
-                        rangeEnd: lastDayOfMonth(year, 11, 0),
-                        // children: [],
-                        state: {
-                            opened : false
-                        },
-                        parent: 'all'
-                    };
-                    nodesTree[year] = yearNode;
-                    nodes.push(yearNode);
-                    if (year == currentNode) {
-                        currentFound = true;
-                    }
-                }
-                var month = nodesList[nodexIndex].byMonth;
-                var monthNode = nodesTree[year+"-"+month];
-                if (!validValue(monthNode)) {
-                    monthNode = {
-                        id: year+"-"+month,
-                        text: month,
-                        icon: "glyphicon glyphicon-folder-open",
-                        rangeStart: formatToDateDateObject(new Date(year, month-1, 1)),
-                        rangeEnd: lastDayOfMonth(year, month-1, 0),
-                        // children: [],
-                        state: {
-                            opened : false
-                        },
-                        parent: year
-                    };
-                    nodesTree[year+"-"+month] = monthNode;
-                    // yearNode.children.push(monthNode);
-                    // yearNode.children.push(year+"-"+month);
-                    nodes.push(monthNode);
-                    if (year+"-"+month == currentNode) {
-                        currentFound = true;
-                    }
-                }
-
-                var day = nodesList[nodexIndex].byDay;
-                var dayNode = nodesTree[year+"-"+month+"-"+day];
-                if (!validValue(dayNode)) {
-                    dayNode = {
-                        id: year+"-"+month+"-"+day,
-                        text: day,
-                        icon: "glyphicon glyphicon-folder-open",
-                        rangeStart: formatToDateDateObject(new Date(year, month-1, day)),
-                        rangeEnd: formatToDateDateObject(new Date(year, month-1, day)),
-                        // children: false,
-                        state: {
-                            opened : false
-                        },
-                        parent: year+"-"+month
-                    };
-                    nodesTree[year+"-"+month+"-"+day] = dayNode;
-                    // monthNode.children.push(dayNode);
-                    // monthNode.children.push(year+"-"+month+"-"+day);
-                    nodes.push(dayNode);
-                    if (year+"-"+month+"-"+day == currentNode) {
-                        currentFound = true;
-                    }
-                }
+            for(nodexIndex in nodesList.content) {
+                var data = nodesList.content[nodexIndex];
+                var path = data.name;
+                var node = {
+                    text: path,
+                    icon: "glyphicon glyphicon-folder-open",
+                    children: data.foldersCount > 0,
+                    state: {
+                        opened : false
+                    },
+                    content: data
+                };
+                nodes.push(node);
             }
-
-            if (!currentFound) {
-                treeObject.currentNode = null;
+            if (nodeParent.id === "#") {
+                return  {
+                    parent: "#",
+                    text: "Gallery Root",
+                    icon: "glyphicon glyphicon-folder-open",
+                    children: nodes,
+                    state: {
+                        opened : true
+                    }
+                }
             }
             return nodes;
         }
@@ -103,9 +38,10 @@ var TreeDates = {
         var object = {
             div: $(element),
             currentNode: null,
-            initialized: false,
             treeRowColumnsTemplate: validValue(rowTemplateElement) ? $(rowTemplateElement) : null,
+            initialized: false,
 
+            /** callBack handlers */
             clickJSTreeNode: clickJSTreeNode,
             prepareCriteria: prepareCriteria,
 
@@ -119,7 +55,7 @@ var TreeDates = {
                             dataType: "json",
                             contentType: "application/json",
                             "url" : function (node, cb, par2) {
-                                return "/sources/findDates";
+                                return "/sources/listFolders";
                             },
                             "data" : function (node, cb, par2) {
                                 var data = node;
@@ -127,14 +63,14 @@ var TreeDates = {
                                     data = node.original.content;
                                 }
                                 if (treeObject.prepareCriteria) {
-                                    var criteria = treeObject.prepareCriteria(data, "date");
+                                    var criteria = treeObject.prepareCriteria(data, "path");
                                     return JSON.stringify(criteria, null, 2);
                                 }
                                 debugger;
                                 return null;
                             },
                             "postprocessor": function (node, data, par2) {
-                                return preprocessDatesAsNodes(data.list, node, treeObject);
+                                return preprocessFoldersAsNodes(data.list, node);
                             },
                             "renderer" : function (node, obj, settings, jstree, document) {
                                 if (object.treeRowColumnsTemplate) {
@@ -145,7 +81,7 @@ var TreeDates = {
                             }
                         }
                     },
-                    "plugins": ["contextmenu", "dnd"],
+                    "plugins": ["contextmenu", "dnd", "wholerow"],
                     "contextmenu": {
                         "items": function ($node) {
                             return {
@@ -164,8 +100,7 @@ var TreeDates = {
                                         var ref = $.jstree.reference(obj.reference),
                                             sel = ref.get_selected();
                                         if(!sel.length) { return false; }
-                                        // ref.refresh_node(sel);//
-                                        ref.refresh();//
+                                        ref.refresh_node(sel);
                                     }
                                 }
                             };
@@ -200,6 +135,7 @@ var TreeDates = {
         if (validValue(doInit) && doInit) {
             object.init();
         }
+
         return object;
     }
 

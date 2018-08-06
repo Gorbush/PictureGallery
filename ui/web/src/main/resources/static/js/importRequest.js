@@ -31,8 +31,8 @@ var ImportRequestsTree = {
                 sourceDataProvider: "/sources/uni",
                 breadcrumb: "#breadcrumblist",
                 gallery: '#slideshow',
-                treePath: '#folderTree',
-                treeDates: '#datesTree',
+                treePath: null,
+                treeDates: null,
                 pagerBar: "#sourcesNav",
                 sourcesRootDiv: "div#sources",
                 criteriaContributor: ImportRequestsTree.criteriaContributor,
@@ -40,7 +40,6 @@ var ImportRequestsTree = {
                 grade: "IMPORT",
                 onClick: ImportRequestsTree.onClickImportBlock
             });
-        ImportRequestsTree.viewSwitcher.setSourceList(ImportRequestsTree.sourceList);
 
         ImportRequestsTree.matchesBlock = $("div#sourcesMatches");
         ImportRequestsTree.matchesBlockTemplate = $("div#matchBlockTemplate");
@@ -251,7 +250,7 @@ var ImportRequestsTree = {
         criteria.path = null;
         return criteria;
     },
-    criteriaContributorMatches: function(sourceList, criteria, nodeData) {
+    criteriaContributorMatches: function(sourceList, criteria, nodeData, nodeType) {
         var block = ImportRequestsTree.getSelectedImportSource();
         if (block) {
             criteria.matchesOfImportId = block.dataobject.id;
@@ -343,8 +342,8 @@ $(document).ready(function() {
     });
     $("#refresh").on('click', function () {
         debugger;
-        if (ImportRequestsTree.sourceList.treeFolderPath) {
-            ImportRequestsTree.sourceList.treeFolderPath.refresh();
+        if (ImportRequestsTree.sourceList.treePath) {
+            ImportRequestsTree.sourceList.treePath.refresh();
         }
     });
 

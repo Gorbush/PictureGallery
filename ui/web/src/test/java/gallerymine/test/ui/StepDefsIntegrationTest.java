@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cucumber.api.java.en.Given;
 import gallerymine.model.mvc.SourceCriteria;
 import gallerymine.model.support.PictureGrade;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,17 @@ public class StepDefsIntegrationTest extends SpringIntegrationTest {
         SourceCriteria searchCriteria = new SourceCriteria();
         searchCriteria.setPage(0);
         searchCriteria.setSize(10);
-        searchCriteria.setPath(path);
+        searchCriteria.setPath(unquote(path));
+        searchCriteria.setGrade(PictureGrade.GALLERY);
+        runPostRequest(searchCriteria, "/sources/listFolders");
+    }
+
+    @Given("^api call /findPath (.+)")
+    public void the_client_issues_findPath(String path) {
+        SourceCriteria searchCriteria = new SourceCriteria();
+        searchCriteria.setPage(0);
+        searchCriteria.setSize(10);
+        searchCriteria.setPath(unquote(path));
         searchCriteria.setGrade(PictureGrade.GALLERY);
         runPostRequest(searchCriteria, "/sources/findPath");
     }

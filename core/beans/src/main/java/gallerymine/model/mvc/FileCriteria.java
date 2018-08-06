@@ -66,7 +66,12 @@ public class FileCriteria {
         return pager.getPageNumber() * pager.getPageSize();
     }
 
-    public void setStatuses(InfoStatus... statuses) {
-        this.statuses = new HashSet<>(Arrays.asList(statuses));
+    public void addStatuses(InfoStatus... statuses) {
+        if (this.statuses == null) {
+            this.statuses = new HashSet<>(Arrays.asList(statuses));
+        } else {
+            this.statuses.addAll(new HashSet<>(Arrays.asList(statuses)));
+        }
     }
+
 }
