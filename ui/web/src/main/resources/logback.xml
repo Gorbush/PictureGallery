@@ -273,7 +273,17 @@
 	<logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="WARN" additivity="true" />
 	<logger name="org.springframework.beans.factory.support.DefaultListableBeanFactory" level="WARN" additivity="true" />
 
+	<appender name="STASH" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>logs/galleryMine.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>logs/galleryMine.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>7</maxHistory>
+		</rollingPolicy>
+		<encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+	</appender>
+
 	<root level="INFO">
+		<appender-ref ref="STASH" />
 		<!--<appender-ref ref="stdout"/>-->
 		<!--<appender-ref ref="INDEX_FILE"/>-->
 	</root>
