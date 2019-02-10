@@ -13,7 +13,8 @@ spring:
 quartz.scheduler-factory.expose-scheduler-in-repository: false
 
 server:
-    address: 127.0.0.1
+#    address: 127.0.0.1
+    address: 0.0.0.0
     port: 8070
     tomcat:
         access_log_enabled: true
@@ -38,12 +39,12 @@ application.api.google:
 
 gallery:
     paths:
-        galleryRootFolder: ~/work/Gallery/data/gallery/
-        sourcesRootFolder: ~/work_mine/data/rootFolder/
-        thumbsRootFolder: ~/work/Gallery/data/thumbsFolder/
-        importRootFolder: ~/work/Gallery/data/importFolder/
-        importExposedRootFolder: ~/work/Gallery/data/importExposedFolder/
-        importTestRootFolder: ~/work/Gallery/data/importTestFolder/
+        galleryRootFolder: ~/work/GalleryMine/data/gallery/
+        sourcesRootFolder: ~/work/GalleryMine/data/rootFolder/
+        thumbsRootFolder: ~/work/GalleryMine/data/thumbsFolder/
+        importRootFolder: ~/work/GalleryMine/data/importFolder/
+        importExposedRootFolder: ~/work/GalleryMine/data/importExposedFolder/
+        importTestRootFolder: ~/work/GalleryMine/data/importTestFolder/
 
     debug:
         dryRunImportMoves: true

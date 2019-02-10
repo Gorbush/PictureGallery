@@ -20,6 +20,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
 import java.security.Principal;
 import java.time.Instant;
@@ -61,9 +62,14 @@ public class MainPageController {
     }
 
     @GetMapping("/files")
-    public ModelAndView listFiles(Principal principal) {
+    public Object listFiles(HttpServletResponse response, Principal principal) {
         Page<FileInformation> files = fileRepository.findAll(new PageRequest(0, 50, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
-        return new ModelAndView("main/files", "files", files);
+        if (files.getSize() == 0) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return "File Not Found";
+        } else {
+            return new ModelAndView("main/files", "files", files);
+        }
     }
 
     @GetMapping("/main")

@@ -75,10 +75,15 @@ public class FilesController {
 
     @GetMapping("{fileName}")
     @ResponseBody
-	public String findFile(@PathVariable String fileName) {
+	public String findFile(HttpServletResponse response, @PathVariable String fileName) {
 		Collection<FileInformation> sources = fileRepository.findByFileName(fileName);
 
-        return sources.stream().map(FileInformation::getLocation).collect( Collectors.joining( "\n" ) );
+        if (sources.size() == 0) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return "Not Found";
+        } else {
+            return sources.stream().map(FileInformation::getLocation).collect(Collectors.joining("\n"));
+        }
 	}
 
     @GetMapping("{size}/{fileName}")
@@ -93,7 +98,7 @@ public class FilesController {
 		}
 		if (sources.size() == 0) {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			return "";
+            return "Not Found";
 		} else {
 			return sources.stream().map(FileInformation::getLocation).collect(Collectors.joining("\n"));
 		}
@@ -101,14 +106,20 @@ public class FilesController {
 
     @GetMapping("{storage}/{size}/{fileName}")
     @ResponseBody
-	public String findFile(@PathVariable("storage") String storage,
-								   @PathVariable Long size,
-								   @PathVariable String fileName) {
+	public Object
+	findFile(HttpServletResponse response,
+			 @PathVariable("storage") String storage,
+			 @PathVariable Long size,
+			 @PathVariable String fileName) {
 		Collection<FileInformation> sources;
 
 		sources = fileRepository.findByStorageAndFileNameAndSize(storage, fileName, size);
-
-        return sources.stream().map(FileInformation::getLocation).collect( Collectors.joining( "\n" ) );
+		if (sources.size() == 0) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return "Not Found";
+		} else {
+			return sources.stream().map(FileInformation::getLocation).collect(Collectors.joining("\n"));
+		}
 	}
 
 	@PutMapping(value = {"/{storage}/{size}/{stamp}/**"} )
