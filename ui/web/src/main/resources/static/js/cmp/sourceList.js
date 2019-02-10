@@ -247,7 +247,7 @@ var SourceList = {
             object.grade = object.options.grade;
             object.criteriaContributor = object.options.criteriaContributor;
             object.sourcesRootDiv = $(object.options.sourcesRootDiv);
-            object.pagerBar = Pager.create($(object.options.pagerBar), this.pagerChangeHandler);
+            object.pagerBar = Pager.create($(object.options.pagerBar), object.pagerChangeHandler);
             object.breadcrumb = $(object.options.breadcrumb);
 
             object.responseData = null;

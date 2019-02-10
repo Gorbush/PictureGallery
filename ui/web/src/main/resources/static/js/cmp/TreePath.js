@@ -10,6 +10,9 @@ var TreePath = {
             for(nodexIndex in nodesList.content) {
                 var data = nodesList.content[nodexIndex];
                 var path = data.name;
+                if (path === "") {
+                    path = "Gallery Root";
+                }
                 var node = {
                     text: path,
                     icon: "glyphicon glyphicon-folder-open",

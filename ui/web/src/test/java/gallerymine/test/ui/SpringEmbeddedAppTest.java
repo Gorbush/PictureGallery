@@ -1,13 +1,8 @@
 package gallerymine.test.ui;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gallerymine.GalleryMineApplication;
-import gallerymine.model.mvc.SourceCriteria;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +26,19 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+//@SpringBootTest(classes = GalleryMineApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @SpringBootTest(classes = GalleryMineApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-//@SpringBootTest(classes = GalleryMineApplication.class)
 @ContextConfiguration
-public class SpringIntegrationTest {
+public class SpringEmbeddedAppTest extends SpringIntegrationTest {
 
-    private static Logger log = LoggerFactory.getLogger(SpringIntegrationTest.class);
+    private static Logger log = LoggerFactory.getLogger(SpringEmbeddedAppTest.class);
 
     static ResponseEntity<HashMap> latestResponseMap = null;
 

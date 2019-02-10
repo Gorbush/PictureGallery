@@ -1,23 +1,20 @@
 package gallerymine;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import gallerymine.backend.beans.AppConfig;
-import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
-import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.WebMvcProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.thymeleaf.TemplateEngine;
-//import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
-import org.thymeleaf.spring4.SpringTemplateEngine;
-import org.thymeleaf.spring4.view.ThymeleafViewResolver;
-import org.thymeleaf.templateresolver.ITemplateResolver;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
 //import uk.co.gcwilliams.jodatime.thymeleaf.JodaTimeDialect;
 
 /**
@@ -66,6 +63,17 @@ public class WebAppConfig extends WebMvcConfigurerAdapter {
 //        ThymeleafViewResolver viewResolver = new ThymeleafViewResolver();
 //        viewResolver.setTemplateEngine(templateEngine(templateResolver));
 //        return viewResolver;
+//    }
+
+//    @Override
+//    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+//        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+//        builder.serializationInclusion(JsonInclude.Include.NON_NULL);
+//        builder.propertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+//        builder.serializationInclusion(JsonInclude.Include.NON_EMPTY);
+//        builder.indentOutput(true).dateFormat(new SimpleDateFormat("yyyy-MM-dd"));
+//        converters.add(new MappingJackson2HttpMessageConverter(builder.build()));
+//        converters.add(new MappingJackson2XmlHttpMessageConverter(builder.createXmlMapper(true).build()));
 //    }
 
 }

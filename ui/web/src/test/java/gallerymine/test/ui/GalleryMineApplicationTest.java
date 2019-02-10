@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package gallerymine;
+package gallerymine.test.ui;
 
-import org.springframework.boot.CommandLineRunner;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import gallerymine.backend.beans.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -35,17 +40,30 @@ import org.springframework.web.client.RestTemplate;
 @EnableMongoAuditing
 @EnableMongoRepositories
 @EnableAspectJAutoProxy(proxyTargetClass = true)
-//@EnableLoadTimeWeaving
-@Import({ WebAppConfig.class, WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter.class })
 @ComponentScan(basePackages = {
 		"gallerymine.backend",
 		"gallerymine.frontend.mvc",
 		"gallerymine.services.rest"})
-public class GalleryMineApplication implements CommandLineRunner {
+public class GalleryMineApplicationTest {
+
+	@Autowired
+	private CustomerRepository repository;
 
     @Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
+	}
+
+	@Bean
+	public Jackson2ObjectMapperBuilder objectMapperBuilder() {
+		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+		builder.serializationInclusion(JsonInclude.Include.NON_NULL);
+		return builder;
+	}
+
+	@Bean
+	public ObjectMapper objectMapper() {
+    	return objectMapperBuilder().build();
 	}
 
 	@Bean
@@ -74,12 +92,8 @@ public class GalleryMineApplication implements CommandLineRunner {
 //        return new CustomConversions(converterList);
 //    }
 
-	@Override
-	public void run(String... args) {
-	}
-
-	public static void main(String[] args) {
-		SpringApplication.run(GalleryMineApplication.class, args);
+	public static void main(String[] args) throws Exception {
+		SpringApplication.run(GalleryMineApplicationTest.class, args);
 	}
 
 }

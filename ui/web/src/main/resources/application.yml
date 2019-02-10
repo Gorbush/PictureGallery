@@ -38,12 +38,12 @@ application.api.google:
 
 gallery:
     paths:
-        galleryRootFolder: ~/work_mine/data/gallery/
+        galleryRootFolder: ~/work/Gallery/data/gallery/
         sourcesRootFolder: ~/work_mine/data/rootFolder/
-        thumbsRootFolder: ~/work_mine/data/thumbsFolder/
-        importRootFolder: ~/work_mine/data/importFolder/
-        importExposedRootFolder: ~/work_mine/data/importExposedFolder/
-        importTestRootFolder: ~/work_mine/data/importTestFolder/
+        thumbsRootFolder: ~/work/Gallery/data/thumbsFolder/
+        importRootFolder: ~/work/Gallery/data/importFolder/
+        importExposedRootFolder: ~/work/Gallery/data/importExposedFolder/
+        importTestRootFolder: ~/work/Gallery/data/importTestFolder/
 
     debug:
         dryRunImportMoves: true
